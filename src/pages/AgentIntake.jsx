@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { Lead, ActivityLog } from "../api/entities";
+import { createClient } from "@base44/sdk";
 
-// ── Shared Layout ──────────────────────────────────────────────────────────
+const base44 = createClient({ appId: "69b9620de5303495dd309130" });
+const Lead = base44.entities.Lead;
+const ActivityLog = base44.entities.ActivityLog;
+
 const NAV = [
   { label: "Command Center", path: "/CommandCenter", icon: "⚡" },
   { label: "Agent 1: Intake", path: "/AgentIntake", icon: "🤖" },
@@ -12,52 +15,44 @@ const NAV = [
   { label: "Settings", path: "/Settings", icon: "⚙️" },
   { label: "📋 Lead Form", path: "/LeadForm", icon: "" },
 ];
-function Sidebar({ current }) {
+
+function Sidebar() {
   return (
     <aside style={{ width: "220px", background: "#0f0f0f", borderRight: "1px solid #1a1a1a", display: "flex", flexDirection: "column", flexShrink: 0, minHeight: "100vh" }}>
       <div style={{ padding: "18px 14px", borderBottom: "1px solid #1a1a1a", display: "flex", alignItems: "center", gap: "10px" }}>
         <div style={{ width: "30px", height: "30px", background: "linear-gradient(135deg,#00ff88,#00cc66)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px" }}>🐒</div>
         <div>
           <div style={{ fontFamily: "monospace", fontSize: "10px", color: "#00ff88", letterSpacing: "2px", fontWeight: "bold" }}>MONKEE BIZZ AI</div>
-          <div style={{ fontFamily: "monospace", fontSize: "9px", color: "#333", letterSpacing: "1px" }}>SAOS v1.0</div>
+          <div style={{ fontFamily: "monospace", fontSize: "9px", color: "#333" }}>SAOS v1.0</div>
         </div>
       </div>
       <nav style={{ flex: 1, padding: "10px 8px" }}>
-        {NAV.map((n) => {
-          const active = current === n.path;
+        {NAV.map(n => {
+          const a = n.path === "/AgentIntake";
           return (
-            <a key={n.path} href={n.path} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 10px", borderRadius: "7px", marginBottom: "3px", textDecoration: "none", background: active ? "rgba(0,255,136,0.1)" : "transparent", border: active ? "1px solid rgba(0,255,136,0.25)" : "1px solid transparent" }}>
+            <a key={n.path} href={n.path} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 10px", borderRadius: "7px", marginBottom: "3px", textDecoration: "none", background: a ? "rgba(0,255,136,0.1)" : "transparent", border: a ? "1px solid rgba(0,255,136,0.25)" : "1px solid transparent" }}>
               <span style={{ fontSize: "14px" }}>{n.icon}</span>
-              <span style={{ fontSize: "12px", color: active ? "#00ff88" : "#777", fontWeight: active ? "600" : "400" }}>{n.label}</span>
+              <span style={{ fontSize: "12px", color: a ? "#00ff88" : "#777", fontWeight: a ? "600" : "400" }}>{n.label}</span>
             </a>
           );
         })}
       </nav>
-      <div style={{ padding: "12px", borderTop: "1px solid #1a1a1a", fontFamily: "monospace", fontSize: "9px", color: "#222", letterSpacing: "1px" }}>SAOS BUILD 1</div>
+      <div style={{ padding: "12px", borderTop: "1px solid #1a1a1a", fontFamily: "monospace", fontSize: "9px", color: "#222" }}>SAOS BUILD 1</div>
     </aside>
   );
 }
-function Shell({ children }) {
-  return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#0a0a0a", color: "#e0e0e0", fontFamily: "'Inter','Segoe UI',sans-serif" }}>
-      <Sidebar current="/AgentIntake" />
-      <main style={{ flex: 1, overflow: "auto" }}>{children}</main>
-    </div>
-  );
-}
 
-// ── Helpers ────────────────────────────────────────────────────────────────
+// ── Helpers ──────────────────────────────────────────────────────────────
 function nowUTC() { return new Date().toISOString(); }
-function generateToken() { return Math.random().toString(36).substring(2,10).toUpperCase() + "-" + Date.now().toString(36).toUpperCase(); }
+function generateToken() { return Math.random().toString(36).substring(2,10).toUpperCase()+"-"+Date.now().toString(36).toUpperCase(); }
 async function writeLog(lead_id, event) {
   try { await ActivityLog.create({ lead_id, event, created_at: nowUTC() }); } catch(e) { console.error(e); }
 }
 
-// ── Processing ─────────────────────────────────────────────────────────────
+// ── Processing pipeline ──────────────────────────────────────────────────
 function buildNullSafeScore(score) {
   if (!score || score === "" || score === "PENDING") return null;
-  if (["HOT","WARM","COLD"].includes(score)) return score;
-  return null;
+  return ["HOT","WARM","COLD"].includes(score) ? score : null;
 }
 function buildNullSafeStatus(status) {
   if (!status || status === "" || status === "New") return null;
@@ -67,8 +62,8 @@ function buildNullSafeStatus(status) {
 async function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 async function SCORE_LEAD(lead) {
-  const urgencyScore = { high: 3, medium: 2, low: 1 }[lead.urgency] || 1;
-  const total = urgencyScore + (lead.email?1:0) + (lead.phone?1:0) + (lead.business_type?1:0) + (lead.service_need?1:0);
+  const u = { high:3, medium:2, low:1 }[lead.urgency] || 1;
+  const total = u + (lead.email?1:0) + (lead.phone?1:0) + (lead.business_type?1:0) + (lead.service_need?1:0);
   const score = total >= 6 ? "HOT" : total >= 4 ? "WARM" : "COLD";
   await Lead.update(lead.id, { score });
   await writeLog(lead.id, `Score assigned: ${score} (internal)`);
@@ -83,7 +78,7 @@ async function ROUTE_LEAD(lead, score) {
 async function NOTIFY_ADMIN(lead) { await writeLog(lead.id, `Admin notification sent (internal)`); }
 async function CONFIRM_LEAD(lead) { await writeLog(lead.id, `Lead confirmation sent (internal)`); }
 
-async function FORWARD_TO_WEBHOOK(lead, webhookUrl) {
+async function FORWARD_TO_WEBHOOK(lead, url) {
   const payload = {
     lead_id: lead.id, name: lead.name, phone: lead.phone||null, email: lead.email||null,
     business_type: lead.business_type||null, service_need: lead.service_need||null, urgency: lead.urgency||null,
@@ -95,14 +90,14 @@ async function FORWARD_TO_WEBHOOK(lead, webhookUrl) {
     try {
       const ctrl = new AbortController();
       const t = setTimeout(() => ctrl.abort(), 10000);
-      const res = await fetch(webhookUrl, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload), signal: ctrl.signal });
+      const res = await fetch(url, { method:"POST", headers:{"Content-Type":"application/json"}, body: JSON.stringify(payload), signal: ctrl.signal });
       clearTimeout(t);
       if (res.status === 200) {
-        await Lead.update(lead.id, { webhook_status: "fired" });
-        await writeLog(lead.id, attempt === 1 ? "Webhook fired to n8n" : "Webhook fired to n8n (attempt 2)");
+        await Lead.update(lead.id, { webhook_status:"fired" });
+        await writeLog(lead.id, attempt===1 ? "Webhook fired to n8n" : "Webhook fired to n8n (attempt 2)");
         return { success: true };
       } else { lastError = `HTTP ${res.status}`; }
-    } catch(e) { lastError = e.name === "AbortError" ? "Timeout" : `Network error: ${e.message}`; }
+    } catch(e) { lastError = e.name==="AbortError" ? "Timeout" : `Network error: ${e.message}`; }
     if (attempt < 2) {
       await writeLog(lead.id, `Webhook attempt ${attempt} failed — retrying in 2 seconds (${lastError})`);
       await sleep(2000); attempt++;
@@ -127,10 +122,10 @@ async function processLead(lead, mode, webhookUrl) {
       await ROUTE_LEAD(lead, score);
       await NOTIFY_ADMIN(lead); await CONFIRM_LEAD(lead); return;
     }
-    await Lead.update(lead.id, { webhook_status: "pending" });
+    await Lead.update(lead.id, { webhook_status:"pending" });
     const result = await FORWARD_TO_WEBHOOK(lead, webhookUrl);
     if (!result.success) {
-      await Lead.update(lead.id, { webhook_status: "failed" });
+      await Lead.update(lead.id, { webhook_status:"failed" });
       const score = await SCORE_LEAD(lead);
       await ROUTE_LEAD(lead, score);
       await NOTIFY_ADMIN(lead); await CONFIRM_LEAD(lead);
@@ -139,7 +134,7 @@ async function processLead(lead, mode, webhookUrl) {
   }
 }
 
-// ── UI Constants ───────────────────────────────────────────────────────────
+// ── UI ───────────────────────────────────────────────────────────────────
 const INP = { width:"100%", background:"#0f0f0f", border:"1px solid #222", borderRadius:"7px", padding:"9px 11px", color:"#ddd", fontSize:"12px", outline:"none", boxSizing:"border-box", fontFamily:"inherit" };
 const LBL = { display:"block", fontFamily:"monospace", fontSize:"9px", color:"#555", letterSpacing:"2px", marginBottom:"4px" };
 
@@ -267,7 +262,6 @@ function AddLeadForm({ onSuccess, mode, webhookUrl }) {
   );
 }
 
-// ── Main ───────────────────────────────────────────────────────────────────
 export default function AgentIntake() {
   const [leads, setLeads] = useState([]);
   const [logs, setLogs] = useState([]);
@@ -314,13 +308,13 @@ export default function AgentIntake() {
   const pending = leads.filter(l=>l.score==="PENDING").length;
 
   return (
-    <Shell>
-      <div style={{ padding:"28px", maxWidth:"1300px" }}>
+    <div style={{ display:"flex", minHeight:"100vh", background:"#0a0a0a", color:"#e0e0e0", fontFamily:"'Inter','Segoe UI',sans-serif" }}>
+      <Sidebar />
+      <main style={{ flex:1, overflow:"auto", padding:"28px", maxWidth:"1300px" }}>
         <div style={{ fontFamily:"monospace", fontSize:"10px", color:"#00ff88", letterSpacing:"3px", marginBottom:"5px" }}>AGENT 01</div>
         <h1 style={{ fontSize:"22px", fontWeight:"700", color:"#fff", margin:"0 0 4px" }}>Intake Agent</h1>
         <p style={{ color:"#555", fontSize:"12px", marginBottom:"20px" }}>Lead capture, scoring, and routing.</p>
 
-        {/* Stats */}
         <div style={{ display:"flex", gap:"10px", marginBottom:"20px", flexWrap:"wrap" }}>
           {[["TOTAL",leads.length,"#00ff88"],["HOT",hot,"#ff3333"],["WARM",warm,"#ffdd00"],["COLD",cold,"#888"],["PENDING",pending,"#444"]].map(([l,v,c]) => (
             <div key={l} style={{ background:"#111", border:`1px solid ${c}22`, borderRadius:"9px", padding:"12px 16px", minWidth:"90px" }}>
@@ -330,7 +324,6 @@ export default function AgentIntake() {
           ))}
         </div>
 
-        {/* Mode + Webhook config */}
         <div style={{ background:"#111", border:"1px solid #1a1a1a", borderRadius:"10px", padding:"16px", marginBottom:"16px", display:"flex", gap:"20px", flexWrap:"wrap", alignItems:"flex-end" }}>
           <div>
             <div style={{ fontFamily:"monospace", fontSize:"9px", color:"#444", letterSpacing:"2px", marginBottom:"8px" }}>PROCESSING MODE</div>
@@ -341,7 +334,6 @@ export default function AgentIntake() {
                 </button>
               ))}
             </div>
-            <div style={{ fontFamily:"monospace", fontSize:"9px", color:"#2a2a2a", marginTop:"5px" }}>{mode==="internal"?"Score + route inside Base44":"Forward raw lead to n8n"}</div>
           </div>
           {mode==="webhook" && (
             <div style={{ flex:1, minWidth:"240px" }}>
@@ -356,12 +348,9 @@ export default function AgentIntake() {
           )}
         </div>
 
-        {/* Toast */}
         {toast && <div style={{ background:"#00ff8812", border:"1px solid #00ff8844", borderRadius:"7px", padding:"9px 14px", marginBottom:"14px", fontFamily:"monospace", fontSize:"11px", color:"#00ff88" }}>✓ {toast}</div>}
 
-        {/* Table card */}
         <div style={{ background:"#111", border:"1px solid #1a1a1a", borderRadius:"12px", overflow:"hidden" }}>
-          {/* Toolbar */}
           <div style={{ padding:"12px 16px", borderBottom:"1px solid #1a1a1a", display:"flex", gap:"10px", alignItems:"center", flexWrap:"wrap" }}>
             <span style={{ fontFamily:"monospace", fontSize:"10px", color:"#00ff88", letterSpacing:"2px" }}>LEADS</span>
             <input style={{ ...INP, width:"160px", padding:"6px 10px" }} placeholder="Search..." value={search} onChange={e=>setSearch(e.target.value)} />
@@ -371,20 +360,16 @@ export default function AgentIntake() {
             </select>
             <select style={{ ...INP, width:"150px", padding:"6px 9px", cursor:"pointer" }} value={filterStatus} onChange={e=>setFilterStatus(e.target.value)}>
               <option value="ALL">All Statuses</option>
-              <option value="New">New</option>
-              <option value="Action Required">Action Required</option>
-              <option value="Follow Up">Follow Up</option>
-              <option value="Nurture">Nurture</option>
-              <option value="Contacted">Contacted</option>
-              <option value="Booked">Booked</option>
+              <option value="New">New</option><option value="Action Required">Action Required</option>
+              <option value="Follow Up">Follow Up</option><option value="Nurture">Nurture</option>
+              <option value="Contacted">Contacted</option><option value="Booked">Booked</option>
             </select>
-            <button onClick={()=>setShowForm(!showForm)} style={{ marginLeft:"auto", background:showForm?"transparent":"#00ff88", color:showForm?"#555":"#000", border:showForm?"1px solid #222":"none", padding:"7px 14px", borderRadius:"7px", cursor:"pointer", fontFamily:"monospace", fontSize:"10px", fontWeight:"700", letterSpacing:"1px" }}>
+            <button onClick={()=>setShowForm(!showForm)} style={{ marginLeft:"auto", background:showForm?"transparent":"#00ff88", color:showForm?"#555":"#000", border:showForm?"1px solid #222":"none", padding:"7px 14px", borderRadius:"7px", cursor:"pointer", fontFamily:"monospace", fontSize:"10px", fontWeight:"700" }}>
               {showForm?"CANCEL":"+ ADD LEAD"}
             </button>
             <button onClick={load} style={{ background:"transparent", border:"1px solid #1a1a1a", color:"#444", padding:"7px 10px", borderRadius:"7px", cursor:"pointer", fontFamily:"monospace", fontSize:"9px" }}>↺</button>
           </div>
 
-          {/* Add form */}
           {showForm && (
             <div style={{ padding:"18px", borderBottom:"1px solid #1a1a1a", background:"#0d0d0d" }}>
               <div style={{ fontFamily:"monospace", fontSize:"9px", color:"#444", letterSpacing:"2px", marginBottom:"12px" }}>ADD LEAD — MODE: {mode.toUpperCase()}</div>
@@ -392,7 +377,6 @@ export default function AgentIntake() {
             </div>
           )}
 
-          {/* Table */}
           {loading ? (
             <div style={{ padding:"40px", textAlign:"center", fontFamily:"monospace", fontSize:"11px", color:"#333" }}>LOADING...</div>
           ) : filtered.length === 0 ? (
@@ -414,7 +398,7 @@ export default function AgentIntake() {
             </div>
           )}
         </div>
-      </div>
-    </Shell>
+      </main>
+    </div>
   );
 }
