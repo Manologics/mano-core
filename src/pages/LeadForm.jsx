@@ -1,28 +1,7 @@
 import React, { useState } from "react";
-import { createClient } from "@base44/sdk";
 
-const base44 = createClient({ appId: "69b9620de5303495dd309130" });
-const Lead = base44.entities.Lead;
-
-function generateToken() {
-  return Math.random().toString(36).substring(2, 10).toUpperCase() +
-    "-" + Date.now().toString(36).toUpperCase();
-}
-
-function scoreLead(form) {
-  const urgencyScore = { high: 3, medium: 2, low: 1 }[form.urgency] || 1;
-  const total =
-    urgencyScore +
-    (form.email ? 1 : 0) +
-    (form.phone ? 1 : 0) +
-    (form.business_type ? 1 : 0) +
-    (form.service_need ? 1 : 0);
-  return total >= 6 ? "HOT" : total >= 4 ? "WARM" : "COLD";
-}
-
-function routeLead(score) {
-  return score === "HOT" ? "Action Required" : score === "WARM" ? "Follow Up" : "Nurture";
-}
+// Backend function endpoint — service-side only, no token exposed here
+const SUBMIT_URL = "https://mano-dd309130.base44.app/functions/submitLead";
 
 const INP = {
   width: "100%",
@@ -66,38 +45,35 @@ export default function LeadForm() {
     e.preventDefault();
     setError("");
 
-    if (!form.name.trim()) { setError("Full name is required."); return; }
-    if (!form.phone.trim()) { setError("Phone number is required."); return; }
+    if (!form.name.trim())  { setError("Full name is required.");     return; }
+    if (!form.phone.trim()) { setError("Phone number is required.");  return; }
     if (!form.email.trim()) { setError("Email address is required."); return; }
 
     setLoading(true);
     try {
-      const score = scoreLead(form);
-      const status = routeLead(score);
-
-      await Lead.create({
-        name: form.name.trim(),
-        phone: form.phone.trim(),
-        email: form.email.trim(),
-        business_type: form.business_type || null,
-        service_need: form.service_need.trim() || null,
-        urgency: form.urgency,
-        score,
-        status,
-        webhook_status: "none",
-        processing_mode: "internal",
-        submission_token: generateToken(),
+      const res = await fetch(SUBMIT_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name:          form.name.trim(),
+          phone:         form.phone.trim(),
+          email:         form.email.trim(),
+          business_type: form.business_type || null,
+          service_need:  form.service_need.trim() || null,
+          urgency:       form.urgency,
+        }),
       });
 
-      setSubmitted(true);
-    } catch (err) {
-      console.error("Lead submission error:", err);
-      const msg = err?.message || err?.toString() || "";
-      if (msg.toLowerCase().includes("private") || msg.toLowerCase().includes("access")) {
-        setError("Submission error: permission denied. Please contact support.");
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok || data.error) {
+        setError(data.error || "Submission failed. Please try again.");
       } else {
-        setError("Something went wrong. Please try again.");
+        setSubmitted(true);
       }
+    } catch (err) {
+      console.error("LeadForm submit error:", err);
+      setError("Network error. Please check your connection and try again.");
     }
     setLoading(false);
   };
@@ -136,20 +112,26 @@ export default function LeadForm() {
 
             <div>
               <label style={LBL}>FULL NAME *</label>
-              <input style={INP} name="name" value={form.name} onChange={handle} placeholder="Your full name" autoComplete="name"
-                onFocus={e => e.target.style.borderColor = "#00ff88"} onBlur={e => e.target.style.borderColor = "#222"} />
+              <input style={INP} name="name" value={form.name} onChange={handle}
+                placeholder="Your full name" autoComplete="name"
+                onFocus={e => e.target.style.borderColor = "#00ff88"}
+                onBlur={e  => e.target.style.borderColor = "#222"} />
             </div>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
               <div>
                 <label style={LBL}>PHONE NUMBER *</label>
-                <input style={INP} name="phone" value={form.phone} onChange={handle} placeholder="(555) 000-0000" autoComplete="tel"
-                  onFocus={e => e.target.style.borderColor = "#00ff88"} onBlur={e => e.target.style.borderColor = "#222"} />
+                <input style={INP} name="phone" value={form.phone} onChange={handle}
+                  placeholder="(555) 000-0000" autoComplete="tel"
+                  onFocus={e => e.target.style.borderColor = "#00ff88"}
+                  onBlur={e  => e.target.style.borderColor = "#222"} />
               </div>
               <div>
                 <label style={LBL}>EMAIL *</label>
-                <input style={INP} name="email" type="email" value={form.email} onChange={handle} placeholder="you@email.com" autoComplete="email"
-                  onFocus={e => e.target.style.borderColor = "#00ff88"} onBlur={e => e.target.style.borderColor = "#222"} />
+                <input style={INP} name="email" type="email" value={form.email} onChange={handle}
+                  placeholder="you@email.com" autoComplete="email"
+                  onFocus={e => e.target.style.borderColor = "#00ff88"}
+                  onBlur={e  => e.target.style.borderColor = "#222"} />
               </div>
             </div>
 
@@ -172,9 +154,10 @@ export default function LeadForm() {
 
             <div>
               <label style={LBL}>SERVICE NEED</label>
-              <textarea style={{ ...INP, resize: "vertical" }} name="service_need" value={form.service_need} onChange={handle} rows={3}
-                placeholder="What are you looking for help with?"
-                onFocus={e => e.target.style.borderColor = "#00ff88"} onBlur={e => e.target.style.borderColor = "#222"} />
+              <textarea style={{ ...INP, resize: "vertical" }} name="service_need" value={form.service_need}
+                onChange={handle} rows={3} placeholder="What are you looking for help with?"
+                onFocus={e => e.target.style.borderColor = "#00ff88"}
+                onBlur={e  => e.target.style.borderColor = "#222"} />
             </div>
 
             <div>
