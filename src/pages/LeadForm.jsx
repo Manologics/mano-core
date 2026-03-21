@@ -1,7 +1,5 @@
 import React, { useState } from "react";
-
-// Backend function endpoint — service-side only, no token exposed here
-const SUBMIT_URL = "https://mano-dd309130.base44.app/functions/submitLead";
+import { base44 } from "@/api/base44Client";
 
 const INP = {
   width: "100%",
@@ -51,29 +49,18 @@ export default function LeadForm() {
 
     setLoading(true);
     try {
-      const res = await fetch(SUBMIT_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name:          form.name.trim(),
-          phone:         form.phone.trim(),
-          email:         form.email.trim(),
-          business_type: form.business_type || null,
-          service_need:  form.service_need.trim() || null,
-          urgency:       form.urgency,
-        }),
+      await base44.entities.Lead.create({
+        name:          form.name.trim(),
+        phone:         form.phone.trim(),
+        email:         form.email.trim(),
+        business_type: form.business_type || null,
+        service_need:  form.service_need.trim() || null,
+        urgency:       form.urgency,
       });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok || data.error) {
-        setError(data.error || "Submission failed. Please try again.");
-      } else {
-        setSubmitted(true);
-      }
+      setSubmitted(true);
     } catch (err) {
       console.error("LeadForm submit error:", err);
-      setError("Network error. Please check your connection and try again.");
+      setError("Submission failed. Please try again.");
     }
     setLoading(false);
   };
