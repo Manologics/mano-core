@@ -7,6 +7,7 @@ import AgentRetention from './pages/AgentRetention';
 import CommandCenter from './pages/CommandCenter';
 import LeadForm from './pages/LeadForm';
 import Settings from './pages/Settings';
+import DealAccess from './pages/DealAccess';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="/CommandCenter" element={<CommandCenter />} />
         <Route path="/LeadForm" element={<LeadForm />} />
         <Route path="/Settings" element={<Settings />} />
+        <Route path="/DealAccess" element={<DealAccess />} />
       </Routes>
     </BrowserRouter>
   )
