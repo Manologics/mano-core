@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { base44 } from "@/api/base44Client";
+import { createClient } from "@base44/sdk";
+
+const base44 = createClient({ appId: "69b9620de5303495dd309130" });
 
 const INP = {
   width: "100%",
