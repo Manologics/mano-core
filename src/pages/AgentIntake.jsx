@@ -1,11 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { createClient } from "@base44/sdk";
+import BookingPanel from "../components/BookingPanel";
 
-const base44 = createClient({ appId: "69b9620de5303495dd309130" });
-const Lead = base44.entities.Lead;
-const ActivityLog = base44.entities.ActivityLog;
 
-const NAV = [
   { label: "Command Center", path: "/CommandCenter", icon: "⚡" },
   { label: "Agent 1: Intake", path: "/AgentIntake", icon: "🤖" },
   { label: "Agent 2: Booking", path: "/AgentBooking", icon: "🤖" },
@@ -207,9 +204,11 @@ function LeadRow({ lead, logs, onNotesUpdate }) {
                     {saving?"SAVING...":"SAVE NOTES"}
                   </button>
                 </div>
+                <BookingPanel lead={lead} onBookingConfirmed={() => { load(); }} />
               </div>
               <div>
                 <div style={{ fontFamily:"monospace", fontSize:"9px", color:"#444", letterSpacing:"2px", marginBottom:"10px" }}>ACTIVITY LOG</div>
+
                 <LogPanel leadId={lead.id} logs={logs} />
               </div>
             </div>
