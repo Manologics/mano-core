@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { createClient } from "@base44/sdk";
 import BookingPanel from "../components/BookingPanel";
 
-
+const NAV = [
   { label: "Command Center", path: "/CommandCenter", icon: "⚡" },
   { label: "Agent 1: Intake", path: "/AgentIntake", icon: "🤖" },
   { label: "Agent 2: Booking", path: "/AgentBooking", icon: "🤖" },
@@ -204,7 +204,7 @@ function LeadRow({ lead, logs, onNotesUpdate }) {
                     {saving?"SAVING...":"SAVE NOTES"}
                   </button>
                 </div>
-                <BookingPanel lead={lead} onBookingConfirmed={() => { load(); }} />
+                <BookingPanel lead={lead} onBookingConfirmed={onBookingConfirmed} />
               </div>
               <div>
                 <div style={{ fontFamily:"monospace", fontSize:"9px", color:"#444", letterSpacing:"2px", marginBottom:"10px" }}>ACTIVITY LOG</div>
