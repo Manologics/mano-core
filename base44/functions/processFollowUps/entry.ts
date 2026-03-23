@@ -116,20 +116,24 @@ Deno.serve(async (req) => {
       }
 
       // Skip if lead already booked
-      if (["Booked", "Closed — Won"].includes(lead.status)) {
+      if (["Booked", "Closed \u2014 Won"].includes(lead.status)) {
         await S.entities.FollowUp.update(fu.id, { status: "Skipped" });
         continue;
       }
 
-      // Step 2 — Minimum send gap check
+      // Step 2 — Minimum send gap check (2 hours)
       if (!checkGap(lead)) {
         const lastSentDisplay = new Date(lead.last_followup_sent_at).toLocaleString("en-US", { timeZone: tz, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
         await S.entities.FollowUp.update(fu.id, { status: "Skipped" });
-        await log(fu.lead_id, `Follow-up skipped — minimum send gap enforced (last sent: ${lastSentDisplay})`);
+        await log(fu.lead_id, `Follow-up skipped \u2014 minimum send gap enforced (last sent: ${lastSentDisplay})`);
         continue;
       }
 
       const templates = fu.sequence_type === "no_show" ? NOSHOW_TEMPLATES : STANDARD_TEMPLATES;
+      const tmpl = templates[fu.attempt_number];
+      const seqLabel = fu.sequence_type === "no_show" ? "no-show sequence" : "standard sequence";
+
+      try {
         await S.integrations.Core.SendEmail({
           to: lead.email,
           subject: tmpl.subject(businessName),
@@ -138,31 +142,32 @@ Deno.serve(async (req) => {
 
         await S.entities.FollowUp.update(fu.id, { status: "Sent", sent_at: now.toISOString() });
         await S.entities.Lead.update(fu.lead_id, { last_followup_sent_at: now.toISOString() });
-        await log(fu.lead_id, `Follow-up attempt ${fu.attempt_number} sent — ${seqLabel}`);
+        await log(fu.lead_id, `Follow-up attempt ${fu.attempt_number} sent \u2014 ${seqLabel}`);
+        sent++;
+
         // After attempt 3 — move to Nurture + notify admin
         if (fu.attempt_number === 3) {
           await S.entities.Lead.update(fu.lead_id, { status: "Nurture" });
-          await log(fu.lead_id, `Follow-up sequence complete — lead moved to Nurture`);
+          await log(fu.lead_id, `Follow-up sequence complete \u2014 lead moved to Nurture`);
 
           const seqCompleteBody = `<div style="font-family:Arial,sans-serif;max-width:600px;background:#0a0a0a;color:#fff;padding:32px;border-radius:16px">
-            <div style="font-family:monospace;font-size:11px;color:#ffdd00;letter-spacing:3px;margin-bottom:20px">📋 SEQUENCE COMPLETE — NO RESPONSE</div>
+            <div style="font-family:monospace;font-size:11px;color:#ffdd00;letter-spacing:3px;margin-bottom:20px">📋 SEQUENCE COMPLETE \u2014 NO RESPONSE</div>
             <p><strong>Lead:</strong> ${lead.name}</p>
-            <p><strong>Score:</strong> ${lead.score || "—"}</p>
-            <p><strong>Phone:</strong> ${lead.phone || "—"}</p>
+            <p><strong>Score:</strong> ${lead.score || "\u2014"}</p>
+            <p><strong>Phone:</strong> ${lead.phone || "\u2014"}</p>
             <p>All 3 follow-up attempts sent. No response received. Lead moved to Nurture.</p>
             <div style="margin-top:20px;padding:14px;background:#111;border-radius:8px">
               <p style="margin:0 0 8px;font-family:monospace;font-size:10px;color:#555">QUICK ACTIONS</p>
-              <p><a href="${appUrl}/admin/leads/${fu.lead_id}" style="color:#00ff88">Archive Lead →</a></p>
-              <p><a href="${appUrl}/AgentFollowUp" style="color:#00ff88">Re-Engage →</a></p>
-              <p><a href="${appUrl}/AgentFollowUp" style="color:#00ff88">View Queue →</a></p>
+              <p><a href="${appUrl}/AgentFollowUp" style="color:#00ff88">Archive Lead \u2192</a></p>
+              <p><a href="${appUrl}/AgentFollowUp" style="color:#00ff88">View Queue \u2192</a></p>
             </div>
           </div>`;
           await S.integrations.Core.SendEmail({
             to: adminEmail,
-            subject: `📋 Sequence Complete — ${lead.name} — No Response`,
+            subject: `\ud83d\udccb Sequence Complete \u2014 ${lead.name} \u2014 No Response`,
             body: seqCompleteBody
           }).catch(() => {});
-          await log(fu.lead_id, `Admin notified — sequence complete, no response`);
+          await log(fu.lead_id, `Admin notified \u2014 sequence complete, no response`);
         }
       } catch (err) {
         await S.entities.FollowUp.update(fu.id, { status: "Failed" });
@@ -170,17 +175,17 @@ Deno.serve(async (req) => {
         failed++;
 
         const failBody = `<div style="font-family:Arial,sans-serif;max-width:600px;background:#0a0a0a;color:#fff;padding:32px;border-radius:16px">
-          <div style="font-family:monospace;font-size:11px;color:#ff3333;letter-spacing:3px;margin-bottom:20px">⚠️ FOLLOW-UP FAILED</div>
+          <div style="font-family:monospace;font-size:11px;color:#ff3333;letter-spacing:3px;margin-bottom:20px">\u26a0\ufe0f FOLLOW-UP FAILED</div>
           <p><strong>Lead:</strong> ${lead.name}</p>
           <p><strong>Attempt:</strong> ${fu.attempt_number} of 3</p>
           <p><strong>Error:</strong> ${err.message}</p>
           <div style="margin-top:20px;padding:14px;background:#111;border-radius:8px">
-            <p><a href="${appUrl}/AgentFollowUp" style="color:#00ff88">View Follow-Up Queue →</a></p>
+            <p><a href="${appUrl}/AgentFollowUp" style="color:#00ff88">View Follow-Up Queue \u2192</a></p>
           </div>
         </div>`;
         await S.integrations.Core.SendEmail({
           to: adminEmail,
-          subject: `⚠️ Follow-Up Failed — ${lead.name} — Attempt ${fu.attempt_number}`,
+          subject: `\u26a0\ufe0f Follow-Up Failed \u2014 ${lead.name} \u2014 Attempt ${fu.attempt_number}`,
           body: failBody
         }).catch(() => {});
       }
