@@ -165,7 +165,7 @@ function LogPanel({ leadId, logs }) {
   );
 }
 
-function LeadRow({ lead, logs, onNotesUpdate }) {
+function LeadRow({ lead, logs, onNotesUpdate, onBookingConfirmed }) {
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState(lead.notes || "");
   const [saving, setSaving] = useState(false);
@@ -390,7 +390,7 @@ export default function AgentIntake() {
                 </tr></thead>
                 <tbody>
                   {filtered.map(lead => (
-                    <LeadRow key={lead.id} lead={lead} logs={logs} onNotesUpdate={(id,n)=>setLeads(prev=>prev.map(l=>l.id===id?{...l,notes:n}:l))} />
+                    <LeadRow key={lead.id} lead={lead} logs={logs} onNotesUpdate={(id,n)=>setLeads(prev=>prev.map(l=>l.id===id?{...l,notes:n}:l))} onBookingConfirmed={load} />
                   ))}
                 </tbody>
               </table>
