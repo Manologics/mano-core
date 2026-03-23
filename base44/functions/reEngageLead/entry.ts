@@ -18,8 +18,20 @@ Deno.serve(async (req) => {
 
     const businessName = get("business_name", "Monkee Bizz AI");
     const calendlyUrl = get("calendly_event_url", "");
+    const tz = get("app_timezone", "America/Phoenix");
 
     const lead = await S.entities.Lead.get(lead_id);
+
+    // Minimum send gap check (2 hours)
+    if (lead.last_followup_sent_at) {
+      const gapMs = new Date() - new Date(lead.last_followup_sent_at);
+      if (gapMs < 2 * 60 * 60 * 1000) {
+        const lastSentDisplay = new Date(lead.last_followup_sent_at).toLocaleString("en-US", { timeZone: tz, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+        const now = new Date().toISOString();
+        await S.entities.ActivityLog.create({ lead_id, event: `Follow-up skipped — minimum send gap enforced (last sent: ${lastSentDisplay})`, created_at: now }).catch(() => {});
+        return Response.json({ skipped: true, reason: "minimum_gap", last_sent: lead.last_followup_sent_at });
+      }
+    }
 
     const emailBody = `<div style="font-family:Arial,sans-serif;max-width:600px;background:#0a0a0a;color:#fff;padding:32px;border-radius:16px">
       <p>Hi ${lead.name},</p>
@@ -37,6 +49,7 @@ Deno.serve(async (req) => {
     });
 
     const now = new Date().toISOString();
+    await S.entities.Lead.update(lead_id, { last_followup_sent_at: now });
     await Promise.all([
       S.entities.FollowUp.create({
         lead_id,
@@ -48,7 +61,6 @@ Deno.serve(async (req) => {
       }),
       S.entities.Lead.update(lead_id, { status: "Follow Up" })
     ]);
-
     await S.entities.ActivityLog.create({ lead_id, event: "Manual re-engagement sent — lead reactivated", created_at: now });
 
     return Response.json({ success: true });

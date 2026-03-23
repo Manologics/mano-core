@@ -91,6 +91,12 @@ Deno.serve(async (req) => {
     const log = (lead_id, event) =>
       S.entities.ActivityLog.create({ lead_id, event, created_at: now.toISOString() }).catch(() => {});
 
+    const TWO_HOURS_MS = 2 * 60 * 60 * 1000;
+    const checkGap = (lead) => {
+      if (!lead.last_followup_sent_at) return true;
+      return (now - new Date(lead.last_followup_sent_at)) >= TWO_HOURS_MS;
+    };
+
     const [allFollowUps, leads] = await Promise.all([
       S.entities.FollowUp.list(),
       S.entities.Lead.list()
@@ -115,11 +121,15 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      const templates = fu.sequence_type === "no_show" ? NOSHOW_TEMPLATES : STANDARD_TEMPLATES;
-      const tmpl = templates[fu.attempt_number];
-      const seqLabel = fu.sequence_type === "no_show" ? "no-show sequence" : "standard sequence";
+      // Step 2 — Minimum send gap check
+      if (!checkGap(lead)) {
+        const lastSentDisplay = new Date(lead.last_followup_sent_at).toLocaleString("en-US", { timeZone: tz, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+        await S.entities.FollowUp.update(fu.id, { status: "Skipped" });
+        await log(fu.lead_id, `Follow-up skipped — minimum send gap enforced (last sent: ${lastSentDisplay})`);
+        continue;
+      }
 
-      try {
+      const templates = fu.sequence_type === "no_show" ? NOSHOW_TEMPLATES : STANDARD_TEMPLATES;
         await S.integrations.Core.SendEmail({
           to: lead.email,
           subject: tmpl.subject(businessName),
@@ -127,9 +137,8 @@ Deno.serve(async (req) => {
         });
 
         await S.entities.FollowUp.update(fu.id, { status: "Sent", sent_at: now.toISOString() });
+        await S.entities.Lead.update(fu.lead_id, { last_followup_sent_at: now.toISOString() });
         await log(fu.lead_id, `Follow-up attempt ${fu.attempt_number} sent — ${seqLabel}`);
-        sent++;
-
         // After attempt 3 — move to Nurture + notify admin
         if (fu.attempt_number === 3) {
           await S.entities.Lead.update(fu.lead_id, { status: "Nurture" });
