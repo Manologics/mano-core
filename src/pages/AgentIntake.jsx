@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { createClient } from "@base44/sdk";
-import BookingPanel from "../components/BookingPanel";
+
+const base44 = createClient({ appId: "69b9620de5303495dd309130" });
+const Lead = base44.entities.Lead;
+const ActivityLog = base44.entities.ActivityLog;
 
 const NAV = [
   { label: "Command Center", path: "/CommandCenter", icon: "⚡" },
@@ -165,7 +168,7 @@ function LogPanel({ leadId, logs }) {
   );
 }
 
-function LeadRow({ lead, logs, onNotesUpdate, onBookingConfirmed }) {
+function LeadRow({ lead, logs, onNotesUpdate }) {
   const [open, setOpen] = useState(false);
   const [notes, setNotes] = useState(lead.notes || "");
   const [saving, setSaving] = useState(false);
@@ -204,11 +207,9 @@ function LeadRow({ lead, logs, onNotesUpdate, onBookingConfirmed }) {
                     {saving?"SAVING...":"SAVE NOTES"}
                   </button>
                 </div>
-                <BookingPanel lead={lead} onBookingConfirmed={onBookingConfirmed} />
               </div>
               <div>
                 <div style={{ fontFamily:"monospace", fontSize:"9px", color:"#444", letterSpacing:"2px", marginBottom:"10px" }}>ACTIVITY LOG</div>
-
                 <LogPanel leadId={lead.id} logs={logs} />
               </div>
             </div>
@@ -390,7 +391,7 @@ export default function AgentIntake() {
                 </tr></thead>
                 <tbody>
                   {filtered.map(lead => (
-                    <LeadRow key={lead.id} lead={lead} logs={logs} onNotesUpdate={(id,n)=>setLeads(prev=>prev.map(l=>l.id===id?{...l,notes:n}:l))} onBookingConfirmed={load} />
+                    <LeadRow key={lead.id} lead={lead} logs={logs} onNotesUpdate={(id,n)=>setLeads(prev=>prev.map(l=>l.id===id?{...l,notes:n}:l))} />
                   ))}
                 </tbody>
               </table>
