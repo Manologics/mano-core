@@ -339,6 +339,49 @@ export default function AgentRetention() {
           ))}
         </div>
 
+        {/* Flow Diagram */}
+        <div style={{ background: "#111", border: "1px solid #1a1a1a", borderRadius: "12px", padding: "20px", marginBottom: "20px" }}>
+          <div style={{ fontFamily: "monospace", fontSize: "9px", color: "#8b5cf6", letterSpacing: "2px", marginBottom: "18px" }}>RETENTION PIPELINE</div>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: "0", overflowX: "auto", paddingBottom: "4px" }}>
+            {[
+              { icon: "✅", label: "Completed\nBooking", sub: "Trigger",             color: "#00ff88", arrow: true },
+              { icon: "😊", label: "Satisfaction\nCheck",  sub: "Day 2",              color: "#8b5cf6", arrow: true },
+              { icon: "⭐", label: "Review\nRequest",      sub: "Day 5",              color: "#f59e0b", arrow: true, note: "Skipped if\nreview received" },
+              { icon: "🤝", label: "Referral\nAsk",        sub: "Day 12",             color: "#3b82f6", arrow: true },
+              { icon: "🚀", label: "Upsell\nOffer",        sub: "Day 26",             color: "#f97316", arrow: true },
+              { icon: "🔁", label: "Re-Engage",            sub: "Day 71",             color: "#ec4899", arrow: false },
+            ].map((step, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "center" }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: "80px" }}>
+                  <div style={{ width: "44px", height: "44px", background: `${step.color}18`, border: `1px solid ${step.color}44`, borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "20px", marginBottom: "6px" }}>{step.icon}</div>
+                  <div style={{ fontFamily: "monospace", fontSize: "9px", color: step.color, textAlign: "center", whiteSpace: "pre-line", lineHeight: "1.4", fontWeight: "600" }}>{step.label}</div>
+                  <div style={{ fontFamily: "monospace", fontSize: "8px", color: "#444", marginTop: "2px" }}>{step.sub}</div>
+                  {step.note && <div style={{ fontFamily: "monospace", fontSize: "7px", color: "#555", marginTop: "4px", textAlign: "center", whiteSpace: "pre-line", lineHeight: "1.3", background: "#1a1a1a", padding: "2px 5px", borderRadius: "3px" }}>{step.note}</div>}
+                </div>
+                {step.arrow && <div style={{ color: "#2a2a2a", fontSize: "18px", margin: "0 6px", marginBottom: "18px" }}>→</div>}
+              </div>
+            ))}
+          </div>
+
+          {/* Side rails */}
+          <div style={{ display: "flex", gap: "10px", marginTop: "16px", flexWrap: "wrap" }}>
+            {[
+              { icon: "🔒", label: "Client Rebooks",   desc: "All events stopped → Agent 2 takes over → Clean handoff",    color: "#00ff88" },
+              { icon: "💬", label: "Client Responds",  desc: "All remaining cancelled → Admin alerted immediately",         color: "#f59e0b" },
+              { icon: "🔄", label: "New Completion",   desc: "Cycle resets cleanly → Fresh sequence created",               color: "#8b5cf6" },
+              { icon: "📊", label: "Daily Summary",    desc: "8:15 AM every day → Full queue report sent to admin",          color: "#3b82f6" },
+            ].map(rail => (
+              <div key={rail.label} style={{ flex: "1", minWidth: "160px", background: "#0f0f0f", border: `1px solid ${rail.color}22`, borderRadius: "8px", padding: "10px 12px", display: "flex", gap: "10px", alignItems: "flex-start" }}>
+                <span style={{ fontSize: "16px", lineHeight: 1, marginTop: "1px" }}>{rail.icon}</span>
+                <div>
+                  <div style={{ fontFamily: "monospace", fontSize: "9px", color: rail.color, letterSpacing: "1px", marginBottom: "3px" }}>{rail.label}</div>
+                  <div style={{ fontSize: "10px", color: "#555", lineHeight: "1.5" }}>{rail.desc}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
         {/* Table */}
         <div style={{ background: "#111", border: "1px solid #1a1a1a", borderRadius: "12px", overflow: "hidden" }}>
           <div style={{ padding: "12px 16px", borderBottom: "1px solid #1a1a1a", display: "flex", alignItems: "center", gap: "10px" }}>
