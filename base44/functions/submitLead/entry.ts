@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
     const S = base44.asServiceRole;
 
     const body = await req.json();
-    const { name, phone, email, business_type, service_need, urgency } = body;
+    const { name, phone, email, business_type, service_need, urgency, budget, timeline } = body;
 
     if (!name || !email || !phone) {
       return Response.json({ error: 'Name, email, and phone are required.' }, { status: 400 });
@@ -25,6 +25,8 @@ Deno.serve(async (req) => {
       business_type: business_type || null,
       service_need: service_need || null,
       urgency: urgency || 'medium',
+      budget: budget || null,
+      timeline: timeline || null,
       status: 'New',
       score: 'PENDING',
       submission_token: token,
