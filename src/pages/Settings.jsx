@@ -222,6 +222,25 @@ export default function Settings() {
             </div>
           </div>
 
+          {/* Agent 4 — Retention Settings */}
+          <div style={{ background: "#111", border: "1px solid #1a1a1a", borderRadius: "11px", padding: "18px" }}>
+            <div style={{ fontFamily: "monospace", fontSize: "10px", color: "#8b5cf6", letterSpacing: "2px", marginBottom: "18px" }}>AGENT 4 — RETENTION SETTINGS</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+              {numField("retention_satisfaction_days", "SATISFACTION CHECK (DAYS AFTER COMPLETED BOOKING)", 2, 1, "Days after completed appointment before first check-in")}
+              {numField("retention_review_days",       "REVIEW REQUEST (DAYS AFTER SATISFACTION CHECK)",   3, 1, "Days after satisfaction check before asking for a review")}
+              {numField("retention_referral_days",     "REFERRAL ASK (DAYS AFTER REVIEW REQUEST)",         7, 1, "Days after review request before asking for referrals")}
+              {numField("retention_upsell_days",       "UPSELL OFFER (DAYS AFTER REFERRAL ASK)",          14, 1, "Days after referral ask before sending next service offer")}
+              {numField("retention_reengage_days",     "PAST CLIENT RE-ENGAGE (DAYS AFTER UPSELL)",       45, 1, "Days after upsell before reactivating past client")}
+              {field("retention_review_link",    "REVIEW LINK",                "Public link where clients can leave a review",   "text", "https://g.page/yourbusiness/review")}
+              {field("retention_referral_offer", "REFERRAL OFFER MESSAGE",     "Included in referral ask email",                "text", "We appreciate referrals and will take great care of anyone you send our way.")}
+              {field("retention_upsell_link",    "UPSELL CALL-TO-ACTION LINK", "Link for next service follow-up or rebooking",  "text", "https://calendly.com/yourlink")}
+              {field("retention_from_name",      "FROM NAME",                  "Sender name used in all retention emails",       "text", s["business_name"] || "Your Business Name")}
+            </div>
+            <div style={{ marginTop: "8px" }}>
+              {toggleField("retention_enabled", "Automated Retention Active", true, "Turn off to pause all automated retention sequences")}
+            </div>
+          </div>
+
           {/* System Info */}
           <div style={{ background: "#111", border: "1px solid #1a1a1a", borderRadius: "11px", padding: "18px" }}>
             <div style={{ fontFamily: "monospace", fontSize: "10px", color: "#00ff88", letterSpacing: "2px", marginBottom: "14px" }}>SYSTEM INFO</div>
@@ -233,7 +252,7 @@ export default function Settings() {
             ))}
           </div>
 
-          {/* Quick Links */}
+
           <div style={{ background: "#111", border: "1px solid #1a1a1a", borderRadius: "11px", padding: "18px" }}>
             <div style={{ fontFamily: "monospace", fontSize: "10px", color: "#00ff88", letterSpacing: "2px", marginBottom: "14px" }}>QUICK LINKS</div>
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
