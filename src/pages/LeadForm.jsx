@@ -34,8 +34,6 @@ export default function LeadForm() {
     business_type: "",
     service_need: "",
     urgency: "medium",
-    budget: "",
-    timeline: "",
   });
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -63,8 +61,6 @@ export default function LeadForm() {
           business_type: form.business_type || null,
           service_need:  form.service_need.trim() || null,
           urgency:       form.urgency,
-          budget:        form.budget || null,
-          timeline:      form.timeline || null,
         }),
       });
 
@@ -107,109 +103,70 @@ export default function LeadForm() {
         <div style={{ textAlign: "center", marginBottom: "32px" }}>
           <div style={{ width: "56px", height: "56px", background: "linear-gradient(135deg,#00ff88,#00cc66)", borderRadius: "16px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "28px", margin: "0 auto 14px" }}>🐒</div>
           <div style={{ fontFamily: "monospace", fontSize: "11px", color: "#00ff88", letterSpacing: "3px", marginBottom: "8px" }}>MONKEE BIZZ AI</div>
-          <h1 style={{ color: "#fff", fontSize: "26px", margin: "0 0 8px", fontWeight: "700" }}>Get a Free Strategy Call</h1>
-          <p style={{ color: "#555", fontSize: "13px" }}>Tell us about your business and we'll reach out with a custom plan — usually within the hour.</p>
+          <h1 style={{ color: "#fff", fontSize: "26px", margin: "0 0 8px", fontWeight: "700" }}>Get Started Today</h1>
+          <p style={{ color: "#555", fontSize: "13px" }}>Tell us about your business and we'll reach out with a custom plan.</p>
         </div>
 
         <div style={{ background: "#111", border: "1px solid #1a1a1a", borderRadius: "16px", padding: "28px" }}>
-          <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: "18px" }}>
 
-            {/* Contact Info */}
-            <div style={{ borderBottom: "1px solid #1a1a1a", paddingBottom: "20px" }}>
-              <div style={{ fontFamily: "monospace", fontSize: "9px", color: "#333", letterSpacing: "2px", marginBottom: "14px" }}>YOUR INFO</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                <div>
-                  <label style={LBL}>FULL NAME *</label>
-                  <input style={INP} name="name" value={form.name} onChange={handle}
-                    placeholder="Your full name" autoComplete="name"
-                    onFocus={e => e.target.style.borderColor = "#00ff88"}
-                    onBlur={e  => e.target.style.borderColor = "#222"} />
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-                  <div>
-                    <label style={LBL}>PHONE NUMBER *</label>
-                    <input style={INP} name="phone" value={form.phone} onChange={handle}
-                      placeholder="(555) 000-0000" autoComplete="tel"
-                      onFocus={e => e.target.style.borderColor = "#00ff88"}
-                      onBlur={e  => e.target.style.borderColor = "#222"} />
-                  </div>
-                  <div>
-                    <label style={LBL}>EMAIL *</label>
-                    <input style={INP} name="email" type="email" value={form.email} onChange={handle}
-                      placeholder="you@email.com" autoComplete="email"
-                      onFocus={e => e.target.style.borderColor = "#00ff88"}
-                      onBlur={e  => e.target.style.borderColor = "#222"} />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Business Info */}
-            <div style={{ borderBottom: "1px solid #1a1a1a", paddingBottom: "20px" }}>
-              <div style={{ fontFamily: "monospace", fontSize: "9px", color: "#333", letterSpacing: "2px", marginBottom: "14px" }}>YOUR BUSINESS</div>
-              <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-                <div>
-                  <label style={LBL}>BUSINESS TYPE</label>
-                  <select style={{ ...INP, cursor: "pointer" }} name="business_type" value={form.business_type} onChange={handle}>
-                    <option value="">Select your industry...</option>
-                    <option value="Restaurant / Food & Beverage">Restaurant / Food & Beverage</option>
-                    <option value="Salon / Beauty">Salon / Beauty</option>
-                    <option value="Contractor / Construction">Contractor / Construction</option>
-                    <option value="Retail / eCommerce">Retail / eCommerce</option>
-                    <option value="Health & Wellness">Health & Wellness</option>
-                    <option value="Real Estate">Real Estate</option>
-                    <option value="Professional Services">Professional Services</option>
-                    <option value="Automotive">Automotive</option>
-                    <option value="Education / Coaching">Education / Coaching</option>
-                    <option value="Other">Other</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={LBL}>WHAT PROBLEM ARE YOU TRYING TO SOLVE RIGHT NOW?</label>
-                  <textarea style={{ ...INP, resize: "vertical" }} name="service_need" value={form.service_need}
-                    onChange={handle} rows={3} placeholder="Describe your challenge or goal — the more detail, the better."
-                    onFocus={e => e.target.style.borderColor = "#00ff88"}
-                    onBlur={e  => e.target.style.borderColor = "#222"} />
-                </div>
-              </div>
-            </div>
-
-            {/* Project Fit */}
             <div>
-              <div style={{ fontFamily: "monospace", fontSize: "9px", color: "#333", letterSpacing: "2px", marginBottom: "14px" }}>PROJECT FIT</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
-                <div>
-                  <label style={LBL}>BUDGET RANGE</label>
-                  <select style={{ ...INP, cursor: "pointer" }} name="budget" value={form.budget} onChange={handle}>
-                    <option value="">Select a range...</option>
-                    <option value="Under $500">Under $500</option>
-                    <option value="$500 – $1,000">$500 – $1,000</option>
-                    <option value="$1,000 – $2,500">$1,000 – $2,500</option>
-                    <option value="$2,500 – $5,000">$2,500 – $5,000</option>
-                    <option value="$5,000 – $10,000">$5,000 – $10,000</option>
-                    <option value="$10,000+">$10,000+</option>
-                    <option value="Not sure yet">Not sure yet</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={LBL}>WHEN DO YOU NEED THIS?</label>
-                  <select style={{ ...INP, cursor: "pointer" }} name="timeline" value={form.timeline} onChange={handle}>
-                    <option value="">Select a timeline...</option>
-                    <option value="ASAP">ASAP — I need this now</option>
-                    <option value="1-2 weeks">In the next 1–2 weeks</option>
-                    <option value="1 month">Within the next month</option>
-                    <option value="Just exploring">Just exploring options</option>
-                  </select>
-                </div>
-                <div>
-                  <label style={LBL}>HOW URGENT IS THIS?</label>
-                  <select style={{ ...INP, cursor: "pointer" }} name="urgency" value={form.urgency} onChange={handle}>
-                    <option value="low">Low — No rush</option>
-                    <option value="medium">Medium — Within a few weeks</option>
-                    <option value="high">High — Need this ASAP</option>
-                  </select>
-                </div>
+              <label style={LBL}>FULL NAME *</label>
+              <input style={INP} name="name" value={form.name} onChange={handle}
+                placeholder="Your full name" autoComplete="name"
+                onFocus={e => e.target.style.borderColor = "#00ff88"}
+                onBlur={e  => e.target.style.borderColor = "#222"} />
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+              <div>
+                <label style={LBL}>PHONE NUMBER *</label>
+                <input style={INP} name="phone" value={form.phone} onChange={handle}
+                  placeholder="(555) 000-0000" autoComplete="tel"
+                  onFocus={e => e.target.style.borderColor = "#00ff88"}
+                  onBlur={e  => e.target.style.borderColor = "#222"} />
               </div>
+              <div>
+                <label style={LBL}>EMAIL *</label>
+                <input style={INP} name="email" type="email" value={form.email} onChange={handle}
+                  placeholder="you@email.com" autoComplete="email"
+                  onFocus={e => e.target.style.borderColor = "#00ff88"}
+                  onBlur={e  => e.target.style.borderColor = "#222"} />
+              </div>
+            </div>
+
+            <div>
+              <label style={LBL}>BUSINESS TYPE</label>
+              <select style={{ ...INP, cursor: "pointer" }} name="business_type" value={form.business_type} onChange={handle}>
+                <option value="">Select your business type...</option>
+                <option value="Restaurant / Food & Beverage">Restaurant / Food & Beverage</option>
+                <option value="Salon / Beauty">Salon / Beauty</option>
+                <option value="Contractor / Construction">Contractor / Construction</option>
+                <option value="Retail / eCommerce">Retail / eCommerce</option>
+                <option value="Health & Wellness">Health & Wellness</option>
+                <option value="Real Estate">Real Estate</option>
+                <option value="Professional Services">Professional Services</option>
+                <option value="Automotive">Automotive</option>
+                <option value="Education / Coaching">Education / Coaching</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={LBL}>SERVICE NEED</label>
+              <textarea style={{ ...INP, resize: "vertical" }} name="service_need" value={form.service_need}
+                onChange={handle} rows={3} placeholder="What are you looking for help with?"
+                onFocus={e => e.target.style.borderColor = "#00ff88"}
+                onBlur={e  => e.target.style.borderColor = "#222"} />
+            </div>
+
+            <div>
+              <label style={LBL}>URGENCY</label>
+              <select style={{ ...INP, cursor: "pointer" }} name="urgency" value={form.urgency} onChange={handle}>
+                <option value="low">Low — Just exploring options</option>
+                <option value="medium">Medium — Ready in the next few weeks</option>
+                <option value="high">High — Need this ASAP</option>
+              </select>
             </div>
 
             {error && (
