@@ -13,7 +13,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/LeadForm" replace />} />
+        <Route path="/" element={<Navigate to="/CommandCenter" replace />} />
         <Route path="/AgentBooking" element={<AgentBooking />} />
         <Route path="/AgentFollowUp" element={<AgentFollowUp />} />
         <Route path="/AgentIntake" element={<AgentIntake />} />
