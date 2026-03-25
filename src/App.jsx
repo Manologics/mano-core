@@ -1,5 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import AgentBooking from './pages/AgentBooking';
+import ListMyCarLeadForm from './pages/ListMyCarLeadForm';
+import VendorfyLeadForm from './pages/VendorfyLeadForm';
 import AgentFollowUp from './pages/AgentFollowUp';
 import AgentIntake from './pages/AgentIntake';
 import AgentOps from './pages/AgentOps';
@@ -22,6 +24,8 @@ function App() {
         <Route path="/CommandCenter" element={<CommandCenter />} />
         <Route path="/DealAccess" element={<DealAccess />} />
         <Route path="/LeadForm" element={<LeadForm />} />
+        <Route path="/ListMyCarLeadForm" element={<ListMyCarLeadForm />} />
+        <Route path="/VendorfyLeadForm" element={<VendorfyLeadForm />} />
         <Route path="/Settings" element={<Settings />} />
       </Routes>
     </BrowserRouter>
