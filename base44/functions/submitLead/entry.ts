@@ -22,7 +22,10 @@ async function sendSms(to, body) {
     body: new URLSearchParams({ From: TWILIO_FROM, To: to, Body: body }).toString(),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.message || 'Twilio error');
+  // Log full Twilio response so we can see error_code even on 201
+  console.log('Twilio response:', JSON.stringify({ status: res.status, sid: data.sid, to: data.to, from: data.from, error_code: data.error_code, error_message: data.error_message, status_msg: data.status }));
+  if (!res.ok) throw new Error(`[${data.error_code}] ${data.message || data.error_message || 'Twilio error'}`);
+  if (data.error_code) throw new Error(`[${data.error_code}] ${data.error_message}`);
   return data.sid;
 }
 
@@ -86,7 +89,7 @@ Deno.serve(async (req) => {
       created_at: new Date().toISOString(),
     }).catch(() => {});
 
-    return Response.json({ success: true, lead_id: lead.id, sms_sent: !!smsSid });
+    return Response.json({ success: true, lead_id: lead.id, sms_sent: !!smsSid, sms_error: smsError || null, sms_to: e164 || null });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
