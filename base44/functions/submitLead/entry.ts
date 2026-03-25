@@ -79,9 +79,16 @@ Deno.serve(async (req) => {
       lead_id: lead.id,
       event: smsSid
         ? `SMS confirmation sent — ${e164} — sid: ${smsSid}`
-        : `SMS skipped — ${smsError || 'could not parse phone'}`,
+        : `SMS FAILED — ${e164 || 'unparseable number'} — error: ${smsError || 'could not parse phone'}`,
       created_at: new Date().toISOString(),
     }).catch(() => {});
+
+    // If SMS failed, add a clear flag on the lead notes for manual follow-up
+    if (!smsSid) {
+      await S.entities.Lead.update(lead.id, {
+        notes: `⚠️ SMS delivery not confirmed - manual text/call needed\nPhone on file: ${phone}\nError: ${smsError || 'phone could not be parsed to E.164'}`,
+      }).catch(() => {});
+    }
 
     await S.entities.ActivityLog.create({
       lead_id: lead.id,
