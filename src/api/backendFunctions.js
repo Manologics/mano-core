@@ -7,3 +7,5 @@ export const dealAccessSms1Batch = base44.functions.dealAccessSms1Batch;
 export const dealAccessSubmit = base44.functions.dealAccessSubmit;
 export const testList = base44.functions.testList;
 export const dealAccessSms2Sender = base44.functions.dealAccessSms2Sender;
+export const testTwilio = base44.functions.testTwilio;
+export const deal_machine_sms2 = base44.functions.deal_machine_sms2;
