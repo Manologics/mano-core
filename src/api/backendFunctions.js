@@ -9,3 +9,4 @@ export const testList = base44.functions.testList;
 export const dealAccessSms2Sender = base44.functions.dealAccessSms2Sender;
 export const testTwilio = base44.functions.testTwilio;
 export const deal_machine_sms2 = base44.functions.deal_machine_sms2;
+export const dealAccessSms2Optimized = base44.functions.dealAccessSms2Optimized;
