@@ -14,3 +14,5 @@ export const dealAccessSms2Scheduled = base44.functions.dealAccessSms2Scheduled;
 export const dealAccessSms2Clean = base44.functions.dealAccessSms2Clean;
 export const dealAccessSms2Send = base44.functions.dealAccessSms2Send;
 export const testTwilioEnv = base44.functions.testTwilioEnv;
+export const testListLeads = base44.functions.testListLeads;
+export const dealMachineSms2 = base44.functions.dealMachineSms2;
