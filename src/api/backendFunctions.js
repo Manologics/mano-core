@@ -10,3 +10,7 @@ export const dealAccessSms2Sender = base44.functions.dealAccessSms2Sender;
 export const testTwilio = base44.functions.testTwilio;
 export const deal_machine_sms2 = base44.functions.deal_machine_sms2;
 export const dealAccessSms2Optimized = base44.functions.dealAccessSms2Optimized;
+export const dealAccessSms2Scheduled = base44.functions.dealAccessSms2Scheduled;
+export const dealAccessSms2Clean = base44.functions.dealAccessSms2Clean;
+export const dealAccessSms2Send = base44.functions.dealAccessSms2Send;
+export const testTwilioEnv = base44.functions.testTwilioEnv;
