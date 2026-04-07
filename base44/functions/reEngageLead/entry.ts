@@ -19,6 +19,7 @@ Deno.serve(async (req) => {
     const businessName = get("business_name", "Monkee Bizz AI");
     const calendlyUrl = get("calendly_event_url", "");
     const tz = get("app_timezone", "America/Phoenix");
+    const signature = get("email_signature", "— Monkee Bizz AI Team");
 
     const lead = await S.entities.Lead.get(lead_id);
 
@@ -39,7 +40,7 @@ Deno.serve(async (req) => {
       <p>If your needs have changed or the timing is better now we would love to reconnect.</p>
       <p>What are you working on?</p>
       ${calendlyUrl ? `<p><a href="${calendlyUrl}" style="color:#00ff88">${calendlyUrl}</a></p>` : ""}
-      <p style="color:#555;margin-top:24px">— The ${businessName} Team</p>
+      <p style="color:#555;margin-top:24px">${signature}</p>
     </div>`;
 
     await S.integrations.Core.SendEmail({

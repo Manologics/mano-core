@@ -3,34 +3,34 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
 const STANDARD_TEMPLATES = {
   1: {
     subject: (biz) => `Still thinking it over? — ${biz}`,
-    body: (name, svc, cal, biz) => `<div style="font-family:Arial,sans-serif;max-width:600px;background:#0a0a0a;color:#fff;padding:32px;border-radius:16px">
+    body: (name, svc, cal, biz, sig) => `<div style="font-family:Arial,sans-serif;max-width:600px;background:#0a0a0a;color:#fff;padding:32px;border-radius:16px">
       <p>Hi ${name},</p>
       <p>Just checking in after your recent inquiry.</p>
       <p>We would love to help with ${svc || "your business needs"}.</p>
       <p>Are you ready to get something scheduled? It only takes a minute.</p>
       ${cal ? `<p><a href="${cal}" style="color:#00ff88">Book a time here →</a></p>` : ""}
-      <p style="color:#555;margin-top:24px">— The ${biz} Team</p>
+      <p style="color:#555;margin-top:24px">${sig}</p>
     </div>`
   },
   2: {
     subject: (biz) => `Quick question — ${biz}`,
-    body: (name, svc, cal, biz) => `<div style="font-family:Arial,sans-serif;max-width:600px;background:#0a0a0a;color:#fff;padding:32px;border-radius:16px">
+    body: (name, svc, cal, biz, sig) => `<div style="font-family:Arial,sans-serif;max-width:600px;background:#0a0a0a;color:#fff;padding:32px;border-radius:16px">
       <p>Hi ${name},</p>
       <p>Wanted to follow up one more time.</p>
       <p>We have availability this week if you are ready to move forward.</p>
       <p>What is the best way to connect?</p>
       ${cal ? `<p><a href="${cal}" style="color:#00ff88">Book here anytime →</a></p>` : ""}
-      <p style="color:#555;margin-top:24px">— The ${biz} Team</p>
+      <p style="color:#555;margin-top:24px">${sig}</p>
     </div>`
   },
   3: {
     subject: (biz) => `Last check-in — ${biz}`,
-    body: (name, svc, cal, biz) => `<div style="font-family:Arial,sans-serif;max-width:600px;background:#0a0a0a;color:#fff;padding:32px;border-radius:16px">
+    body: (name, svc, cal, biz, sig) => `<div style="font-family:Arial,sans-serif;max-width:600px;background:#0a0a0a;color:#fff;padding:32px;border-radius:16px">
       <p>Hi ${name},</p>
       <p>We do not want to keep filling your inbox so this will be our last check-in for now.</p>
       <p>If the timing is better later we are always here.</p>
       ${cal ? `<p><a href="${cal}" style="color:#00ff88">Whenever you are ready →</a></p>` : ""}
-      <p style="color:#555;margin-top:24px">— The ${biz} Team</p>
+      <p style="color:#555;margin-top:24px">${sig}</p>
     </div>`
   }
 };
@@ -38,33 +38,33 @@ const STANDARD_TEMPLATES = {
 const NOSHOW_TEMPLATES = {
   1: {
     subject: (biz) => `We missed you — ${biz}`,
-    body: (name, svc, cal, biz) => `<div style="font-family:Arial,sans-serif;max-width:600px;background:#0a0a0a;color:#fff;padding:32px;border-radius:16px">
+    body: (name, svc, cal, biz, sig) => `<div style="font-family:Arial,sans-serif;max-width:600px;background:#0a0a0a;color:#fff;padding:32px;border-radius:16px">
       <p>Hi ${name},</p>
       <p>It looks like we missed each other at our scheduled appointment.</p>
       <p>No worries at all — things come up.</p>
       <p>Would you like to find another time that works better for you?</p>
       ${cal ? `<p><a href="${cal}" style="color:#00ff88">Grab a new slot here →</a></p>` : ""}
-      <p style="color:#555;margin-top:24px">— The ${biz} Team</p>
+      <p style="color:#555;margin-top:24px">${sig}</p>
     </div>`
   },
   2: {
     subject: (biz) => `Still want to connect? — ${biz}`,
-    body: (name, svc, cal, biz) => `<div style="font-family:Arial,sans-serif;max-width:600px;background:#0a0a0a;color:#fff;padding:32px;border-radius:16px">
+    body: (name, svc, cal, biz, sig) => `<div style="font-family:Arial,sans-serif;max-width:600px;background:#0a0a0a;color:#fff;padding:32px;border-radius:16px">
       <p>Hi ${name},</p>
       <p>Just following up one more time after our missed appointment.</p>
       <p>We still have availability and would love to help with ${svc || "your business needs"}.</p>
       ${cal ? `<p><a href="${cal}" style="color:#00ff88">Book a new time here →</a></p>` : ""}
-      <p style="color:#555;margin-top:24px">— The ${biz} Team</p>
+      <p style="color:#555;margin-top:24px">${sig}</p>
     </div>`
   },
   3: {
     subject: (biz) => `Last follow-up — ${biz}`,
-    body: (name, svc, cal, biz) => `<div style="font-family:Arial,sans-serif;max-width:600px;background:#0a0a0a;color:#fff;padding:32px;border-radius:16px">
+    body: (name, svc, cal, biz, sig) => `<div style="font-family:Arial,sans-serif;max-width:600px;background:#0a0a0a;color:#fff;padding:32px;border-radius:16px">
       <p>Hi ${name},</p>
       <p>This will be our last follow-up after our missed appointment.</p>
       <p>Whenever the timing is right for you we are here.</p>
       ${cal ? `<p><a href="${cal}" style="color:#00ff88">${cal}</a></p>` : ""}
-      <p style="color:#555;margin-top:24px">— The ${biz} Team</p>
+      <p style="color:#555;margin-top:24px">${sig}</p>
     </div>`
   }
 };
@@ -82,10 +82,11 @@ Deno.serve(async (req) => {
     }
 
     const businessName = get("business_name", "Monkee Bizz AI");
-    const adminEmail = get("admin_email", "info@monkeebizznus.com");
+    const adminEmail = get("admin_email", "info@monkeebizai.com");
     const calendlyUrl = get("calendly_event_url", "");
     const appUrl = get("app_url", "https://app.monkeebizzai.com");
     const tz = get("app_timezone", "America/Phoenix");
+    const signature = get("email_signature", "— Monkee Bizz AI Team");
 
     const now = new Date();
     const log = (lead_id, event) =>
@@ -115,13 +116,11 @@ Deno.serve(async (req) => {
         continue;
       }
 
-      // Skip if lead already booked
       if (["Booked", "Closed \u2014 Won"].includes(lead.status)) {
         await S.entities.FollowUp.update(fu.id, { status: "Skipped" });
         continue;
       }
 
-      // Step 2 — Minimum send gap check (2 hours)
       if (!checkGap(lead)) {
         const lastSentDisplay = new Date(lead.last_followup_sent_at).toLocaleString("en-US", { timeZone: tz, month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
         await S.entities.FollowUp.update(fu.id, { status: "Skipped" });
@@ -137,7 +136,7 @@ Deno.serve(async (req) => {
         await S.integrations.Core.SendEmail({
           to: lead.email,
           subject: tmpl.subject(businessName),
-          body: tmpl.body(lead.name, lead.service_need, calendlyUrl, businessName)
+          body: tmpl.body(lead.name, lead.service_need, calendlyUrl, businessName, signature)
         });
 
         await S.entities.FollowUp.update(fu.id, { status: "Sent", sent_at: now.toISOString() });
@@ -145,7 +144,6 @@ Deno.serve(async (req) => {
         await log(fu.lead_id, `Follow-up attempt ${fu.attempt_number} sent \u2014 ${seqLabel}`);
         sent++;
 
-        // After attempt 3 — move to Nurture + notify admin
         if (fu.attempt_number === 3) {
           await S.entities.Lead.update(fu.lead_id, { status: "Nurture" });
           await log(fu.lead_id, `Follow-up sequence complete \u2014 lead moved to Nurture`);

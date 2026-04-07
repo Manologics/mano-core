@@ -10,6 +10,7 @@ Deno.serve(async (req) => {
     const reminder1Enabled = get("reminder_1hr_enabled", "true") === "true";
     const businessName = get("business_name", "Monkee Bizz AI");
     const tz = get("app_timezone", "America/Phoenix");
+    const signature = get("email_signature", "— Monkee Bizz AI Team");
 
     const bookings = await base44.asServiceRole.entities.Booking.list();
     const activeBookings = bookings.filter(b => ["Confirmed", "Rescheduled"].includes(b.status));
@@ -44,7 +45,7 @@ Deno.serve(async (req) => {
               <p><strong>Date:</strong> ${dateStr}</p>
               <p><strong>Time:</strong> ${timeStr}</p>
               ${booking.calendly_event_url ? `<p><a href="${booking.calendly_event_url}" style="color:#00ff88">Need to reschedule? →</a></p>` : ""}
-              <p style="color:#555;margin-top:24px">See you soon.<br>— The ${businessName} Team</p>
+              <p style="color:#555;margin-top:24px">See you soon.<br>${signature}</p>
             </div>`
           });
           await base44.asServiceRole.entities.Booking.update(booking.id, { reminder_24hr_sent: true });
@@ -65,7 +66,7 @@ Deno.serve(async (req) => {
               <p>Hi ${lead.name},</p>
               <p>Your appointment starts <strong>in about an hour</strong>.</p>
               <p><strong>Time:</strong> ${timeStr}</p>
-              <p style="color:#555;margin-top:24px">See you very soon.<br>— The ${businessName} Team</p>
+              <p style="color:#555;margin-top:24px">See you very soon.<br>${signature}</p>
             </div>`
           });
           await base44.asServiceRole.entities.Booking.update(booking.id, { reminder_1hr_sent: true });

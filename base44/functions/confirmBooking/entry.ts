@@ -11,9 +11,10 @@ Deno.serve(async (req) => {
     const allSettings = await base44.asServiceRole.entities.AppSettings.list();
     const get = (key, def = "") => { const s = allSettings.find(s => s.key === key); return s ? s.value : def; };
     const apiKey = get("calendly_api_key");
-    const adminEmail = get("admin_email", "info@monkeebizznus.com");
+    const adminEmail = get("admin_email", "info@monkeebizai.com");
     const businessName = get("business_name", "Monkee Bizz AI");
     const tz = get("app_timezone", "America/Phoenix");
+    const signature = get("email_signature", "— Monkee Bizz AI Team");
 
     const log = async (event) => {
       await base44.asServiceRole.entities.ActivityLog.create({ lead_id, event, created_at: new Date().toISOString() });
@@ -86,7 +87,7 @@ Deno.serve(async (req) => {
             <tr><td style="padding:10px;border-bottom:1px solid #1a1a1a;color:#888;font-size:12px">Time</td><td style="padding:10px;border-bottom:1px solid #1a1a1a;color:#fff">${timeStr}</td></tr>
           </table>
           ${slot.scheduling_url ? `<p style="margin-top:20px"><a href="${slot.scheduling_url}" style="color:#00ff88">Add to your calendar / Reschedule →</a></p>` : ""}
-          <p style="color:#555;margin-top:24px">See you then.<br>— The ${businessName} Team</p>
+          <p style="color:#555;margin-top:24px">See you then.<br>${signature}</p>
         </div>`;
         await base44.asServiceRole.integrations.Core.SendEmail({
           to: lead.email,
