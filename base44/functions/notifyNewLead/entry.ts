@@ -65,7 +65,7 @@ Deno.serve(async (req) => {
     `;
 
     await base44.asServiceRole.integrations.Core.SendEmail({
-      to: 'info@monkeebizznus.com',
+      to: 'info@monkeebizai.com',
       subject: `🐒 New Lead: ${data.name} — ${data.business_type || 'General Inquiry'}`,
       body: emailBody,
     });
