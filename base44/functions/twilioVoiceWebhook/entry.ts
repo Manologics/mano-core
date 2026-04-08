@@ -81,7 +81,22 @@ async function processCallAsync(S, log, { From, To, CallSid, CallStatus, now }) 
   const calendlyUrl          = get('calendly_event_url',       '');
   const appUrl               = get('app_url',                  'https://app.monkeebizzai.com');
 
-  const e164 = toE164(From);
+  const e164 = toE164(From) || From;
+
+  // ── Mapped lead fields ───────────────────────────────────────────────────
+  const mappedLead = {
+    phone:        e164,
+    name:         null,
+    email:        null,
+    service_need: 'Inbound phone call',
+    source:       'monkee',
+    status:       'New',
+    score:        'PENDING',
+    processing_mode: 'twilio_voice',
+    webhook_status:  'received',
+  };
+
+  await log('system', `[twilioVoiceWebhook] Mapped lead data: ${JSON.stringify(mappedLead)}`);
 
   // ── Find or create Lead ───────────────────────────────────────────────────
   const allLeads = await S.entities.Lead.list();
@@ -92,36 +107,32 @@ async function processCallAsync(S, log, { From, To, CallSid, CallStatus, now }) 
     await S.entities.Lead.update(lead.id, {
       notes: [lead.notes, `[Inbound Call ${now}] CallSid:${CallSid} Status:${CallStatus}`].filter(Boolean).join('\n'),
     });
-    await log(lead.id, `[twilioVoiceWebhook] Inbound call from existing lead — CallSid:${CallSid} Status:${CallStatus}`);
+    await log(lead.id, `[twilioVoiceWebhook] Existing lead updated — phone:${e164} CallSid:${CallSid} Status:${CallStatus}`);
   } else {
     lead = await S.entities.Lead.create({
-      name:             From,
-      phone:            e164 || From,
-      email:            '',
-      service_need:     'Inbound phone call',
-      status:           'New',
-      score:            'PENDING',
-      source:           'monkee',
+      ...mappedLead,
       submission_token: CallSid || ('CALL-' + Date.now().toString(36).toUpperCase()),
-      processing_mode:  'twilio_voice',
-      webhook_status:   'received',
-      notes:            `[Inbound Call ${now}] CallSid:${CallSid} Status:${CallStatus}`,
+      notes: `[Inbound Call ${now}] From:${From} To:${To} CallSid:${CallSid} Status:${CallStatus}`,
     });
     isNew = true;
-    await log(lead.id, `[twilioVoiceWebhook] New lead created from inbound call — From:${From}`);
+    await log(lead.id, `[twilioVoiceWebhook] New lead created — phone:${e164} source:monkee CallSid:${CallSid}`);
   }
 
   // ── Admin email notification ──────────────────────────────────────────────
   try {
     await S.integrations.Core.SendEmail({
       to: adminEmail,
-      subject: `📞 Inbound Call — ${From} — ${businessName}`,
+      subject: `📞 Inbound Call — ${e164} — ${businessName}`,
       body: `<div style="font-family:Arial,sans-serif;max-width:600px;background:#0a0a0a;color:#fff;padding:32px;border-radius:16px">
         <div style="font-family:monospace;font-size:11px;color:#00ff88;letter-spacing:3px;margin-bottom:16px">📞 INBOUND CALL</div>
-        <p><strong>From:</strong> ${From}</p>
-        <p><strong>Call Status:</strong> ${CallStatus}</p>
-        <p><strong>CallSid:</strong> ${CallSid}</p>
-        <p><strong>Lead:</strong> ${isNew ? 'NEW' : 'EXISTING'} — ID: ${lead.id}</p>
+        <table style="width:100%;border-collapse:collapse">
+          <tr><td style="padding:8px;border-bottom:1px solid #1a1a1a;color:#555;font-size:11px">FROM</td><td style="padding:8px;border-bottom:1px solid #1a1a1a">${e164}</td></tr>
+          <tr><td style="padding:8px;border-bottom:1px solid #1a1a1a;color:#555;font-size:11px">TO</td><td style="padding:8px;border-bottom:1px solid #1a1a1a">${To}</td></tr>
+          <tr><td style="padding:8px;border-bottom:1px solid #1a1a1a;color:#555;font-size:11px">CALL STATUS</td><td style="padding:8px;border-bottom:1px solid #1a1a1a">${CallStatus}</td></tr>
+          <tr><td style="padding:8px;border-bottom:1px solid #1a1a1a;color:#555;font-size:11px">CALL SID</td><td style="padding:8px;border-bottom:1px solid #1a1a1a">${CallSid}</td></tr>
+          <tr><td style="padding:8px;border-bottom:1px solid #1a1a1a;color:#555;font-size:11px">TIMESTAMP</td><td style="padding:8px;border-bottom:1px solid #1a1a1a">${now}</td></tr>
+          <tr><td style="padding:8px;color:#555;font-size:11px">LEAD</td><td style="padding:8px">${isNew ? '🆕 NEW' : 'EXISTING'} — ID: ${lead.id}</td></tr>
+        </table>
         <div style="margin-top:20px;padding:14px;background:#111;border-radius:8px">
           <p><a href="${appUrl}/AgentIntake" style="color:#00ff88">View Lead →</a></p>
           ${calendlyUrl ? `<p><a href="${calendlyUrl}" style="color:#00ff88">Book Appointment →</a></p>` : ''}

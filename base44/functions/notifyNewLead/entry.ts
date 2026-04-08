@@ -42,7 +42,7 @@ Deno.serve(async (req) => {
             <tr>
               <td style="padding: 14px; border-bottom: 1px solid #1a1a1a; font-family: monospace; font-size: 10px; color: #555; letter-spacing: 2px;">PHONE</td>
               <td style="padding: 14px; border-bottom: 1px solid #1a1a1a; color: #ddd; font-size: 14px;">
-                <a href="tel:${data.phone}" style="color: #00ff88; text-decoration: none;">${data.phone || 'N/A'}</a>
+                <a href="tel:${data.phone}" style="color: #00ff88; text-decoration: none; font-size: 18px; font-weight: 700;">${data.phone || 'N/A'}</a>
               </td>
             </tr>
             <tr>
