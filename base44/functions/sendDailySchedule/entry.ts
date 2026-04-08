@@ -6,7 +6,7 @@ Deno.serve(async (req) => {
 
     const allSettings = await base44.asServiceRole.entities.AppSettings.list();
     const get = (key, def = "") => { const s = allSettings.find(s => s.key === key); return s ? s.value : def; };
-    const adminEmail = get("admin_email", "info@monkeebizznus.com");
+    const adminEmail = get("admin_email", "info@monkeebizai.com");
     const tz = get("app_timezone", "America/Phoenix");
 
     const today = new Date().toLocaleDateString("en-US", { timeZone: tz });

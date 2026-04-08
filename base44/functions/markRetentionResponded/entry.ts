@@ -11,7 +11,7 @@ Deno.serve(async (req) => {
 
     const settings = await S.entities.AppSettings.list();
     const get = (k, d) => { const s = settings.find(x => x.key === k); return s ? s.value : d; };
-    const adminEmail   = get("admin_email",            "info@monkeebizznus.com");
+    const adminEmail   = get("admin_email",            "info@monkeebizai.com");
     const appUrl       = get("app_url",                "https://app.monkeebizzai.com");
     const businessName = get("business_name",          "Monkee Bizz AI");
     const upsellLink   = get("retention_upsell_link",  "");

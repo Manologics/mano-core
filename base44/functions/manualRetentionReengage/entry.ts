@@ -16,6 +16,7 @@ Deno.serve(async (req) => {
     const retentionFrom = get("retention_from_name",   businessName);
     const upsellLink    = get("retention_upsell_link", "");
     const tz            = get("app_timezone",          "America/Phoenix");
+    const signature     = get("email_signature",       "— Monkee Bizz AI Team");
 
     const lead = await S.entities.Lead.get(lead_id);
     const allEvents = await S.entities.RetentionEvents.list();
@@ -70,7 +71,7 @@ Deno.serve(async (req) => {
       <p>Wanted to reach back out and see how things are going.</p>
       <p>If anything new has come up or if you want to reconnect, we are here.</p>
       ${upsellLink ? `<p><a href="${upsellLink}" style="color:#8b5cf6">${upsellLink}</a></p>` : ""}
-      <p style="color:#555;margin-top:24px">— The ${businessName} Team</p>
+      <p style="color:#555;margin-top:24px">${signature}</p>
     </div>`;
 
     await S.integrations.Core.SendEmail({
