@@ -28,37 +28,27 @@ Deno.serve(async (req) => {
   const now = new Date().toISOString();
   console.log('[twilioInboundVoice] Webhook hit:', now);
 
-  let params;
+  // CRITICAL: init SDK BEFORE consuming body — body can only be read once
+  const base44 = createClientFromRequest(req);
+  const S = base44.asServiceRole;
+
+  let fromRaw = '', toNumber = '', callSid = '', callStatus = '';
   try {
     const text = await req.text();
-    params = Object.fromEntries(new URLSearchParams(text));
+    const params = Object.fromEntries(new URLSearchParams(text));
     console.log('[twilioInboundVoice] Payload parsed:', JSON.stringify(params));
+    fromRaw    = params.From       || '';
+    toNumber   = params.To         || '';
+    callSid    = params.CallSid    || '';
+    callStatus = params.CallStatus || '';
   } catch (err) {
     console.error('[twilioInboundVoice] Failed to parse payload:', err.message);
-    return buildTwiml('Thank you for calling. Please leave a message after the tone.', true);
+    return buildTwiml('Thanks for calling Monkee Biz AI. Please leave a message or text us and we will follow up shortly.');
   }
-
-  const fromRaw    = params.From       || '';
-  const toNumber   = params.To         || '';
-  const callSid    = params.CallSid    || '';
-  const callStatus = params.CallStatus || '';
 
   console.log(`[twilioInboundVoice] From=${fromRaw} To=${toNumber} Sid=${callSid} Status=${callStatus}`);
 
   try {
-    const base44 = createClientFromRequest(req);
-    const S = base44.asServiceRole;
-
-    const settings = await S.entities.AppSettings.list();
-    const get = (k, d) => { const s = settings.find(x => x.key === k); return s ? s.value : d; };
-    const adminEmail          = get('admin_email',              'info@monkeebizai.com');
-    const businessName        = get('business_name',            'Monkee Bizz AI');
-    const voiceGreeting       = get('voice_greeting',           `Thanks for calling ${businessName}. We will be with you shortly.`);
-    const missedCallSmsEnabled = get('missed_call_sms_enabled', 'true') === 'true';
-    const missedCallSmsMsg    = get('missed_call_sms_message',  `Hi! We missed your call to ${businessName}. Reply here and we will get right back to you.`);
-    const appUrl              = get('app_url',                  'https://app.monkeebizzai.com');
-    const source              = 'monkee';
-
     const e164 = toE164(fromRaw) || fromRaw;
     const token = Math.random().toString(36).substring(2, 10).toUpperCase() + '-' + Date.now().toString(36).toUpperCase();
 
@@ -155,20 +145,22 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Return TwiML — answer the call with a greeting + optional voicemail
-    return buildTwiml(voiceGreeting, true);
+    // Return TwiML — answer the call
+    console.log('[twilioInboundVoice] Returning TwiML greeting');
+    return buildTwiml(voiceGreeting);
   } catch (error) {
     console.error('[twilioInboundVoice] Fatal error:', error.message);
-    return buildTwiml('Thank you for calling. Please try again shortly.', false);
+    return buildTwiml('Thanks for calling Monkee Biz AI. Please leave a message or text us and we will follow up shortly.');
   }
 });
 
-function buildTwiml(greeting, includeRecord) {
+function buildTwiml(greeting) {
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Say voice="Polly.Joanna">${greeting}</Say>
-  ${includeRecord ? `<Record maxLength="120" transcribe="true" playBeep="true"/>` : ''}
+  <Hangup/>
 </Response>`;
+  console.log('[twilioInboundVoice] TwiML returned:', twiml);
   return new Response(twiml, {
     status: 200,
     headers: { 'Content-Type': 'text/xml' },
