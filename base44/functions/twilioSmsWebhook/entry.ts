@@ -113,8 +113,34 @@ Deno.serve(async (req) => {
       await log(lead.id, `[twilioSmsWebhook] Admin notification FAILED: ${emailErr.message}`);
     }
 
-    // ── 5. Auto-reply SMS ─────────────────────────────────────────────────────
-    if (autoReply && e164) {
+    // ── 5. Intent detection & conversation flow ─────────────────────────────
+    const msg = Body.trim().toLowerCase();
+
+    // Detect if this is a service intent reply from an existing lead
+    const SERVICE_KEYWORDS = ['website','seo','marketing','social','ads','branding','design','automation','ai','app','help','need','want','looking','build','create','fix','manage','grow','email','content','video','photo','logo'];
+    const hasServiceIntent = SERVICE_KEYWORDS.some(k => msg.includes(k)) || msg.length > 10;
+
+    if (!isNew && hasServiceIntent && calendlyUrl && !lead.booking_offered) {
+      // Lead replied with service need → send booking link
+      try {
+        const bookingMsg = `Got it! You can book a quick call here: ${calendlyUrl} 📅`;
+        const smsSid = await sendSms(e164, bookingMsg);
+        await S.entities.Lead.update(lead.id, {
+          score:           'WARM',
+          status:          'Action Required',
+          booking_offered: true,
+          service_need:    lead.service_need || Body,
+          notes:           [lead.notes, `[Booking link sent ${now}]`].filter(Boolean).join('\n'),
+        });
+        await log(lead.id, `[twilioSmsWebhook] Booking link sent — sid:${smsSid} score:WARM`);
+      } catch (smsErr) {
+        await log(lead.id, `[twilioSmsWebhook] Booking link send FAILED: ${smsErr.message}`);
+      }
+    } else if (autoReply && isNew && e164) {
+      // New lead — send welcome (only if sendWelcomeSms automation isn't handling it)
+      // Skip if welcome already handled by entity automation
+    } else if (autoReply && !isNew && !hasServiceIntent && e164) {
+      // Generic reply for non-intent messages
       try {
         const smsSid = await sendSms(e164, autoReplyMsg);
         await log(lead.id, `[twilioSmsWebhook] Auto-reply sent — sid:${smsSid}`);
