@@ -19,7 +19,7 @@ Deno.serve(async (req) => {
     const noshowEscHours       = parseFloat(get('ops_noshow_escalation_hours',   '6'));
     const criticalAlerts       = get('ops_critical_alerts_enabled', 'true') === 'true';
     const autoResolve          = get('ops_auto_resolve_enabled',    'true') === 'true';
-    const opsEmail             = get('ops_admin_email',             'admin@monkeebizzai.com');
+    const opsEmail             = get('ops_admin_email',             'info@monkeebizai.com');
     const appUrl               = get('app_url',                     'https://app.monkeebizzai.com');
     const avgDeal              = parseFloat(get('ops_average_deal_value', '1500'));
 
