@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from "react";
-import { createClient } from "@base44/sdk";
+import React, { useState, useEffect, useCallback } from "react";
+import { base44 } from "@/api/base44Client";
 
-const base44 = createClient({ appId: "69b9620de5303495dd309130" });
 const Lead = base44.entities.Lead;
 const Booking = base44.entities.Booking;
 const FollowUp = base44.entities.FollowUp;
@@ -55,18 +54,37 @@ export default function CommandCenter() {
   const [bookings, setBookings] = useState([]);
   const [followups, setFollowups] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lastRefresh, setLastRefresh] = useState(null);
 
-  useEffect(() => {
+  const fetchAll = useCallback(() => {
     Promise.all([Lead.list(), Booking.list(), FollowUp.list()])
-      .then(([l, b, f]) => { setLeads(l); setBookings(b); setFollowups(f); })
+      .then(([l, b, f]) => { setLeads(l); setBookings(b); setFollowups(f); setLastRefresh(new Date()); })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
 
+  useEffect(() => {
+    fetchAll();
+    // Real-time subscription — updates immediately when any lead changes
+    const unsub = Lead.subscribe((event) => {
+      if (event.type === 'create') {
+        setLeads(prev => [event.data, ...prev]);
+        setLastRefresh(new Date());
+      } else if (event.type === 'update') {
+        setLeads(prev => prev.map(l => l.id === event.id ? event.data : l));
+      } else if (event.type === 'delete') {
+        setLeads(prev => prev.filter(l => l.id !== event.id));
+      }
+    });
+    // Polling fallback every 30s for bookings/followups
+    const poll = setInterval(fetchAll, 30000);
+    return () => { unsub(); clearInterval(poll); };
+  }, [fetchAll]);
+
   const hot = leads.filter(l => l.score === "HOT").length;
   const warm = leads.filter(l => l.score === "WARM").length;
   const cold = leads.filter(l => l.score === "COLD").length;
-  const pendingFU = followups.filter(f => f.status === "pending").length;
+  const pendingFU = followups.filter(f => f.status === "Pending").length;
   const recent = [...leads].sort((a, b) => new Date(b.created_date) - new Date(a.created_date)).slice(0, 8);
 
   const stat = (label, val, color, sub) => (
@@ -83,7 +101,10 @@ export default function CommandCenter() {
       <main style={{ flex: 1, overflow: "auto", padding: "28px" }}>
         <div style={{ fontFamily: "monospace", fontSize: "10px", color: "#00ff88", letterSpacing: "3px", marginBottom: "5px" }}>MONKEE BIZZ AI — SAOS</div>
         <h1 style={{ fontSize: "24px", fontWeight: "700", color: "#fff", margin: "0 0 4px" }}>Command Center</h1>
-        <div style={{ fontSize: "12px", color: "#444", marginBottom: "24px" }}>{new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</div>
+        <div style={{ fontSize: "12px", color: "#444", marginBottom: "24px", display: "flex", gap: "16px", alignItems: "center" }}>
+          <span>{new Date().toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</span>
+          {lastRefresh && <span style={{ color: "#00ff8866", fontFamily: "monospace", fontSize: "10px" }}>↻ {lastRefresh.toLocaleTimeString()}</span>}
+        </div>
 
         <div style={{ display: "flex", gap: "12px", marginBottom: "24px", flexWrap: "wrap" }}>
           {stat("TOTAL LEADS", leads.length, "#00ff88", "all time")}
