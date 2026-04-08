@@ -11,13 +11,14 @@ Deno.serve(async (req) => {
 
     const settings = await S.entities.AppSettings.list();
     const get = (k, d) => { const s = settings.find(x => x.key === k); return s ? s.value : d; };
-    const adminEmail   = get("admin_email",            "info@monkeebizai.com");
+    const getAdminEmail = (source) => source === "vendorfy" ? get("vendorfy_email", "info@vendorfyai.com") : source === "surplus" ? get("surplus_email", "info@surplussyndicatestore.com") : get("admin_email", "info@monkeebizai.com");
     const appUrl       = get("app_url",                "https://app.monkeebizzai.com");
     const businessName = get("business_name",          "Monkee Bizz AI");
     const upsellLink   = get("retention_upsell_link",  "");
 
     const now = new Date().toISOString();
     const lead = await S.entities.Lead.get(lead_id);
+    const adminEmail = getAdminEmail(lead.source);
     const allEvents = await S.entities.RetentionEvents.list();
     const leadEvents = allEvents.filter(e => e.lead_id === lead_id);
 

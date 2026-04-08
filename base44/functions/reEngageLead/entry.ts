@@ -19,9 +19,9 @@ Deno.serve(async (req) => {
     const businessName = get("business_name", "Monkee Bizz AI");
     const calendlyUrl = get("calendly_event_url", "");
     const tz = get("app_timezone", "America/Phoenix");
-    const signature = get("email_signature", "— Monkee Bizz AI Team");
 
     const lead = await S.entities.Lead.get(lead_id);
+    const signature = lead.source === "vendorfy" ? get("vendorfy_signature", "— Vendorfy AI Support") : lead.source === "surplus" ? get("surplus_signature", "— Surplus Syndicate Team") : get("email_signature", "— Monkee Bizz AI Team");
 
     // Minimum send gap check (2 hours)
     if (lead.last_followup_sent_at) {

@@ -11,12 +11,13 @@ Deno.serve(async (req) => {
 
     const settings = await S.entities.AppSettings.list();
     const get = (k, d) => { const s = settings.find(x => x.key === k); return s ? s.value : d; };
-    const adminEmail = get("admin_email", "info@monkeebizai.com");
+    const getAdminEmail = (source) => source === "vendorfy" ? get("vendorfy_email", "info@vendorfyai.com") : source === "surplus" ? get("surplus_email", "info@surplussyndicatestore.com") : get("admin_email", "info@monkeebizai.com");
     const appUrl = get("app_url", "https://app.monkeebizzai.com");
     const calendlyUrl = get("calendly_event_url", "");
 
     const now = new Date().toISOString();
     const lead = await S.entities.Lead.get(lead_id);
+    const adminEmail = getAdminEmail(lead.source);
 
     const [allFU] = await Promise.all([S.entities.FollowUp.list()]);
     const leadFUs = allFU.filter(f => f.lead_id === lead_id);

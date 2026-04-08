@@ -40,6 +40,8 @@ Deno.serve(async (req) => {
 
     const body = await req.json();
     const { name, phone, email, business_type, service_need, urgency, budget, timeline } = body;
+    const rawSource = body.source || "";
+    const source = rawSource.includes("vendorfy") ? "vendorfy" : rawSource.includes("surplus") ? "surplus" : "monkee";
 
     if (!name || !email || !phone) {
       return Response.json({ error: 'Name, email, and phone are required.' }, { status: 400 });
@@ -58,6 +60,7 @@ Deno.serve(async (req) => {
       timeline: timeline || null,
       status: 'New',
       score: 'PENDING',
+      source,
       submission_token: token,
       processing_mode: 'internal',
       webhook_status: 'none',

@@ -10,6 +10,10 @@ Deno.serve(async (req) => {
       return Response.json({ error: 'No lead data provided' }, { status: 400 });
     }
 
+    const source = data.source || "monkee";
+    const adminTo = source === "vendorfy" ? "info@vendorfyai.com" : source === "surplus" ? "info@surplussyndicatestore.com" : "info@monkeebizai.com";
+    const brandName = source === "vendorfy" ? "VENDORFY AI" : source === "surplus" ? "SURPLUS SYNDICATE" : "MONKEE BIZZ AI";
+
     const urgencyLabel = {
       low: '🟢 Low — Just exploring',
       medium: '🟡 Medium — Ready in weeks',
@@ -21,7 +25,7 @@ Deno.serve(async (req) => {
         <div style="background: #0a0a0a; border-radius: 16px; padding: 32px; color: #fff;">
           <div style="text-align: center; margin-bottom: 24px;">
             <div style="font-size: 32px; margin-bottom: 8px;">🐒</div>
-            <div style="font-family: monospace; font-size: 11px; color: #00ff88; letter-spacing: 3px;">NEW LEAD SUBMITTED</div>
+            <div style="font-family: monospace; font-size: 11px; color: #00ff88; letter-spacing: 3px;">${brandName} — NEW LEAD SUBMITTED</div>
           </div>
 
           <table style="width: 100%; border-collapse: collapse;">
@@ -65,8 +69,8 @@ Deno.serve(async (req) => {
     `;
 
     await base44.asServiceRole.integrations.Core.SendEmail({
-      to: 'info@monkeebizai.com',
-      subject: `🐒 New Lead: ${data.name} — ${data.business_type || 'General Inquiry'}`,
+      to: adminTo,
+      subject: `🐒 New Lead [${brandName}]: ${data.name} — ${data.business_type || 'General Inquiry'}`,
       body: emailBody,
     });
 

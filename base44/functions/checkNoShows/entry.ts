@@ -7,7 +7,7 @@ Deno.serve(async (req) => {
     const allSettings = await base44.asServiceRole.entities.AppSettings.list();
     const get = (key, def = "") => { const s = allSettings.find(s => s.key === key); return s ? s.value : def; };
     const noShowWindowMinutes = parseInt(get("no_show_window_minutes", "30"));
-    const adminEmail = get("admin_email", "info@monkeebizai.com");
+    const getAdminEmail = (source) => source === "vendorfy" ? get("vendorfy_email", "info@vendorfyai.com") : source === "surplus" ? get("surplus_email", "info@surplussyndicatestore.com") : get("admin_email", "info@monkeebizai.com");
     const tz = get("app_timezone", "America/Phoenix");
 
     const bookings = await base44.asServiceRole.entities.Booking.list();
@@ -34,6 +34,7 @@ Deno.serve(async (req) => {
 
       // Notify admin
       const lead = await base44.asServiceRole.entities.Lead.get(booking.lead_id).catch(() => null);
+      const adminEmail = getAdminEmail(lead?.source);
       const timeStr = apptTime.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: tz, timeZoneName: "short" });
       const dateStr = apptTime.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", timeZone: tz });
 

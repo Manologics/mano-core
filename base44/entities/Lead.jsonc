@@ -1,0 +1,176 @@
+{
+  "name": "Lead",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "description": "Full name of the lead"
+    },
+    "email": {
+      "type": "string",
+      "description": "Email address of the lead"
+    },
+    "phone": {
+      "type": "string",
+      "description": "Phone number"
+    },
+    "business_type": {
+      "type": "string",
+      "description": "Type of business"
+    },
+    "service_need": {
+      "type": "string",
+      "description": "What problem the lead is trying to solve"
+    },
+    "urgency": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high"
+      ],
+      "default": "medium",
+      "description": "How urgently the lead needs help"
+    },
+    "budget": {
+      "type": "string",
+      "enum": [
+        "Under $500",
+        "$500 \u2013 $1,000",
+        "$1,000 \u2013 $2,500",
+        "$2,500 \u2013 $5,000",
+        "$5,000 \u2013 $10,000",
+        "$10,000+",
+        "Not sure yet"
+      ],
+      "description": "Lead's stated budget range"
+    },
+    "timeline": {
+      "type": "string",
+      "enum": [
+        "ASAP",
+        "1-2 weeks",
+        "1 month",
+        "Just exploring"
+      ],
+      "description": "When the lead needs the service"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "New",
+        "Action Required",
+        "Follow Up",
+        "Nurture",
+        "Contacted",
+        "Appointment Requested",
+        "Booked",
+        "Closed \u2014 Won",
+        "Closed \u2014 No Response"
+      ],
+      "default": "New",
+      "description": "Current status of the lead"
+    },
+    "score": {
+      "type": "string",
+      "enum": [
+        "HOT",
+        "WARM",
+        "COLD",
+        "PENDING"
+      ],
+      "description": "Lead score"
+    },
+    "source": {
+      "type": "string",
+      "enum": [
+        "monkee",
+        "vendorfy",
+        "surplus"
+      ],
+      "default": "monkee",
+      "description": "Brand source of the lead submission"
+    },
+    "booking_offered": {
+      "type": "boolean",
+      "default": false
+    },
+    "webhook_status": {
+      "type": "string",
+      "description": "Webhook delivery status"
+    },
+    "processing_mode": {
+      "type": "string",
+      "description": "Processing mode used"
+    },
+    "submission_token": {
+      "type": "string",
+      "description": "Unique submission token"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Internal notes"
+    },
+    "last_followup_sent_at": {
+      "type": "string",
+      "description": "UTC ISO timestamp of last follow-up email",
+      "default": null
+    },
+    "last_retention_sent_at": {
+      "type": "string",
+      "description": "UTC ISO timestamp of last retention email",
+      "default": null
+    },
+    "retention_stage": {
+      "type": "string",
+      "enum": [
+        "none",
+        "satisfaction_check_due",
+        "review_request_due",
+        "referral_ask_due",
+        "upsell_due",
+        "reengage_due",
+        "complete",
+        "opted_out"
+      ],
+      "default": null,
+      "description": "Current retention stage"
+    },
+    "retention_opt_out": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, skip all automated retention sends"
+    },
+    "last_completed_booking_at": {
+      "type": "string",
+      "description": "UTC ISO timestamp of last completed booking",
+      "default": null
+    },
+    "review_received": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, skip review_request and advance to referral_ask"
+    },
+    "last_ops_reviewed_at": {
+      "type": "string",
+      "description": "UTC ISO timestamp when Agent 5 last reviewed this lead",
+      "default": null
+    },
+    "ops_priority_flag": {
+      "type": "string",
+      "enum": [
+        "watch",
+        "urgent",
+        "blocked",
+        "none"
+      ],
+      "default": null,
+      "description": "Ops-only priority flag set by Agent 5 monitoring"
+    }
+  },
+  "required": [
+    "name",
+    "email",
+    "phone"
+  ]
+}

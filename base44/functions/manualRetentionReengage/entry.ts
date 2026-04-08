@@ -16,7 +16,7 @@ Deno.serve(async (req) => {
     const retentionFrom = get("retention_from_name",   businessName);
     const upsellLink    = get("retention_upsell_link", "");
     const tz            = get("app_timezone",          "America/Phoenix");
-    const signature     = get("email_signature",       "— Monkee Bizz AI Team");
+    const signature     = lead.source === "vendorfy" ? get("vendorfy_signature", "— Vendorfy AI Support") : lead.source === "surplus" ? get("surplus_signature", "— Surplus Syndicate Team") : get("email_signature", "— Monkee Bizz AI Team");
 
     const lead = await S.entities.Lead.get(lead_id);
     const allEvents = await S.entities.RetentionEvents.list();

@@ -69,6 +69,21 @@ const NOSHOW_TEMPLATES = {
   }
 };
 
+const getBrandConfig = (source, get) => {
+  if (source === "vendorfy") return {
+    adminEmail: get("vendorfy_email", "info@vendorfyai.com"),
+    signature: get("vendorfy_signature", "— Vendorfy AI Support")
+  };
+  if (source === "surplus") return {
+    adminEmail: get("surplus_email", "info@surplussyndicatestore.com"),
+    signature: get("surplus_signature", "— Surplus Syndicate Team")
+  };
+  return {
+    adminEmail: get("admin_email", "info@monkeebizai.com"),
+    signature: get("email_signature", "— Monkee Bizz AI Team")
+  };
+};
+
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
@@ -82,11 +97,9 @@ Deno.serve(async (req) => {
     }
 
     const businessName = get("business_name", "Monkee Bizz AI");
-    const adminEmail = get("admin_email", "info@monkeebizai.com");
     const calendlyUrl = get("calendly_event_url", "");
     const appUrl = get("app_url", "https://app.monkeebizzai.com");
     const tz = get("app_timezone", "America/Phoenix");
-    const signature = get("email_signature", "— Monkee Bizz AI Team");
 
     const now = new Date();
     const log = (lead_id, event) =>
@@ -128,6 +141,7 @@ Deno.serve(async (req) => {
         continue;
       }
 
+      const { adminEmail, signature } = getBrandConfig(lead.source, get);
       const templates = fu.sequence_type === "no_show" ? NOSHOW_TEMPLATES : STANDARD_TEMPLATES;
       const tmpl = templates[fu.attempt_number];
       const seqLabel = fu.sequence_type === "no_show" ? "no-show sequence" : "standard sequence";

@@ -10,7 +10,7 @@ Deno.serve(async (req) => {
     const reminder1Enabled = get("reminder_1hr_enabled", "true") === "true";
     const businessName = get("business_name", "Monkee Bizz AI");
     const tz = get("app_timezone", "America/Phoenix");
-    const signature = get("email_signature", "— Monkee Bizz AI Team");
+    const getBrandSig = (source) => source === "vendorfy" ? get("vendorfy_signature", "— Vendorfy AI Support") : source === "surplus" ? get("surplus_signature", "— Surplus Syndicate Team") : get("email_signature", "— Monkee Bizz AI Team");
 
     const bookings = await base44.asServiceRole.entities.Booking.list();
     const activeBookings = bookings.filter(b => ["Confirmed", "Rescheduled"].includes(b.status));
@@ -26,6 +26,7 @@ Deno.serve(async (req) => {
       const msUntil = apptTime - now;
       const hoursUntil = msUntil / (1000 * 60 * 60);
 
+      const signature = getBrandSig(lead?.source);
       const log = async (event) => {
         await base44.asServiceRole.entities.ActivityLog.create({ lead_id: booking.lead_id, event, created_at: new Date().toISOString() });
       };

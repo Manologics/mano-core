@@ -11,10 +11,13 @@ Deno.serve(async (req) => {
     const allSettings = await base44.asServiceRole.entities.AppSettings.list();
     const get = (key, def = "") => { const s = allSettings.find(s => s.key === key); return s ? s.value : def; };
     const apiKey = get("calendly_api_key");
-    const adminEmail = get("admin_email", "info@monkeebizai.com");
     const businessName = get("business_name", "Monkee Bizz AI");
     const tz = get("app_timezone", "America/Phoenix");
-    const signature = get("email_signature", "— Monkee Bizz AI Team");
+    const getBrandConfig = (source) => {
+      if (source === "vendorfy") return { adminEmail: get("vendorfy_email", "info@vendorfyai.com"), signature: get("vendorfy_signature", "— Vendorfy AI Support") };
+      if (source === "surplus") return { adminEmail: get("surplus_email", "info@surplussyndicatestore.com"), signature: get("surplus_signature", "— Surplus Syndicate Team") };
+      return { adminEmail: get("admin_email", "info@monkeebizai.com"), signature: get("email_signature", "— Monkee Bizz AI Team") };
+    };
 
     const log = async (event) => {
       await base44.asServiceRole.entities.ActivityLog.create({ lead_id, event, created_at: new Date().toISOString() });
@@ -45,6 +48,7 @@ Deno.serve(async (req) => {
     }
 
     const lead = await base44.asServiceRole.entities.Lead.get(lead_id);
+    const { adminEmail, signature } = getBrandConfig(lead.source);
     const slotDate = new Date(slot.start_time);
     const dateStr = slotDate.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: tz });
     const timeStr = slotDate.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: tz, timeZoneName: "short" });
