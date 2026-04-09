@@ -1,4 +1,4 @@
-// v2
+// v4
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 const TWILIO_FROM = '+16233001709';
@@ -41,19 +41,18 @@ const fallback = new Response(
 
 Deno.serve(async (req) => {
   try {
-    // Read body FIRST before SDK client consumes the stream
     const bodyText = await req.text();
-    const base44 = createClientFromRequest(req);
+    const S = createClientFromRequest(req).asServiceRole;
 
     // Parse form-encoded Twilio POST body
     const params = new URLSearchParams(bodyText);
     const digit = params.get('Digits') || '';
     const from  = params.get('From')  || '';
 
-    // Create lead record, then send SMS
+    // Create lead record, then send SMS (non-blocking)
     if (from) {
       const e164 = toE164(from);
-      base44.asServiceRole.entities.Lead.create({
+      S.entities.Lead.create({
         name:             from,
         phone:            e164 || from,
         email:            '',
@@ -65,21 +64,21 @@ Deno.serve(async (req) => {
         notes:            `[Inbound Call ${new Date().toISOString()}] Pressed: ${digit || 'none'}`,
         submission_token: 'CALL-' + Date.now().toString(36).toUpperCase(),
       }).then(async (lead) => {
-        // SMS triggered after lead created
+        console.log(`[twilioVoiceMenu] Lead created — id:${lead.id}`);
         if (e164) {
           try {
             const smsSid = await sendSms(e164, "Hey, this is Monkee Bizz AI — we got your call. What can we help you with?");
-            await base44.asServiceRole.entities.Lead.update(lead.id, {
+            await S.entities.Lead.update(lead.id, {
               notes: (lead.notes || '') + `\n[SMS Sent ${new Date().toISOString()}] to:${e164} sid:${smsSid}`
             }).catch(() => {});
             console.log(`[twilioVoiceMenu] SMS sent — to:${e164} sid:${smsSid}`);
           } catch (smsErr) {
             console.error(`[twilioVoiceMenu] SMS FAILED — to:${e164} error:${smsErr.message}`);
           }
-        } else {
-          console.warn(`[twilioVoiceMenu] SMS skipped — could not parse E.164 from:${from}`);
         }
-      }).catch(() => {});
+      }).catch((err) => {
+        console.error(`[twilioVoiceMenu] Lead create FAILED: ${err.message}`);
+      });
     }
 
     if (digit === '1') return twiml('Thank you. A specialist will contact you shortly. Goodbye.');
@@ -88,7 +87,8 @@ Deno.serve(async (req) => {
 
     return fallback;
 
-  } catch (_) {
+  } catch (err) {
+    console.error(`[twilioVoiceMenu] FATAL: ${err.message}`);
     return fallback;
   }
 });
