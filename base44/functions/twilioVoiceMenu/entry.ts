@@ -34,11 +34,11 @@ const fallback = new Response(
 
 Deno.serve(async (req) => {
   try {
-    // Create SDK client BEFORE consuming body stream
+    // Read body FIRST before SDK client consumes the stream
+    const bodyText = await req.text();
     const base44 = createClientFromRequest(req);
 
     // Parse form-encoded Twilio POST body
-    const bodyText = await req.text();
     const params = new URLSearchParams(bodyText);
     const digit = params.get('Digits') || '';
     const from  = params.get('From')  || '';
