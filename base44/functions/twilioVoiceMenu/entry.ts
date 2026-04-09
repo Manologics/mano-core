@@ -26,6 +26,13 @@ function toE164(phone) {
   return phone || null;
 }
 
+function twiml(message) {
+  return new Response(
+    `<?xml version="1.0" encoding="UTF-8"?><Response><Say voice="alice">${message}</Say><Hangup/></Response>`,
+    { status: 200, headers: { "Content-Type": "text/xml" } }
+  );
+}
+
 const fallback = new Response(
 
   `<?xml version="1.0" encoding="UTF-8"?><Response><Say voice="alice">We did not receive your selection. Goodbye.</Say><Hangup/></Response>`,
