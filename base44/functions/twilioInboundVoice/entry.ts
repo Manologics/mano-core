@@ -71,7 +71,7 @@ Deno.serve(async (req) => {
 
     // 3. Return the voice menu
     return new Response(
-      `<?xml version="1.0" encoding="UTF-8"?><Response><Gather numDigits="1" action="https://mano-dd309130.base44.app/functions/twilioVoiceMenu" method="POST"><Say voice="alice">Welcome to Monkee Bizz AI. Press 1 for a quote. Press 2 for support. Press 3 for a callback.</Say></Gather><Say voice="alice">We did not receive your selection. Goodbye.</Say><Hangup/></Response>`,
+      `<?xml version="1.0" encoding="UTF-8"?><Response><Gather numDigits="1" action="https://base44.app/api/apps/69bae88c1f7bb2218159dde8/functions/twilioVoiceMenu" method="POST"><Say voice="alice">Welcome to Monkee Bizz AI. Press 1 for a quote. Press 2 for support. Press 3 for a callback.</Say></Gather><Say voice="alice">We did not receive your selection. Goodbye.</Say><Hangup/></Response>`,
       { status: 200, headers: { 'Content-Type': 'text/xml' } }
     );
 
