@@ -74,17 +74,16 @@ Deno.serve(async (req) => {
       }
     }
 
-    // 3. Return the voice menu
-
+    // 3. Return silent hangup
     return new Response(
-      `<?xml version="1.0" encoding="UTF-8"?><Response><Gather numDigits="1" action="https://base44.app/api/apps/69bae88c1f7bb2218159dde8/functions/twilioVoiceMenu" method="POST"><Say voice="alice">Welcome to Monkee Bizz AI. Press 1 for a quote. Press 2 for support. Press 3 for a callback.</Say></Gather><Say voice="alice">We did not receive your selection. Goodbye.</Say><Hangup/></Response>`,
+      `<?xml version="1.0" encoding="UTF-8"?><Response><Hangup/></Response>`,
       { status: 200, headers: { 'Content-Type': 'text/xml' } }
     );
 
   } catch (err) {
     console.error(`[twilioInboundVoice] FATAL: ${err.message}`);
     return new Response(
-      `<?xml version="1.0" encoding="UTF-8"?><Response><Say voice="alice">We are experiencing technical difficulties. Please try again later.</Say><Hangup/></Response>`,
+      `<?xml version="1.0" encoding="UTF-8"?><Response><Hangup/></Response>`,
       { status: 200, headers: { 'Content-Type': 'text/xml' } }
     );
   }
