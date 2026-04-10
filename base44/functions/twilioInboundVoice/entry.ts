@@ -36,12 +36,14 @@ Deno.serve(async (req) => {
     const now = new Date().toISOString();
 
     // 1. Create lead immediately on any inbound call
+    console.log(`[twilioInboundVoice] Webhook received — From:${from}`);
+
     if (from) {
+      let lead;
       try {
-        const lead = await S.entities.Lead.create({
+        lead = await S.entities.Lead.create({
           name:             from,
           phone:            e164 || from,
-          email:            'unknown@inbound.call',
           status:           'New',
           score:            'PENDING',
           source:           'monkee',
@@ -51,25 +53,29 @@ Deno.serve(async (req) => {
           notes:            `[Inbound Call ${now}]`,
         });
         console.log(`[twilioInboundVoice] Lead created — id:${lead.id} from:${from}`);
+      } catch (leadErr) {
+        console.error(`[twilioInboundVoice] Lead create FAILED: ${leadErr.message}`);
+      }
 
-        // 2. Send instant SMS after lead is created
-        if (e164) {
-          try {
-            const smsSid = await sendSms(e164, "Hey, this is Monkee Bizz AI — we just missed your call! What can we help you with? Reply here and we'll get right back to you 🐒");
-            console.log(`[twilioInboundVoice] SMS sent — to:${e164} sid:${smsSid}`);
+      // 2. Send instant SMS
+      if (e164) {
+        console.log(`[twilioInboundVoice] SMS attempt — to:${e164}`);
+        try {
+          const smsSid = await sendSms(e164, "Hey, sorry we missed your call. What do you need help with?");
+          console.log(`[twilioInboundVoice] SMS success — to:${e164} sid:${smsSid}`);
+          if (lead) {
             await S.entities.Lead.update(lead.id, {
               notes: `[Inbound Call ${now}]\n[SMS Sent ${new Date().toISOString()}] sid:${smsSid}`,
             });
-          } catch (smsErr) {
-            console.error(`[twilioInboundVoice] SMS FAILED — to:${e164} error:${smsErr.message}`);
           }
+        } catch (smsErr) {
+          console.error(`[twilioInboundVoice] SMS failure — to:${e164} error:${smsErr.message}`);
         }
-      } catch (leadErr) {
-        console.error(`[twilioInboundVoice] Lead create FAILED: ${leadErr.message}`);
       }
     }
 
     // 3. Return the voice menu
+
     return new Response(
       `<?xml version="1.0" encoding="UTF-8"?><Response><Gather numDigits="1" action="https://base44.app/api/apps/69bae88c1f7bb2218159dde8/functions/twilioVoiceMenu" method="POST"><Say voice="alice">Welcome to Monkee Bizz AI. Press 1 for a quote. Press 2 for support. Press 3 for a callback.</Say></Gather><Say voice="alice">We did not receive your selection. Goodbye.</Say><Hangup/></Response>`,
       { status: 200, headers: { 'Content-Type': 'text/xml' } }
