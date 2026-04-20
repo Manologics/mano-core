@@ -8,6 +8,7 @@ import CommandCenter from './pages/CommandCenter';
 import DealAccess from './pages/DealAccess';
 import LeadForm from './pages/LeadForm';
 import Settings from './pages/Settings';
+import Demo from './pages/Demo';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="/DealAccess" element={<DealAccess />} />
         <Route path="/LeadForm" element={<LeadForm />} />
         <Route path="/Settings" element={<Settings />} />
+        <Route path="/Demo" element={<Demo />} />
       </Routes>
     </BrowserRouter>
   )
