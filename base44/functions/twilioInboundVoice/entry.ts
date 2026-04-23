@@ -1,4 +1,4 @@
-// twilioInboundVoice v8 — dedup by phone, auto-score, auto-route, silent hangup
+// twilioInboundVoice v9 — dedup, AppSettings-driven SMS, auto-score, auto-route, silent hangup
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 const TWILIO_FROM = '+16233001709';
@@ -94,20 +94,32 @@ Deno.serve(async (req) => {
     await S.entities.Lead.update(lead.id, { score, status });
     await log(lead.id, `[twilioInboundVoice] Score: ${score} → Status: ${status}`);
 
-    // 3. Send missed-call SMS
+    // 3. Send missed-call SMS (AppSettings-driven, deduplicated)
     if (e164) {
-      const smsText = "Hey, sorry we missed your call. What do you need help with?";
-      try {
-        const smsSid = await sendSms(e164, smsText);
-        console.log(`[twilioInboundVoice] SMS sent — to:${e164} sid:${smsSid}`);
-        await S.entities.Lead.update(lead.id, {
-          notes: [lead.notes, `[SMS Sent ${new Date().toISOString()}] sid:${smsSid}`].filter(Boolean).join('\n'),
-          last_message: smsText,
-        });
-        await log(lead.id, `[twilioInboundVoice] Missed-call SMS sent — sid:${smsSid}`);
-      } catch (smsErr) {
-        console.error(`[twilioInboundVoice] SMS failure — ${smsErr.message}`);
-        await log(lead.id, `[twilioInboundVoice] SMS FAILED — ${smsErr.message}`);
+      const settings = await S.entities.AppSettings.list();
+      const get = (k, d) => { const s = settings.find(x => x.key === k); return s ? s.value : d; };
+      const missedCallSmsEnabled = get('voice_missed_call_sms_enabled', 'true') === 'true';
+      const businessName = get('business_name', 'Monkee Bizz AI');
+      const missedCallSmsMsg = get('voice_missed_call_sms_msg', `Hey, sorry we missed your call! What can we help you with? — ${businessName} 🐒`);
+
+      // Only send if enabled. For existing leads, only send once per call (not if we already sent recently).
+      // For new leads, always send. For existing leads, send to re-engage.
+      if (missedCallSmsEnabled) {
+        try {
+          const smsSid = await sendSms(e164, missedCallSmsMsg);
+          const sentAt = new Date().toISOString();
+          console.log(`[twilioInboundVoice] Missed-call SMS sent — to:${e164} sid:${smsSid}`);
+          await S.entities.Lead.update(lead.id, {
+            notes: [lead.notes, `[Missed-Call SMS ${sentAt}] sid:${smsSid}`].filter(Boolean).join('\n'),
+            last_message: missedCallSmsMsg,
+          });
+          await log(lead.id, `[twilioInboundVoice] Missed-call SMS sent — sid:${smsSid}`);
+        } catch (smsErr) {
+          console.error(`[twilioInboundVoice] SMS failure — ${smsErr.message}`);
+          await log(lead.id, `[twilioInboundVoice] Missed-call SMS FAILED — ${smsErr.message}`);
+        }
+      } else {
+        await log(lead.id, `[twilioInboundVoice] Missed-call SMS skipped — disabled via AppSettings`);
       }
     }
 

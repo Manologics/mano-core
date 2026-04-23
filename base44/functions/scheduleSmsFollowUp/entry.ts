@@ -30,11 +30,21 @@ Deno.serve(async (req) => {
   }
 
   const now = new Date();
-  const DELAYS_MS = [
-    1 * 60 * 60 * 1000,        // 1 hour
-    24 * 60 * 60 * 1000,       // 24 hours
-    3 * 24 * 60 * 60 * 1000,   // 3 days
-  ];
+
+  // If a missed-call SMS was already sent (last_message set by twilioInboundVoice),
+  // push attempt 1 to 24hr instead of 1hr to avoid stacking with the immediate missed-call SMS.
+  const hadImmediateSms = lead.processing_mode === 'twilio_voice' && !!lead.last_message;
+  const DELAYS_MS = hadImmediateSms
+    ? [
+        24 * 60 * 60 * 1000,       // 24 hours (skip 1hr — immediate SMS already sent)
+        48 * 60 * 60 * 1000,       // 48 hours
+        3 * 24 * 60 * 60 * 1000,   // 3 days
+      ]
+    : [
+        1 * 60 * 60 * 1000,        // 1 hour
+        24 * 60 * 60 * 1000,       // 24 hours
+        3 * 24 * 60 * 60 * 1000,   // 3 days
+      ];
 
   const created = await Promise.all(
     DELAYS_MS.map((delay, i) =>
@@ -50,7 +60,9 @@ Deno.serve(async (req) => {
 
   await S.entities.ActivityLog.create({
     lead_id,
-    event: `SMS follow-up sequence scheduled — 3 attempts at 1hr, 24hr, 3 days`,
+    event: hadImmediateSms
+      ? `SMS follow-up sequence scheduled — 3 attempts at 24hr, 48hr, 3 days (1hr skipped — missed-call SMS already sent)`
+      : `SMS follow-up sequence scheduled — 3 attempts at 1hr, 24hr, 3 days`,
     created_at: now.toISOString(),
   }).catch(() => {});
 
