@@ -15,8 +15,6 @@ export default function BookingPanel({ lead, onBookingConfirmed }) {
   const [notConfigured, setNotConfigured] = useState(false);
   const [eventTypeUri, setEventTypeUri] = useState("");
 
-  if (!lead || !["HOT", "WARM"].includes(lead.score) || BLOCKED_STATUSES.includes(lead.status)) return null;
-
   const fetchSlots = async () => {
     setLoading(true);
     setError("");
@@ -38,7 +36,12 @@ export default function BookingPanel({ lead, onBookingConfirmed }) {
     setLoading(false);
   };
 
-  useEffect(() => { fetchSlots(); }, [lead.id]);
+  useEffect(() => {
+    if (!lead || !["HOT", "WARM"].includes(lead.score) || BLOCKED_STATUSES.includes(lead.status)) return;
+    fetchSlots();
+  }, [lead?.id]);
+
+  if (!lead || !["HOT", "WARM"].includes(lead.score) || BLOCKED_STATUSES.includes(lead.status)) return null;
 
   const handleConfirm = async () => {
     if (!selectedSlot) return;

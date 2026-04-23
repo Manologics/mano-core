@@ -1,3 +1,6 @@
+// twilioSmsWebhook — CANONICAL inbound SMS handler
+// Handles: dedup by phone, auto-score, auto-route, logging, admin notify, auto-reply
+// twilioInboundSms is DEPRECATED — this is the single active path
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.23';
 
 const TWILIO_FROM = '+16233001709';
@@ -25,6 +28,21 @@ async function sendSms(to, body) {
   return data.sid;
 }
 
+// Score mirrors AgentIntake SCORE_LEAD logic
+function scoreLead(lead) {
+  const u = { high: 3, medium: 2, low: 1 }[lead.urgency] || 1;
+  const total = u + (lead.email ? 1 : 0) + (lead.phone ? 1 : 0) + (lead.business_type ? 1 : 0) + (lead.service_need ? 1 : 0);
+  return total >= 6 ? 'HOT' : total >= 4 ? 'WARM' : 'COLD';
+}
+
+function routeFromScore(score) {
+  return score === 'HOT' ? 'Action Required' : score === 'WARM' ? 'Follow Up' : 'Nurture';
+}
+
+const EMPTY_TWIML = new Response('<?xml version="1.0"?><Response></Response>', {
+  headers: { 'Content-Type': 'text/xml' },
+});
+
 Deno.serve(async (req) => {
   const S = createClientFromRequest(req).asServiceRole;
   const now = new Date().toISOString();
@@ -33,65 +51,81 @@ Deno.serve(async (req) => {
     S.entities.ActivityLog.create({ lead_id: lead_id || 'system', event, created_at: now }).catch(() => {});
 
   try {
-    // ── 1. Parse Twilio form payload ──────────────────────────────────────────
+    // 1. Parse Twilio payload
     const text = await req.text();
-    await log('system', `[twilioSmsWebhook] Raw payload received: ${text.slice(0, 500)}`);
-
     const params = new URLSearchParams(text);
     const From       = params.get('From') || '';
-    const To         = params.get('To') || '';
     const Body       = params.get('Body') || '';
     const MessageSid = params.get('MessageSid') || '';
 
-    await log('system', `[twilioSmsWebhook] Parsed — From:${From} To:${To} MessageSid:${MessageSid} Body:"${Body.slice(0,100)}"`);
+    console.log(`[twilioSmsWebhook] From:${From} Sid:${MessageSid} Body:"${Body.slice(0, 100)}"`);
 
-    if (!From) {
-      return new Response('<?xml version="1.0"?><Response></Response>', {
-        headers: { 'Content-Type': 'text/xml' }
-      });
-    }
+    if (!From) return EMPTY_TWIML;
 
-    // ── 2. Load settings ──────────────────────────────────────────────────────
+    const e164 = toE164(From) || From;
+
+    // 2. Load settings
     const settings = await S.entities.AppSettings.list();
     const get = (k, d) => { const s = settings.find(x => x.key === k); return s ? s.value : d; };
+    const adminEmail   = get('admin_email',       'info@monkeebizai.com');
+    const businessName = get('business_name',     'Monkee Bizz AI');
+    const autoReply    = get('sms_auto_reply',     'true') === 'true';
+    const autoReplyMsg = get('sms_auto_reply_msg', `Thanks for reaching out to ${businessName}! We received your message and will be in touch shortly. 🐒`);
+    const calendlyUrl  = get('calendly_event_url', '');
+    const appUrl       = get('app_url',            'https://app.monkeebizzai.com');
 
-    const adminEmail     = get('admin_email',       'info@monkeebizai.com');
-    const businessName   = get('business_name',     'Monkee Bizz AI');
-    const autoReply      = get('sms_auto_reply',    'true') === 'true';
-    const autoReplyMsg   = get('sms_auto_reply_msg', `Thanks for reaching out to ${businessName}! We received your message and will be in touch shortly. 🐒`);
-    const calendlyUrl    = get('calendly_event_url', '');
-    const appUrl         = get('app_url',            'https://app.monkeebizzai.com');
-
-    // ── 3. Find or create Lead ────────────────────────────────────────────────
-    const e164 = toE164(From);
+    // 3. Dedup — find existing lead by E.164 phone
     const allLeads = await S.entities.Lead.list();
     let lead = allLeads.find(l => l.phone && toE164(l.phone) === e164);
     let isNew = false;
 
     if (lead) {
+      // Append inbound SMS to notes, update last_message
+      const updatedNotes = [lead.notes, `[Inbound SMS ${now}]: ${Body}`].filter(Boolean).join('\n');
+      // If lead was in a terminal state, reactivate
+      const reactivateStatus = ['Nurture', 'Closed — No Response'].includes(lead.status) ? 'Follow Up' : lead.status;
       await S.entities.Lead.update(lead.id, {
-        notes: [lead.notes, `[Inbound SMS ${now}]: ${Body}`].filter(Boolean).join('\n'),
+        notes: updatedNotes,
+        last_message: Body,
+        status: reactivateStatus,
       });
-      await log(lead.id, `[twilioSmsWebhook] Inbound SMS from existing lead — MessageSid:${MessageSid}`);
+      lead = { ...lead, notes: updatedNotes, status: reactivateStatus, last_message: Body };
+      await log(lead.id, `[twilioSmsWebhook] Inbound SMS from existing lead — Sid:${MessageSid} — "${Body.slice(0, 80)}"`);
     } else {
+      // Create new lead
       lead = await S.entities.Lead.create({
-        name:            From,
-        phone:           e164 || From,
-        email:           '',
-        service_need:    Body || 'Inbound SMS',
-        status:          'New',
-        score:           'PENDING',
-        source:          'monkee',
+        name:             e164,
+        phone:            e164,
+        email:            '',
+        service_need:     Body || 'Inbound SMS',
+        status:           'New',
+        score:            'PENDING',
+        source:           'monkee',
         submission_token: MessageSid || ('SMS-' + Date.now().toString(36).toUpperCase()),
-        processing_mode: 'twilio_sms',
-        webhook_status:  'received',
-        notes:           `[Inbound SMS ${now}]: ${Body}`,
+        processing_mode:  'twilio_inbound_sms',
+        webhook_status:   'received',
+        notes:            `[Inbound SMS ${now}]: ${Body}`,
+        last_message:     Body,
       });
       isNew = true;
       await log(lead.id, `[twilioSmsWebhook] New lead created from inbound SMS — From:${From}`);
     }
 
-    // ── 4. Admin notification email ───────────────────────────────────────────
+    // 4. Auto-score and auto-route (always recalculate)
+    const score = scoreLead(lead);
+    const routedStatus = routeFromScore(score);
+    // Don't downgrade a Booked/Won/Contacted lead
+    const protectedStatuses = ['Booked', 'Closed — Won', 'Contacted', 'Appointment Requested'];
+    if (!protectedStatuses.includes(lead.status)) {
+      await S.entities.Lead.update(lead.id, { score, status: routedStatus });
+      lead = { ...lead, score, status: routedStatus };
+      await log(lead.id, `[twilioSmsWebhook] Auto-scored: ${score} → Status: ${routedStatus}`);
+    } else {
+      await S.entities.Lead.update(lead.id, { score });
+      await log(lead.id, `[twilioSmsWebhook] Auto-scored: ${score} (status preserved: ${lead.status})`);
+    }
+
+    // 5. Admin notification email
     try {
       await S.integrations.Core.SendEmail({
         to: adminEmail,
@@ -102,6 +136,7 @@ Deno.serve(async (req) => {
           <p><strong>Message:</strong> ${Body || '(empty)'}</p>
           <p><strong>MessageSid:</strong> ${MessageSid}</p>
           <p><strong>Lead:</strong> ${isNew ? 'NEW' : 'EXISTING'} — ID: ${lead.id}</p>
+          <p><strong>Score:</strong> ${score} | <strong>Status:</strong> ${lead.status}</p>
           <div style="margin-top:20px;padding:14px;background:#111;border-radius:8px">
             <p><a href="${appUrl}/AgentIntake" style="color:#00ff88">View Lead →</a></p>
             ${calendlyUrl ? `<p><a href="${calendlyUrl}" style="color:#00ff88">Book Appointment →</a></p>` : ''}
@@ -113,15 +148,12 @@ Deno.serve(async (req) => {
       await log(lead.id, `[twilioSmsWebhook] Admin notification FAILED: ${emailErr.message}`);
     }
 
-    // ── 5. Intent detection & conversation flow ─────────────────────────────
+    // 6. Intent detection + booking link or auto-reply
     const msg = Body.trim().toLowerCase();
-
-    // Detect if this is a service intent reply from an existing lead
     const SERVICE_KEYWORDS = ['website','seo','marketing','social','ads','branding','design','automation','ai','app','help','need','want','looking','build','create','fix','manage','grow','email','content','video','photo','logo'];
     const hasServiceIntent = SERVICE_KEYWORDS.some(k => msg.includes(k)) || msg.length > 10;
 
     if (!isNew && hasServiceIntent && calendlyUrl && !lead.booking_offered) {
-      // Lead replied with service need → send booking link
       try {
         const bookingMsg = `Got it! You can book a quick call here: ${calendlyUrl} 📅`;
         const smsSid = await sendSms(e164, bookingMsg);
@@ -131,16 +163,21 @@ Deno.serve(async (req) => {
           booking_offered: true,
           service_need:    lead.service_need || Body,
           notes:           [lead.notes, `[Booking link sent ${now}]`].filter(Boolean).join('\n'),
+          last_message:    bookingMsg,
         });
-        await log(lead.id, `[twilioSmsWebhook] Booking link sent — sid:${smsSid} score:WARM`);
+        await log(lead.id, `[twilioSmsWebhook] Booking link sent — sid:${smsSid}`);
       } catch (smsErr) {
         await log(lead.id, `[twilioSmsWebhook] Booking link send FAILED: ${smsErr.message}`);
       }
     } else if (autoReply && isNew && e164) {
-      // New lead — send welcome (only if sendWelcomeSms automation isn't handling it)
-      // Skip if welcome already handled by entity automation
+      try {
+        const smsSid = await sendSms(e164, autoReplyMsg);
+        await S.entities.Lead.update(lead.id, { last_message: autoReplyMsg });
+        await log(lead.id, `[twilioSmsWebhook] Auto-reply sent to new lead — sid:${smsSid}`);
+      } catch (smsErr) {
+        await log(lead.id, `[twilioSmsWebhook] Auto-reply FAILED: ${smsErr.message}`);
+      }
     } else if (autoReply && !isNew && !hasServiceIntent && e164) {
-      // Generic reply for non-intent messages
       try {
         const smsSid = await sendSms(e164, autoReplyMsg);
         await log(lead.id, `[twilioSmsWebhook] Auto-reply sent — sid:${smsSid}`);
@@ -149,15 +186,10 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ── 6. Return empty TwiML (suppress Twilio default reply) ─────────────────
-    return new Response('<?xml version="1.0"?><Response></Response>', {
-      headers: { 'Content-Type': 'text/xml' }
-    });
+    return EMPTY_TWIML;
 
   } catch (error) {
     await log('system', `[twilioSmsWebhook] FATAL ERROR: ${error.message}`);
-    return new Response('<?xml version="1.0"?><Response></Response>', {
-      headers: { 'Content-Type': 'text/xml' }
-    });
+    return EMPTY_TWIML;
   }
 });

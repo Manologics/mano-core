@@ -111,6 +111,10 @@
       "type": "string",
       "description": "Internal notes"
     },
+    "last_message": {
+      "type": "string",
+      "description": "Last inbound or key outbound message text for quick reference"
+    },
     "last_followup_sent_at": {
       "type": "string",
       "description": "UTC ISO timestamp of last follow-up email",
