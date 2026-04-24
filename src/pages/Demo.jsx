@@ -341,11 +341,11 @@ export default function Demo() {
         </div>
 
         <h1 style={{ fontSize:"clamp(32px,5.5vw,58px)",fontWeight:"900",color:"#fff",lineHeight:1.12,margin:"0 0 20px",letterSpacing:"-0.5px" }}>
-          Stop Losing Jobs<br/><span style={{ color:"#ff4444" }}>From Missed Calls</span>
+          Turn Missed Calls Into Booked Jobs<br/><span style={{ color:"#ff4444" }}>Before Your Competitors Do</span>
         </h1>
 
         <p style={{ fontSize:"17px",color:"#666",maxWidth:"540px",margin:"0 auto 14px",lineHeight:1.8 }}>
-          Mano responds in seconds, qualifies the lead, and books the job — automatically. 24/7. No extra staff. No missed opportunities.
+          Mano responds in seconds, qualifies the lead, and books the job — automatically.
         </p>
 
         <p style={{ fontSize:"14px",color:"#444",maxWidth:"400px",margin:"0 auto 36px",lineHeight:1.6 }}>
