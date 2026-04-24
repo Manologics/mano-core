@@ -6,15 +6,38 @@ Deno.serve(async (req) => {
   const S = createClientFromRequest(req).asServiceRole;
 
   const body = await req.json();
-  const { lead_id } = body;
+
+  // Entity automation payload shape: { event, data, old_data, changed_fields }
+  // Direct invocation shape: { lead_id } or { id }
+  // Extract lead_id from any known payload shape.
+  const lead_id =
+    body.lead_id ||
+    body.id ||
+    body.data?.id ||
+    body.event?.entity_id ||
+    body.record?.id ||
+    body.entity?.id ||
+    null;
 
   if (!lead_id) {
-    return Response.json({ error: 'Missing lead_id' }, { status: 400 });
+    // Log payload shape so we can diagnose unexpected structures
+    console.warn('[scheduleSmsFollowUp] Could not extract lead_id. Payload keys:', JSON.stringify(Object.keys(body)));
+    await S.entities.ActivityLog.create({
+      lead_id: 'system',
+      event: `[scheduleSmsFollowUp] Skipped — could not extract lead_id. Payload keys: ${JSON.stringify(Object.keys(body))}`,
+      created_at: new Date().toISOString(),
+    }).catch(() => {});
+    return Response.json({ skipped: true, reason: 'missing_lead_id', payload_keys: Object.keys(body) });
   }
 
-  const lead = await S.entities.Lead.get(lead_id);
+  let lead;
+  try {
+    lead = await S.entities.Lead.get(lead_id);
+  } catch (_) {
+    return Response.json({ skipped: true, reason: 'lead_not_found', lead_id });
+  }
   if (!lead || !lead.phone) {
-    return Response.json({ error: 'Lead not found or missing phone' }, { status: 404 });
+    return Response.json({ skipped: true, reason: 'lead_missing_phone', lead_id });
   }
 
   // Don't schedule if lead already booked
