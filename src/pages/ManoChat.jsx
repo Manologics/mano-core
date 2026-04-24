@@ -101,7 +101,10 @@ export default function ManoChat() {
 
         {/* Input */}
         <div style={{ background: "white", borderTop: "1px solid #e0e0e0", padding: "16px 20px" }}>
-          <div style={{ maxWidth: "800px", margin: "0 auto", display: "flex", gap: "8px" }}>
+          <div style={{ maxWidth: "800px", margin: "0 auto", display: "flex", alignItems: "center", gap: "10px" }}>
+            <button style={{ width: "32px", height: "32px", borderRadius: "50%", background: "transparent", border: "none", color: "#007AFF", cursor: "pointer", fontSize: "18px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              ➕
+            </button>
             <input
               value={input}
               onChange={e => setInput(e.target.value)}
@@ -109,6 +112,9 @@ export default function ManoChat() {
               placeholder="Type a message..."
               style={{ flex: 1, padding: "10px 16px", border: "1px solid #d0d0d0", borderRadius: "20px", fontSize: "14px", outline: "none", fontFamily: "inherit" }}
             />
+            <button style={{ width: "32px", height: "32px", borderRadius: "50%", background: "transparent", border: "none", color: "#007AFF", cursor: "pointer", fontSize: "18px", display: "flex", alignItems: "center", justifyContent: "center" }}>
+              🎤
+            </button>
             <button onClick={send} disabled={loading || !input.trim()}
               style={{ width: "40px", height: "40px", borderRadius: "50%", background: loading || !input.trim() ? "#ccc" : "#007AFF", color: "white", border: "none", cursor: loading || !input.trim() ? "not-allowed" : "pointer", fontSize: "18px", display: "flex", alignItems: "center", justifyContent: "center" }}>
               ➤
