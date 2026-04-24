@@ -8,6 +8,7 @@ export default function ManoChat() {
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [debug, setDebug] = useState({ lastMessage: '', status: '', response: '' });
   const bottomRef = useRef(null);
 
   useEffect(() => {
@@ -16,24 +17,40 @@ export default function ManoChat() {
 
   const send = async () => {
     if (!input.trim() || loading) return;
-    const userMsg = { role: "user", content: input.trim() };
-    console.log('[ManoChat] Sending message:', userMsg.content.substring(0, 50));
+    
+    const userMessage = input.trim();
+    const userMsg = { role: "user", content: userMessage };
+    
+    setDebug({ lastMessage: userMessage, status: 'sending...', response: '' });
     setMessages(prev => [...prev, userMsg]);
     setInput("");
     setLoading(true);
+    
     try {
-      console.log('[ManoChat] Invoking manoAiChat function...');
-      const res = await base44.functions.invoke('manoAiChat', { message: userMsg.content, history: messages.slice(-10) });
-      console.log('[ManoChat] Response received:', res);
-      if (res && res.reply) {
-        console.log('[ManoChat] Adding reply to messages:', res.reply.substring(0, 50));
+      const payload = { message: userMessage, history: messages.slice(-10) };
+      console.log('[ManoChat] Calling backend with:', payload);
+      
+      const res = await base44.functions.invoke('manoAiChat', payload);
+      console.log('[ManoChat] Backend response:', res);
+      
+      setDebug(prev => ({ ...prev, response: JSON.stringify(res) }));
+      
+      if (res && res.success && res.reply) {
+        setDebug(prev => ({ ...prev, status: 'success' }));
         setMessages(prev => [...prev, { role: "assistant", content: res.reply }]);
+      } else if (res && res.error) {
+        setDebug(prev => ({ ...prev, status: `error: ${res.error}` }));
+        setMessages(prev => [...prev, { role: "assistant", content: "MANO had a connection issue. Try again." }]);
       } else {
-        console.error('[ManoChat] No reply in response:', res);
+        setDebug(prev => ({ ...prev, status: 'error: no reply' }));
+        setMessages(prev => [...prev, { role: "assistant", content: "MANO had a connection issue. Try again." }]);
       }
     } catch (e) {
-      console.error('[ManoChat] Function call error:', e);
+      console.error('[ManoChat] Catch block error:', e);
+      setDebug(prev => ({ ...prev, status: `error: ${e.message}` }));
+      setMessages(prev => [...prev, { role: "assistant", content: "MANO had a connection issue. Try again." }]);
     }
+    
     setLoading(false);
   };
 
@@ -53,6 +70,15 @@ export default function ManoChat() {
           <p style={{ fontSize: "12px", color: "#9ca3af", margin: "3px 0 0 0", fontWeight: "500" }}>AI Revenue Operator</p>
         </div>
       </div>
+
+      {/* Debug Panel */}
+      {debug.lastMessage && (
+        <div style={{ background: "#f0f0f0", border: "1px solid #ccc", borderRadius: "4px", padding: "8px 12px", margin: "12px 0", fontSize: "11px", fontFamily: "monospace", color: "#333" }}>
+          <div><strong>Last Message:</strong> {debug.lastMessage.substring(0, 60)}</div>
+          <div><strong>Status:</strong> {debug.status}</div>
+          {debug.response && <div><strong>Response:</strong> {debug.response.substring(0, 100)}</div>}
+        </div>
+      )}
 
       {/* Chat Container */}
       <div style={{ flex: 1, maxWidth: "900px", width: "100%", margin: "0 auto", display: "flex", flexDirection: "column", padding: "0 24px" }}>
