@@ -17,16 +17,22 @@ export default function ManoChat() {
   const send = async () => {
     if (!input.trim() || loading) return;
     const userMsg = { role: "user", content: input.trim() };
+    console.log('[ManoChat] Sending message:', userMsg.content.substring(0, 50));
     setMessages(prev => [...prev, userMsg]);
     setInput("");
     setLoading(true);
     try {
+      console.log('[ManoChat] Invoking manoAiChat function...');
       const res = await base44.functions.invoke('manoAiChat', { message: userMsg.content, history: messages.slice(-10) });
+      console.log('[ManoChat] Response received:', res);
       if (res && res.reply) {
+        console.log('[ManoChat] Adding reply to messages:', res.reply.substring(0, 50));
         setMessages(prev => [...prev, { role: "assistant", content: res.reply }]);
+      } else {
+        console.error('[ManoChat] No reply in response:', res);
       }
     } catch (e) {
-      console.error('Mano chat error:', e);
+      console.error('[ManoChat] Function call error:', e);
     }
     setLoading(false);
   };
