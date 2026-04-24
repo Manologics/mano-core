@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { manoAiChat } from "@/functions/manoAiChat";
+import { base44 } from "@/api/base44Client";
 import ReactMarkdown from "react-markdown";
 
 export default function ManoChat() {
@@ -21,7 +21,7 @@ export default function ManoChat() {
     setInput("");
     setLoading(true);
     try {
-      const res = await manoAiChat({ message: userMsg.content, history: messages.slice(-10) });
+      const res = await base44.functions.invoke('manoAiChat', { message: userMsg.content, history: messages.slice(-10) });
       setMessages(prev => [...prev, { role: "assistant", content: res.reply || "Sorry, no response." }]);
     } catch (e) {
       setMessages(prev => [...prev, { role: "assistant", content: `Error: ${e.message}` }]);
