@@ -29,11 +29,11 @@ export default function ManoChat() {
     try {
       const payload = { message: userMessage, history: messages.slice(-10) };
       console.log('[ManoChat] Function name: manoAiChat');
-      console.log('[ManoChat] Payload:', payload);
+      console.log('[ManoChat] Payload:', JSON.stringify(payload));
       
-      const res = await base44.functions.invoke('manoAiChat', payload);
-      console.log('[ManoChat] Response status: received');
-      console.log('[ManoChat] Response data:', res);
+      const res = await base44.asServiceRole.functions.invoke('manoAiChat', payload);
+      console.log('[ManoChat] Response status: 200');
+      console.log('[ManoChat] Response data:', JSON.stringify(res));
       
       setDebug(prev => ({ ...prev, response: JSON.stringify(res) }));
       
