@@ -28,10 +28,12 @@ export default function ManoChat() {
     
     try {
       const payload = { message: userMessage, history: messages.slice(-10) };
-      console.log('[ManoChat] Calling backend with:', payload);
+      console.log('[ManoChat] Function name: manoAiChat');
+      console.log('[ManoChat] Payload:', payload);
       
       const res = await base44.functions.invoke('manoAiChat', payload);
-      console.log('[ManoChat] Backend response:', res);
+      console.log('[ManoChat] Response status: received');
+      console.log('[ManoChat] Response data:', res);
       
       setDebug(prev => ({ ...prev, response: JSON.stringify(res) }));
       
