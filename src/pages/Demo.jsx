@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Lead } from "../api/entities";
 
 // ─── FONT IMPORT ──────────────────────────────────────────────────────────────
 const FontStyle = () => (
@@ -123,17 +122,18 @@ function CalculatorModal({ onClose }) {
     if (!name || !phone || !calls) return;
     setSaving(true);
     try {
-      await Lead.create({
-        name,
-        phone,
-        status: "New",
-        score: "HOT",
-        notes: \`Lost Revenue Calculator | Missed Calls/wk: \${calls} | Est Loss: \${formatMoney(lowEnd)}–\${formatMoney(highEnd)}/mo\`,
-        business_type: "Calculator Lead",
-        service_need: "Demo Booking"
+      await fetch("https://mano-dd309130.base44.app/functions/landingLeadCapture", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          phone,
+          missedCallsPerWeek: calls,
+          source: "calculator"
+        })
       });
     } catch(e) {
-      console.error("Failed to save lead from calculator:", e);
+      console.error("Failed to capture lead:", e);
     }
     setSaving(false);
     setStep(3);

@@ -16,3 +16,6 @@ export const testTwilioEnv = base44.functions.testTwilioEnv;
 export const testListLeads = base44.functions.testListLeads;
 export const dealMachineSms2 = base44.functions.dealMachineSms2;
 export const deal_machine_sms2 = base44.functions.deal_machine_sms2;
+export const landingLeadCapture = base44.functions.landingLeadCapture;
+export const landingSms2 = base44.functions.landingSms2;
+export const landingSms3 = base44.functions.landingSms3;
