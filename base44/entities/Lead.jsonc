@@ -83,13 +83,7 @@
     },
     "source": {
       "type": "string",
-      "enum": [
-        "monkee",
-        "vendorfy",
-        "surplus"
-      ],
-      "default": "monkee",
-      "description": "Brand source of the lead submission"
+      "description": "Source of the lead submission"
     },
     "booking_offered": {
       "type": "boolean",
@@ -170,6 +164,18 @@
       ],
       "default": null,
       "description": "Ops-only priority flag set by Agent 5 monitoring"
+    },
+    "missed_calls_per_week": {
+      "type": "number",
+      "description": "From ROI calculator: missed calls per week"
+    },
+    "average_job_value": {
+      "type": "number",
+      "description": "From ROI calculator: average job value in dollars"
+    },
+    "monthly_loss": {
+      "type": "number",
+      "description": "From ROI calculator: calculated monthly revenue at risk (missed_calls_per_week * average_job_value * 4)"
     }
   },
   "required": [
