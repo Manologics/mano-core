@@ -41,11 +41,11 @@ const FontStyle = () => (
 
 // ─── COLOR SYSTEM ─────────────────────────────────────────────────────────────
 const GOLD  = "#f5c518";
-const GOLDD = "#c9a000";   // deeper gold for gradients
-const RED   = "#cc2020";   // slightly deeper / more aggressive red
-const REDB  = "#e03030";   // bright red for accents
+const GOLDD = "#c9a000";
+const RED   = "#cc2020";
+const REDB  = "#e03030";
 const WHITE = "#ffffff";
-const GREEN = "#00ff88";   // AI/system status only
+const GREEN = "#00ff88";
 
 const CALENDLY_URL = "https://calendly.com/monkee-bizznus/30min";
 
@@ -112,7 +112,7 @@ function CalculatorModal({ onClose }) {
 
   const missedWeekly = parseInt(calls) || 0;
   const missedMonthly = missedWeekly * 4;
-  const conversions = missedMonthly * 0.3; // 30% convert to jobs
+  const conversions = missedMonthly * 0.3;
   const lowEnd = Math.round(conversions * 500);
   const highEnd = Math.round(conversions * 1000);
 
@@ -125,12 +125,7 @@ function CalculatorModal({ onClose }) {
       await fetch("https://mano-dd309130.base44.app/functions/landingLeadCapture", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          phone,
-          missedCallsPerWeek: calls,
-          source: "calculator"
-        })
+        body: JSON.stringify({ name, phone, missedCallsPerWeek: calls, source: "calculator" })
       });
     } catch(e) {
       console.error("Failed to capture lead:", e);
@@ -141,11 +136,11 @@ function CalculatorModal({ onClose }) {
 
   return (
     <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.97)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:"20px" }}>
-      <div style={{ background:"#0d0d0d",border:\`1px solid \${GOLD}22\`,borderRadius:"16px",padding:"36px 32px",maxWidth:"460px",width:"100%",position:"relative",boxShadow:\`0 0 60px \${GOLD}10\` }}>
-        
+      <div style={{ background:"#0d0d0d",border:`1px solid ${GOLD}22`,borderRadius:"16px",padding:"36px 32px",maxWidth:"460px",width:"100%",position:"relative",boxShadow:`0 0 60px ${GOLD}10` }}>
+
         {step < 3 && (
           <div style={{ display:"flex",gap:"8px",marginBottom:"28px" }}>
-            {[1,2].map(s=><div key={s} style={{ flex:1,height:"3px",borderRadius:"2px",background:step>=s?\`linear-gradient(90deg,\${GOLDD},\${GOLD})\`:"#1c1c1c",transition:"background 0.3s" }}/>)}
+            {[1,2].map(s=><div key={s} style={{ flex:1,height:"3px",borderRadius:"2px",background:step>=s?`linear-gradient(90deg,${GOLDD},${GOLD})`:"#1c1c1c",transition:"background 0.3s" }}/>)}
           </div>
         )}
 
@@ -153,36 +148,36 @@ function CalculatorModal({ onClose }) {
           <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"9px",color:GOLD,letterSpacing:"3px",marginBottom:"8px" }}>STEP 1 OF 2</div>
           <h2 style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"32px",color:WHITE,margin:"0 0 6px",letterSpacing:"1px" }}>Who are we calculating for?</h2>
           <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"14px",color:"#555",margin:"0 0 24px" }}>Enter your details to generate your custom loss report.</p>
-          
+
           <div style={{ display:"flex",flexDirection:"column",gap:"16px",marginBottom:"28px" }}>
-            <input 
+            <input
               type="text" placeholder="Your Name" value={name} onChange={e=>setName(e.target.value)}
               style={{ padding:"16px",borderRadius:"8px",background:"#141414",border:"1px solid #222",color:WHITE,fontFamily:"'DM Sans', sans-serif",fontSize:"14px",outline:"none" }}
             />
-            <input 
+            <input
               type="tel" placeholder="Mobile Number" value={phone} onChange={e=>setPhone(e.target.value)}
               style={{ padding:"16px",borderRadius:"8px",background:"#141414",border:"1px solid #222",color:WHITE,fontFamily:"'DM Sans', sans-serif",fontSize:"14px",outline:"none" }}
             />
           </div>
-          
-          <button onClick={()=>name&&phone&&setStep(2)} className={name&&phone?"gold-glow-btn":""} style={{ width:"100%",padding:"18px",borderRadius:"8px",fontFamily:"'Space Mono', monospace",fontSize:"13px",fontWeight:"700",border:"none",cursor:name&&phone?"pointer":"not-allowed",background:name&&phone?\`linear-gradient(135deg,\${GOLD},\${GOLDD})\`:"#1a1a1a",color:name&&phone?"#000":"#333",letterSpacing:"1px",transition:"all 0.2s" }}>NEXT →</button>
+
+          <button onClick={()=>name&&phone&&setStep(2)} className={name&&phone?"gold-glow-btn":""} style={{ width:"100%",padding:"18px",borderRadius:"8px",fontFamily:"'Space Mono', monospace",fontSize:"13px",fontWeight:"700",border:"none",cursor:name&&phone?"pointer":"not-allowed",background:name&&phone?`linear-gradient(135deg,${GOLD},${GOLDD})`:"#1a1a1a",color:name&&phone?"#000":"#333",letterSpacing:"1px",transition:"all 0.2s" }}>NEXT →</button>
         </>}
 
         {step===2&&<>
           <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"9px",color:GOLD,letterSpacing:"3px",marginBottom:"8px" }}>STEP 2 OF 2</div>
           <h2 style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"32px",color:WHITE,margin:"0 0 6px",letterSpacing:"1px" }}>How many calls do you miss?</h2>
           <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"14px",color:"#555",margin:"0 0 24px" }}>Estimate the number of calls you miss per week (after hours, on jobs, weekends).</p>
-          
+
           <div style={{ marginBottom:"28px" }}>
-            <input 
+            <input
               type="number" placeholder="e.g. 5" value={calls} onChange={e=>setCalls(e.target.value)} min="1"
-              style={{ width:"100%",padding:"24px 16px",borderRadius:"8px",background:"#141414",border:\`1px solid \${GOLD}44\`,color:GOLD,fontFamily:"'Bebas Neue', sans-serif",fontSize:"40px",textAlign:"center",outline:"none",boxShadow:\`inset 0 0 20px \${GOLD}08\` }}
+              style={{ width:"100%",padding:"24px 16px",borderRadius:"8px",background:"#141414",border:`1px solid ${GOLD}44`,color:GOLD,fontFamily:"'Bebas Neue', sans-serif",fontSize:"40px",textAlign:"center",outline:"none",boxShadow:`inset 0 0 20px ${GOLD}08` }}
             />
           </div>
 
           <div style={{ display:"flex",gap:"12px" }}>
             <button onClick={()=>setStep(1)} style={{ padding:"16px 20px",borderRadius:"8px",fontFamily:"'DM Sans', sans-serif",fontSize:"13px",cursor:"pointer",background:"transparent",border:"1px solid #222",color:"#555",transition:"all 0.2s" }} onMouseEnter={e=>{ e.currentTarget.style.borderColor="#444"; e.currentTarget.style.color="#ccc"; }} onMouseLeave={e=>{ e.currentTarget.style.borderColor="#222"; e.currentTarget.style.color="#555"; }}>← Back</button>
-            <button onClick={handleCalculate} disabled={!calls || saving} className={calls&&!saving?"gold-glow-btn":""} style={{ flex:1,padding:"16px",borderRadius:"8px",fontFamily:"'Space Mono', monospace",fontSize:"12px",fontWeight:"700",border:"none",cursor:calls&&!saving?"pointer":"not-allowed",background:calls&&!saving?\`linear-gradient(135deg,\${GOLD},\${GOLDD})\`:"#1a1a1a",color:calls&&!saving?"#000":"#333",letterSpacing:"1px",transition:"all 0.2s" }}>
+            <button onClick={handleCalculate} disabled={!calls || saving} className={calls&&!saving?"gold-glow-btn":""} style={{ flex:1,padding:"16px",borderRadius:"8px",fontFamily:"'Space Mono', monospace",fontSize:"12px",fontWeight:"700",border:"none",cursor:calls&&!saving?"pointer":"not-allowed",background:calls&&!saving?`linear-gradient(135deg,${GOLD},${GOLDD})`:"#1a1a1a",color:calls&&!saving?"#000":"#333",letterSpacing:"1px",transition:"all 0.2s" }}>
               {saving ? "CALCULATING..." : "CALCULATE MY LOSS →"}
             </button>
           </div>
@@ -191,20 +186,20 @@ function CalculatorModal({ onClose }) {
         {step===3&&<>
           <div style={{ textAlign:"center",padding:"10px 0" }}>
             <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"10px",color:RED,letterSpacing:"3px",marginBottom:"16px" }}>YOUR ESTIMATED MONTHLY LOSS</div>
-            
+
             <div className="red-loss" style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"clamp(56px,10vw,88px)",color:REDB,lineHeight:1,marginBottom:"8px",letterSpacing:"2px" }}>
               {formatMoney(lowEnd)}–{formatMoney(highEnd)}
             </div>
-            
+
             <div style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"16px",color:"#777",fontWeight:"500",marginBottom:"24px" }}>
               You're losing approximately <strong style={{ color:WHITE }}>{formatMoney(lowEnd)}–{formatMoney(highEnd)}</strong> per month in missed jobs.
             </div>
 
-            <div style={{ background:\`linear-gradient(135deg, \${RED}14, #0a0808)\`,border:\`1px solid \${RED}33\`,borderRadius:"10px",padding:"18px 16px",marginBottom:"32px",boxShadow:\`0 0 30px \${RED}10\` }}>
-              <span style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"14px",color:REDB,fontWeight:"700",letterSpacing:"0.5px",textShadow:\`0 0 10px \${RED}55\` }}>That's revenue going straight to your competitors.</span>
+            <div style={{ background:`linear-gradient(135deg, ${RED}14, #0a0808)`,border:`1px solid ${RED}33`,borderRadius:"10px",padding:"18px 16px",marginBottom:"32px",boxShadow:`0 0 30px ${RED}10` }}>
+              <span style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"14px",color:REDB,fontWeight:"700",letterSpacing:"0.5px",textShadow:`0 0 10px ${RED}55` }}>That's revenue going straight to your competitors.</span>
             </div>
 
-            <button onClick={()=>{window.open(CALENDLY_URL,"_blank");onClose();}} className="gold-glow-btn" style={{ width:"100%",padding:"18px",borderRadius:"8px",fontFamily:"'Space Mono', monospace",fontSize:"12px",fontWeight:"700",border:"none",cursor:"pointer",background:\`linear-gradient(135deg,\${GOLD},\${GOLDD})\`,color:"#000",letterSpacing:"1px",boxShadow:\`0 0 30px \${GOLD}44\` }}>
+            <button onClick={()=>{window.open(CALENDLY_URL,"_blank");onClose();}} className="gold-glow-btn" style={{ width:"100%",padding:"18px",borderRadius:"8px",fontFamily:"'Space Mono', monospace",fontSize:"12px",fontWeight:"700",border:"none",cursor:"pointer",background:`linear-gradient(135deg,${GOLD},${GOLDD})`,color:"#000",letterSpacing:"1px",boxShadow:`0 0 30px ${GOLD}44` }}>
               BOOK A DEMO TO CAPTURE THESE JOBS →
             </button>
           </div>
@@ -241,7 +236,7 @@ function SMSSimulator() {
     <div style={{ background:"#0d0d0d",border:"1px solid #1c1c1c",borderRadius:"16px",overflow:"hidden" }}>
       <div style={{ background:"#111",borderBottom:"1px solid #1c1c1c",padding:"14px 18px",display:"flex",alignItems:"center",justifyContent:"space-between" }}>
         <div style={{ display:"flex",alignItems:"center",gap:"12px" }}>
-          <div style={{ width:"38px",height:"38px",borderRadius:"50%",background:\`linear-gradient(135deg,\${GOLD},\${GOLDD})\`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"18px",flexShrink:0,boxShadow:\`0 0 16px \${GOLD}44\` }}>🤖</div>
+          <div style={{ width:"38px",height:"38px",borderRadius:"50%",background:`linear-gradient(135deg,${GOLD},${GOLDD})`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"18px",flexShrink:0,boxShadow:`0 0 16px ${GOLD}44` }}>🤖</div>
           <div>
             <div style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"13px",fontWeight:"700",color:WHITE }}>Mano — AI Intake Agent</div>
             <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"10px",color:GREEN }}>● Online · Responding instantly</div>
@@ -267,7 +262,7 @@ function SMSSimulator() {
             <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"9px",color:"#2a2a2a",marginBottom:"4px",marginLeft:m.from==="ai"?"2px":0,marginRight:m.from!=="ai"?"2px":0 }}>
               {m.from==="ai"?"Mano":"Marcus"}
             </div>
-            <div style={{ maxWidth:"78%",padding:"12px 16px",borderRadius:m.from==="ai"?"4px 16px 16px 16px":"16px 4px 16px 16px",background:m.from==="ai"?"#181818":\`\${GOLD}10\`,border:m.from==="ai"?"1px solid #222":\`1px solid \${GOLD}33\`,fontFamily:"'DM Sans', sans-serif",fontSize:"13px",color:m.from==="ai"?"#ccc":GOLD,lineHeight:1.65 }}>
+            <div style={{ maxWidth:"78%",padding:"12px 16px",borderRadius:m.from==="ai"?"4px 16px 16px 16px":"16px 4px 16px 16px",background:m.from==="ai"?"#181818":`${GOLD}10`,border:m.from==="ai"?"1px solid #222":`1px solid ${GOLD}33`,fontFamily:"'DM Sans', sans-serif",fontSize:"13px",color:m.from==="ai"?"#ccc":GOLD,lineHeight:1.65 }}>
               {m.text}
             </div>
           </div>
@@ -290,7 +285,7 @@ function SMSSimulator() {
             <span style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"12px",color:GOLD,fontWeight:"600" }}>Lead qualified & booked in under 3 minutes</span>
           </div>}
         </div>
-        <button onClick={run} disabled={running} className={!running?"gold-glow-btn":""} style={{ padding:"10px 22px",borderRadius:"7px",fontFamily:"'Space Mono', monospace",fontSize:"11px",fontWeight:"700",letterSpacing:"1px",cursor:running?"not-allowed":"pointer",background:running?"#1a1a1a":\`linear-gradient(135deg,\${GOLD},\${GOLDD})\`,color:running?"#444":"#000",border:"none",transition:"background 0.2s" }}>
+        <button onClick={run} disabled={running} className={!running?"gold-glow-btn":""} style={{ padding:"10px 22px",borderRadius:"7px",fontFamily:"'Space Mono', monospace",fontSize:"11px",fontWeight:"700",letterSpacing:"1px",cursor:running?"not-allowed":"pointer",background:running?"#1a1a1a":`linear-gradient(135deg,${GOLD},${GOLDD})`,color:running?"#444":"#000",border:"none",transition:"background 0.2s" }}>
           {running?"RUNNING...":done?"▶ REPLAY":"▶ RUN DEMO"}
         </button>
       </div>
@@ -307,11 +302,11 @@ function QualLogic() {
         <div
           key={i}
           onClick={()=>setActive(active===i?null:i)}
-          style={{ background:active===i?"#111":"#0d0d0d",border:\`1px solid \${active===i?s.color+"55":"#1a1a1a"}\`,borderRadius:"14px",padding:"22px 20px",cursor:"pointer",transition:"all 0.25s",boxShadow:active===i&&s.color===GOLD?\`0 0 20px \${GOLD}18\`:active===i&&s.color===REDB?\`0 0 20px \${RED}18\`:"none" }}
+          style={{ background:active===i?"#111":"#0d0d0d",border:`1px solid ${active===i?s.color+"55":"#1a1a1a"}`,borderRadius:"14px",padding:"22px 20px",cursor:"pointer",transition:"all 0.25s",boxShadow:active===i&&s.color===GOLD?`0 0 20px ${GOLD}18`:active===i&&s.color===REDB?`0 0 20px ${RED}18`:"none" }}
         >
           <div style={{ fontSize:"28px",marginBottom:"12px" }}>{s.icon}</div>
           <div style={{ display:"flex",alignItems:"center",gap:"8px",marginBottom:active===i?"10px":"0" }}>
-            <div style={{ width:"20px",height:"20px",borderRadius:"50%",background:\`\${s.color}18\`,border:\`1px solid \${s.color}55\`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
+            <div style={{ width:"20px",height:"20px",borderRadius:"50%",background:`${s.color}18`,border:`1px solid ${s.color}55`,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0 }}>
               <span style={{ fontFamily:"'Space Mono', monospace",fontSize:"9px",color:s.color,fontWeight:"700" }}>{i+1}</span>
             </div>
             <div style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"13px",fontWeight:"700",color:WHITE }}>{s.label}</div>
@@ -349,11 +344,11 @@ function Pipeline() {
           <div key={stage}>
             <div style={{ display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"10px" }}>
               <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"9px",color:c,letterSpacing:"2px",fontWeight:"700" }}>{stage.toUpperCase()}</div>
-              <div style={{ background:\`\${c}18\`,border:\`1px solid \${c}44\`,borderRadius:"10px",padding:"1px 8px",fontFamily:"'Space Mono', monospace",fontSize:"9px",color:c }}>{stageLeads.length}</div>
+              <div style={{ background:`${c}18`,border:`1px solid ${c}44`,borderRadius:"10px",padding:"1px 8px",fontFamily:"'Space Mono', monospace",fontSize:"9px",color:c }}>{stageLeads.length}</div>
             </div>
             <div style={{ display:"flex",flexDirection:"column",gap:"8px",minHeight:"60px" }}>
               {stageLeads.map(l=>(
-                <div key={l.id} style={{ background:"#111",border:"1px solid #1c1c1c",borderRadius:"10px",padding:"12px",opacity:moving===l.id?0.3:1,transition:"opacity 0.3s",boxShadow:stage==="Booked"?\`0 0 12px \${GOLD}14\`:"none" }}>
+                <div key={l.id} style={{ background:"#111",border:"1px solid #1c1c1c",borderRadius:"10px",padding:"12px",opacity:moving===l.id?0.3:1,transition:"opacity 0.3s",boxShadow:stage==="Booked"?`0 0 12px ${GOLD}14`:"none" }}>
                   <div style={{ display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"4px" }}>
                     <div style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"12px",fontWeight:"700",color:WHITE }}>{l.name}</div>
                     <ScoreBadge score={l.score}/>
@@ -361,11 +356,11 @@ function Pipeline() {
                   <div style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"10px",color:"#555",marginBottom:"2px",lineHeight:1.4 }}>{l.issue}</div>
                   <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"9px",color:"#2a2a2a",marginBottom:"10px" }}>{l.time}</div>
                   {stage!=="Booked"&&(
-                    <button onClick={()=>advance(l.id)} style={{ width:"100%",padding:"6px",borderRadius:"5px",fontFamily:"'Space Mono', monospace",fontSize:"9px",fontWeight:"700",cursor:"pointer",background:"transparent",border:\`1px solid \${stageColors[nextStage]}44\`,color:stageColors[nextStage],letterSpacing:"0.5px",transition:"all 0.2s" }}>
+                    <button onClick={()=>advance(l.id)} style={{ width:"100%",padding:"6px",borderRadius:"5px",fontFamily:"'Space Mono', monospace",fontSize:"9px",fontWeight:"700",cursor:"pointer",background:"transparent",border:`1px solid ${stageColors[nextStage]}44`,color:stageColors[nextStage],letterSpacing:"0.5px",transition:"all 0.2s" }}>
                       → {nextStage.toUpperCase()}
                     </button>
                   )}
-                  {stage==="Booked"&&<div style={{ textAlign:"center",fontFamily:"'Space Mono', monospace",fontSize:"9px",color:GOLD,letterSpacing:"1px",textShadow:\`0 0 8px \${GOLD}66\` }}>✓ BOOKED</div>}
+                  {stage==="Booked"&&<div style={{ textAlign:"center",fontFamily:"'Space Mono', monospace",fontSize:"9px",color:GOLD,letterSpacing:"1px",textShadow:`0 0 8px ${GOLD}66` }}>✓ BOOKED</div>}
                 </div>
               ))}
             </div>
@@ -380,22 +375,22 @@ function Pipeline() {
 function ROIPanel() {
   return (
     <div>
-      <div style={{ background:\`linear-gradient(135deg,\${RED}14,#0a0808,\${RED}08)\`,border:\`1px solid \${RED}33\`,borderRadius:"16px",padding:"40px 32px",textAlign:"center",marginBottom:"16px",boxShadow:\`0 0 40px \${RED}10\` }}>
-        <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"10px",color:\`\${RED}aa\`,letterSpacing:"3px",marginBottom:"14px" }}>IF YOU MISS JUST 5 CALLS A WEEK</div>
+      <div style={{ background:`linear-gradient(135deg,${RED}14,#0a0808,${RED}08)`,border:`1px solid ${RED}33`,borderRadius:"16px",padding:"40px 32px",textAlign:"center",marginBottom:"16px",boxShadow:`0 0 40px ${RED}10` }}>
+        <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"10px",color:`${RED}aa`,letterSpacing:"3px",marginBottom:"14px" }}>IF YOU MISS JUST 5 CALLS A WEEK</div>
         <div className="red-loss" style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"clamp(56px,10vw,104px)",color:REDB,lineHeight:1,marginBottom:"10px",letterSpacing:"3px" }}>$2K–$5K</div>
         <div style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"16px",color:"#777",fontWeight:"500",marginBottom:"20px" }}>
           drained from your business — <span style={{ color:REDB,fontWeight:"700" }}>every single month</span>
         </div>
-        <div style={{ display:"inline-block",background:\`\${GOLD}10\`,border:\`1px solid \${GOLD}33\`,borderRadius:"8px",padding:"12px 24px",boxShadow:\`0 0 20px \${GOLD}14\` }}>
+        <div style={{ display:"inline-block",background:`${GOLD}10`,border:`1px solid ${GOLD}33`,borderRadius:"8px",padding:"12px 24px",boxShadow:`0 0 20px ${GOLD}14` }}>
           <span style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"13px",color:GOLD,fontWeight:"700" }}>Mano recovers every one of those calls. Automatically.</span>
         </div>
       </div>
       <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(190px,1fr))",gap:"10px" }}>
         {ROI_ITEMS.map(r=>(
-          <div key={r.label} style={{ background:"#0f0f0f",border:\`1px solid \${GOLD}18\`,borderRadius:"12px",padding:"20px",boxShadow:\`0 0 16px \${GOLD}08\` }}>
+          <div key={r.label} style={{ background:"#0f0f0f",border:`1px solid ${GOLD}18`,borderRadius:"12px",padding:"20px",boxShadow:`0 0 16px ${GOLD}08` }}>
             <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"9px",color:"#3a3a3a",letterSpacing:"1px",marginBottom:"10px" }}>{r.label}</div>
             <div style={{ display:"flex",alignItems:"baseline",gap:"12px" }}>
-              <span style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"13px",color:REDB,textDecoration:"line-through",opacity:0.7,textShadow:\`0 0 6px \${RED}44\` }}>{r.before}</span>
+              <span style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"13px",color:REDB,textDecoration:"line-through",opacity:0.7,textShadow:`0 0 6px ${RED}44` }}>{r.before}</span>
               <span className="gold-headline" style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"34px",color:GOLD,lineHeight:1,letterSpacing:"1px" }}>{r.after}</span>
             </div>
             <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"9px",color:"#1e1e1e",marginTop:"4px",letterSpacing:"0.5px" }}>with Monkee Bizz AI</div>
@@ -418,13 +413,13 @@ export default function Demo() {
     { id:"roi",      label:"📈  ROI Panel" },
   ];
 
-  function CTAPrimary({ style={} }) {
+  function CTAPrimary({ style: extraStyle = {} }) {
     return (
       <button
         onClick={()=>setShowModal(true)}
         className="gold-glow-btn"
         style={{
-          background: \`linear-gradient(135deg, \${GOLD}, \${GOLDD})\`,
+          background: `linear-gradient(135deg, ${GOLD}, ${GOLDD})`,
           color: "#000",
           border: "none",
           padding: "17px 36px",
@@ -435,7 +430,7 @@ export default function Demo() {
           cursor: "pointer",
           letterSpacing: "1px",
           transition: "transform 0.2s, box-shadow 0.2s",
-          ...style
+          ...extraStyle
         }}
       >
         SHOW ME HOW MUCH I'M LOSING →
@@ -443,11 +438,11 @@ export default function Demo() {
     );
   }
 
-  function CTASecondary({ style={} }) {
+  function CTASecondary({ style: extraStyle = {} }) {
     return (
       <button
         onClick={()=>setShowModal(true)}
-        style={{ background:"transparent",color:"#555",border:"1px solid #1e1e1e",padding:"16px 28px",borderRadius:"9px",fontFamily:"'DM Sans', sans-serif",fontSize:"13px",fontWeight:"600",cursor:"pointer",transition:"all 0.2s",...style }}
+        style={{ background:"transparent",color:"#555",border:"1px solid #1e1e1e",padding:"16px 28px",borderRadius:"9px",fontFamily:"'DM Sans', sans-serif",fontSize:"13px",fontWeight:"600",cursor:"pointer",transition:"all 0.2s",...extraStyle }}
         onMouseEnter={e=>{ e.currentTarget.style.borderColor="#333"; e.currentTarget.style.color="#aaa"; }}
         onMouseLeave={e=>{ e.currentTarget.style.borderColor="#1e1e1e"; e.currentTarget.style.color="#555"; }}
       >
@@ -470,7 +465,7 @@ export default function Demo() {
         <button
           onClick={()=>setShowModal(true)}
           className="gold-glow-btn"
-          style={{ background:\`linear-gradient(135deg,\${GOLD},\${GOLDD})\`,color:"#000",border:"none",padding:"10px 22px",borderRadius:"7px",fontFamily:"'Space Mono', monospace",fontSize:"10px",fontWeight:"700",cursor:"pointer",letterSpacing:"1px" }}
+          style={{ background:`linear-gradient(135deg,${GOLD},${GOLDD})`,color:"#000",border:"none",padding:"10px 22px",borderRadius:"7px",fontFamily:"'Space Mono', monospace",fontSize:"10px",fontWeight:"700",cursor:"pointer",letterSpacing:"1px" }}
         >
           CALCULATE LOSS
         </button>
@@ -479,34 +474,29 @@ export default function Demo() {
       {/* ── HERO ── */}
       <section style={{ maxWidth:"880px",margin:"0 auto",padding:"92px 24px 64px",textAlign:"center" }}>
 
-        {/* FOR HVAC tag — red pain */}
-        <div style={{ display:"inline-block",background:\`\${RED}12\`,border:\`1px solid \${RED}44\`,borderRadius:"20px",padding:"5px 18px",marginBottom:"28px",boxShadow:\`0 0 16px \${RED}14\` }}>
+        <div style={{ display:"inline-block",background:`${RED}12`,border:`1px solid ${RED}44`,borderRadius:"20px",padding:"5px 18px",marginBottom:"28px",boxShadow:`0 0 16px ${RED}14` }}>
           <span style={{ fontFamily:"'Space Mono', monospace",fontSize:"9px",color:REDB,letterSpacing:"3px" }}>FOR HVAC CONTRACTORS</span>
         </div>
 
-        {/* headline */}
         <h1 style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"clamp(52px,9vw,108px)",color:WHITE,lineHeight:0.95,margin:"0 0 24px",letterSpacing:"2px" }}>
           Turn <span className="red-loss" style={{ color:REDB }}>Missed Calls</span><br/>
           Into <span className="gold-headline" style={{ color:GOLD }}>Booked Jobs</span><br/>
           <span style={{ fontSize:"clamp(30px,5vw,58px)",color:"#555",letterSpacing:"1px" }}>
-            Before Your <span style={{ color:RED,textShadow:\`0 0 16px \${RED}55\` }}>Competitors</span> Do
+            Before Your <span style={{ color:RED,textShadow:`0 0 16px ${RED}55` }}>Competitors</span> Do
           </span>
         </h1>
 
-        {/* emotional line */}
-        <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"15px",color:\`\${RED}bb\`,maxWidth:"480px",margin:"0 auto 18px",lineHeight:1.6,fontWeight:"500",fontStyle:"italic" }}>
+        <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"15px",color:`${RED}bb`,maxWidth:"480px",margin:"0 auto 18px",lineHeight:1.6,fontWeight:"500",fontStyle:"italic" }}>
           While you're missing calls, your competitors are closing them.
         </p>
 
-        {/* sub */}
         <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"17px",color:"#777",maxWidth:"500px",margin:"0 auto 16px",lineHeight:1.8,fontWeight:"400" }}>
           Mano responds in seconds, qualifies the lead, and books the job — automatically.
         </p>
 
-        {/* pain stat */}
         <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"14px",color:"#3a3a3a",maxWidth:"420px",margin:"0 auto 48px",lineHeight:1.6 }}>
           Miss just 5 calls a week? That's{" "}
-          <strong style={{ color:REDB,textShadow:\`0 0 8px \${RED}44\` }}>$2,000–$5,000 in lost jobs</strong> every month.
+          <strong style={{ color:REDB,textShadow:`0 0 8px ${RED}44` }}>$2,000–$5,000 in lost jobs</strong> every month.
         </p>
 
         <div style={{ display:"flex",gap:"14px",justifyContent:"center",flexWrap:"wrap",marginBottom:"16px" }}>
@@ -518,12 +508,12 @@ export default function Demo() {
 
       {/* ── PAIN DIVIDER ── */}
       <div style={{ maxWidth:"880px",margin:"0 auto 72px",padding:"0 24px" }}>
-        <div style={{ background:\`linear-gradient(135deg,\${RED}14,#0a0808 60%,\${RED}08)\`,border:\`1px solid \${RED}33\`,borderRadius:"14px",padding:"28px 36px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"24px",boxShadow:\`0 0 40px \${RED}0e\` }}>
+        <div style={{ background:`linear-gradient(135deg,${RED}14,#0a0808 60%,${RED}08)`,border:`1px solid ${RED}33`,borderRadius:"14px",padding:"28px 36px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"24px",boxShadow:`0 0 40px ${RED}0e` }}>
           <div style={{ flex:1,minWidth:"220px" }}>
             <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"9px",color:REDB,letterSpacing:"2px",marginBottom:"8px" }}>THE PROBLEM</div>
             <div style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"clamp(22px,3.5vw,34px)",color:WHITE,letterSpacing:"1px",lineHeight:1.1 }}>
               Every missed call is a job your{" "}
-              <span style={{ color:REDB,textShadow:\`0 0 12px \${RED}66\` }}>competitor</span>{" "}books.
+              <span style={{ color:REDB,textShadow:`0 0 12px ${RED}66` }}>competitor</span>{" "}books.
             </div>
           </div>
           <div style={{ textAlign:"center",padding:"0 8px" }}>
@@ -536,7 +526,7 @@ export default function Demo() {
       {/* ── WATCH YOUR AI EMPLOYEE WORK ── */}
       <section style={{ maxWidth:"980px",margin:"0 auto",padding:"0 24px 80px" }}>
         <div style={{ textAlign:"center",marginBottom:"40px" }}>
-          <div style={{ display:"inline-block",background:\`\${GREEN}0e\`,border:\`1px solid \${GREEN}28\`,borderRadius:"20px",padding:"5px 16px",marginBottom:"14px" }}>
+          <div style={{ display:"inline-block",background:`${GREEN}0e`,border:`1px solid ${GREEN}28`,borderRadius:"20px",padding:"5px 16px",marginBottom:"14px" }}>
             <span style={{ fontFamily:"'Space Mono', monospace",fontSize:"9px",color:GREEN,letterSpacing:"3px" }}>● LIVE DEMO</span>
           </div>
           <h2 style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"clamp(32px,5vw,58px)",color:WHITE,margin:"0 0 12px",letterSpacing:"2px" }}>
@@ -548,7 +538,6 @@ export default function Demo() {
           </p>
         </div>
 
-        {/* Tab bar */}
         <div style={{ display:"flex",gap:"4px",marginBottom:"20px",background:"#0d0d0d",border:"1px solid #181818",borderRadius:"10px",padding:"4px" }}>
           {tabs.map(t=>(
             <button key={t.id} onClick={()=>setTab(t.id)} style={{ flex:1,padding:"10px 8px",borderRadius:"7px",fontFamily:"'DM Sans', sans-serif",fontSize:"12px",fontWeight:"600",cursor:"pointer",border:"none",transition:"all 0.2s",background:tab===t.id?"#1c1c1c":"transparent",color:tab===t.id?WHITE:"#444",boxShadow:tab===t.id?"0 1px 8px rgba(0,0,0,0.7)":"none",whiteSpace:"nowrap" }}>
@@ -579,12 +568,12 @@ export default function Demo() {
             ].map(a=>(
               <div key={a.n}
                 style={{ background:"#0d0d0d",border:"1px solid #161616",borderRadius:"12px",padding:"24px 14px",textAlign:"center",transition:"all 0.25s",cursor:"default" }}
-                onMouseEnter={e=>{ e.currentTarget.style.borderColor=\`\${GOLD}44\`; e.currentTarget.style.boxShadow=\`0 0 20px \${GOLD}10\`; }}
+                onMouseEnter={e=>{ e.currentTarget.style.borderColor=`${GOLD}44`; e.currentTarget.style.boxShadow=`0 0 20px ${GOLD}10`; }}
                 onMouseLeave={e=>{ e.currentTarget.style.borderColor="#161616"; e.currentTarget.style.boxShadow="none"; }}
               >
                 <div style={{ fontSize:"24px",marginBottom:"10px" }}>{a.icon}</div>
                 <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"8px",color:"#2a2a2a",marginBottom:"4px",letterSpacing:"1px" }}>AGENT {a.n}</div>
-                <div style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"20px",color:GOLD,marginBottom:"6px",letterSpacing:"2px",textShadow:\`0 0 10px \${GOLD}33\` }}>{a.name}</div>
+                <div style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"20px",color:GOLD,marginBottom:"6px",letterSpacing:"2px",textShadow:`0 0 10px ${GOLD}33` }}>{a.name}</div>
                 <div style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"11px",color:"#3a3a3a",lineHeight:1.5 }}>{a.desc}</div>
               </div>
             ))}
@@ -603,7 +592,7 @@ export default function Demo() {
           <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"15px",color:"#555",margin:"0 0 10px",lineHeight:1.75 }}>
             Book a free 30-minute demo. We'll show you exactly how Mano works — and what it's costing you every day you wait.
           </p>
-          <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"13px",color:\`\${RED}88\`,margin:"0 0 36px",fontStyle:"italic" }}>
+          <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"13px",color:`${RED}88`,margin:"0 0 36px",fontStyle:"italic" }}>
             While you're reading this, your competitors are answering your leads.
           </p>
           <div style={{ display:"flex",gap:"14px",justifyContent:"center",flexWrap:"wrap" }}>
