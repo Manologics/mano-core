@@ -463,6 +463,18 @@ function ROIPanel() {
   );
 }
 
+// ─── SECTION DIVIDER ─────────────────────────────────────────────────────────
+function Divider({ color = GOLD, opacity = 0.12 }) {
+  const c = color === "red" ? REDB : GOLD;
+  return (
+    <div style={{ maxWidth:"880px",margin:"0 auto",padding:"0 24px",display:"flex",alignItems:"center",gap:"14px" }}>
+      <div style={{ flex:1,height:"1px",background:`linear-gradient(90deg,transparent,${c}${Math.round(opacity*255).toString(16).padStart(2,"0")},transparent)` }}/>
+      <div style={{ width:"5px",height:"5px",borderRadius:"50%",background:c,boxShadow:`0 0 10px 2px ${c}66`,opacity:0.7 }}/>
+      <div style={{ flex:1,height:"1px",background:`linear-gradient(90deg,transparent,${c}${Math.round(opacity*255).toString(16).padStart(2,"0")},transparent)` }}/>
+    </div>
+  );
+}
+
 // ─── MAIN ─────────────────────────────────────────────────────────────────────
 export default function Demo() {
   const [showModal, setShowModal] = useState(false);
@@ -568,6 +580,8 @@ export default function Demo() {
         <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"10px",color:DIM,letterSpacing:"1px" }}>Free 30-min walkthrough. No pressure.</div>
       </section>
 
+      <Divider color="red" opacity={0.1}/>
+
       {/* ── PAIN DIVIDER ── */}
       <div style={{ maxWidth:"880px",margin:"0 auto 72px",padding:"0 24px" }}>
         <div style={{ background:`linear-gradient(135deg,${RED}18,#0c0808 60%,${RED}0c)`,border:`1px solid ${RED}44`,borderRadius:"14px",padding:"28px 36px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"24px",boxShadow:`0 0 50px ${RED}14` }}>
@@ -584,6 +598,8 @@ export default function Demo() {
           </div>
         </div>
       </div>
+
+      <Divider opacity={0.1}/>
 
       {/* ── WATCH YOUR AI EMPLOYEE WORK ── */}
       <section style={{ maxWidth:"980px",margin:"0 auto",padding:"0 24px 80px" }}>
@@ -642,6 +658,8 @@ export default function Demo() {
           </div>
         </div>
       </section>
+
+      <Divider opacity={0.1}/>
 
       {/* ── BOTTOM CTA ── */}
       <section style={{ padding:"96px 24px",textAlign:"center" }}>
