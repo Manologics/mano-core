@@ -4,7 +4,7 @@ import ReactMarkdown from "react-markdown";
 
 export default function ManoChat() {
   const [messages, setMessages] = useState([
-    { role: "assistant", content: "Hey there 👋 I'm Mano, your AI ops assistant. What's on your mind?" }
+    { role: "assistant", content: "Hey — I'm MANO 🐒 I help service businesses capture missed leads, respond instantly, qualify customers, and book jobs automatically. What do you want to test?" }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -22,18 +22,20 @@ export default function ManoChat() {
     setLoading(true);
     try {
       const res = await base44.functions.invoke('manoAiChat', { message: userMsg.content, history: messages.slice(-10) });
-      setMessages(prev => [...prev, { role: "assistant", content: res.reply || "Sorry, no response." }]);
+      if (res && res.reply) {
+        setMessages(prev => [...prev, { role: "assistant", content: res.reply }]);
+      }
     } catch (e) {
-      setMessages(prev => [...prev, { role: "assistant", content: `Error: ${e.message}` }]);
+      console.error('Mano chat error:', e);
     }
     setLoading(false);
   };
 
   const SUGGESTIONS = [
-    "What needs attention today?",
-    "Who are my hottest leads?",
-    "How's the pipeline looking?",
-    "Any overdue follow-ups?"
+    "Show me a lead intake example",
+    "How do you book jobs?",
+    "Can you handle no-shows?",
+    "What about follow-ups?"
   ];
 
   return (
@@ -41,8 +43,8 @@ export default function ManoChat() {
       {/* Header */}
       <div style={{ background: "white", borderBottom: "1px solid #e5e5e5", padding: "14px 24px", position: "sticky", top: 0, zIndex: 10 }}>
         <div style={{ maxWidth: "900px", margin: "0 auto" }}>
-          <h1 style={{ fontSize: "18px", fontWeight: "600", color: "#1f2937", margin: 0, letterSpacing: "-0.3px" }}>Mano AI</h1>
-          <p style={{ fontSize: "12px", color: "#9ca3af", margin: "3px 0 0 0", fontWeight: "500" }}>Your ops assistant</p>
+          <h1 style={{ fontSize: "18px", fontWeight: "600", color: "#1f2937", margin: 0, letterSpacing: "-0.3px" }}>MANO</h1>
+          <p style={{ fontSize: "12px", color: "#9ca3af", margin: "3px 0 0 0", fontWeight: "500" }}>AI Revenue Operator</p>
         </div>
       </div>
 
