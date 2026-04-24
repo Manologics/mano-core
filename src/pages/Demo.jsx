@@ -105,107 +105,174 @@ function ScoreBadge({ score }) {
 // ─── LOST REVENUE CALCULATOR MODAL ─────────────────────────────────────────────
 function CalculatorModal({ onClose }) {
   const [step, setStep] = useState(1);
+  const [calls, setCalls] = useState("");
+  const [jobValue, setJobValue] = useState("500");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [calls, setCalls] = useState("");
   const [saving, setSaving] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
 
-  const missedWeekly = parseInt(calls) || 0;
-  const missedMonthly = missedWeekly * 4;
-  const conversions = missedMonthly * 0.3;
-  const lowEnd = Math.round(conversions * 500);
-  const highEnd = Math.round(conversions * 1000);
+  const missedMonthly = (parseInt(calls) || 0) * (parseInt(jobValue) || 500) * 4;
+  const formatMoney = (n) => "$" + n.toLocaleString();
 
-  const formatMoney = (num) => "$" + num.toLocaleString();
+  const INP = {
+    width:"100%", padding:"14px 16px", borderRadius:"8px",
+    background:"#141414", border:"1px solid #2a2a2a", color:WHITE,
+    fontFamily:"'DM Sans', sans-serif", fontSize:"15px", outline:"none",
+    boxSizing:"border-box",
+  };
 
-  async function handleCalculate() {
-    if (!name || !phone || !calls) return;
+  async function handleSubmit() {
+    if (!name || !phone) return;
     setSaving(true);
     try {
       await fetch("https://mano-dd309130.base44.app/functions/landingLeadCapture", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, phone, missedCallsPerWeek: calls, source: "calculator" })
+        body: JSON.stringify({
+          name, phone,
+          missedCallsPerWeek: calls,
+          jobValue,
+          monthlyLoss: missedMonthly,
+          source: "calculator"
+        })
       });
     } catch(e) {
-      console.error("Failed to capture lead:", e);
+      console.error("Lead capture failed:", e);
     }
     setSaving(false);
-    setStep(3);
+    setSubmitted(true);
   }
 
-  return (
-    <div style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.97)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:"20px" }}>
-      <div style={{ background:"#0d0d0d",border:`1px solid ${GOLD}22`,borderRadius:"16px",padding:"36px 32px",maxWidth:"460px",width:"100%",position:"relative",boxShadow:`0 0 60px ${GOLD}10` }}>
+  const STEPS = 3;
+  const canNext1 = calls && parseInt(calls) > 0;
 
-        {step < 3 && (
-          <div style={{ display:"flex",gap:"8px",marginBottom:"28px" }}>
-            {[1,2].map(s=><div key={s} style={{ flex:1,height:"3px",borderRadius:"2px",background:step>=s?`linear-gradient(90deg,${GOLDD},${GOLD})`:"#1c1c1c",transition:"background 0.3s" }}/>)}
+  return (
+    <div
+      style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.96)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:"16px" }}
+      onClick={e=>{ if(e.target===e.currentTarget) onClose(); }}
+    >
+      <div style={{ background:"#0c0c0c",border:`1px solid ${GOLD}28`,borderRadius:"18px",padding:"clamp(24px,5vw,40px) clamp(20px,5vw,36px)",maxWidth:"480px",width:"100%",position:"relative",boxShadow:`0 0 80px ${GOLD}12, 0 40px 80px rgba(0,0,0,0.8)` }}>
+
+        {/* Progress bar */}
+        {!submitted && (
+          <div style={{ display:"flex",gap:"6px",marginBottom:"28px" }}>
+            {Array.from({length:STEPS}).map((_,i)=>(
+              <div key={i} style={{ flex:1,height:"3px",borderRadius:"99px",background:step>i?`linear-gradient(90deg,${GOLDD},${GOLD})`:"#1e1e1e",transition:"background 0.4s" }}/>
+            ))}
           </div>
         )}
 
-        {step===1&&<>
-          <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"9px",color:GOLD,letterSpacing:"3px",marginBottom:"8px" }}>STEP 1 OF 2</div>
-          <h2 style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"32px",color:WHITE,margin:"0 0 6px",letterSpacing:"1px" }}>Who are we calculating for?</h2>
-          <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"14px",color:"#555",margin:"0 0 24px" }}>Enter your details to generate your custom loss report.</p>
+        {/* STEP 1 — Inputs */}
+        {step===1 && <>
+          <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"9px",color:GOLD,letterSpacing:"3px",marginBottom:"10px" }}>STEP 1 OF 3</div>
+          <h2 style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(26px,5vw,34px)",color:WHITE,margin:"0 0 4px",letterSpacing:"1px",lineHeight:1.1 }}>How much are you losing?</h2>
+          <p style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"13px",color:"#555",margin:"0 0 24px",lineHeight:1.6 }}>Enter your numbers and we'll calculate your exact monthly loss.</p>
 
-          <div style={{ display:"flex",flexDirection:"column",gap:"16px",marginBottom:"28px" }}>
-            <input
-              type="text" placeholder="Your Name" value={name} onChange={e=>setName(e.target.value)}
-              style={{ padding:"16px",borderRadius:"8px",background:"#141414",border:"1px solid #222",color:WHITE,fontFamily:"'DM Sans', sans-serif",fontSize:"14px",outline:"none" }}
-            />
-            <input
-              type="tel" placeholder="Mobile Number" value={phone} onChange={e=>setPhone(e.target.value)}
-              style={{ padding:"16px",borderRadius:"8px",background:"#141414",border:"1px solid #222",color:WHITE,fontFamily:"'DM Sans', sans-serif",fontSize:"14px",outline:"none" }}
-            />
+          <div style={{ display:"flex",flexDirection:"column",gap:"14px",marginBottom:"28px" }}>
+            <div>
+              <label style={{ display:"block",fontFamily:"'Space Mono',monospace",fontSize:"9px",color:"#444",letterSpacing:"2px",marginBottom:"7px" }}>MISSED CALLS PER WEEK</label>
+              <input
+                type="number" min="1" placeholder="e.g. 5" value={calls}
+                onChange={e=>setCalls(e.target.value)}
+                style={{ ...INP, border:`1px solid ${calls?GOLD+"44":"#2a2a2a"}`, color:GOLD, fontFamily:"'Bebas Neue',sans-serif", fontSize:"36px", textAlign:"center", padding:"20px 16px", boxShadow:calls?`inset 0 0 20px ${GOLD}08`:"none" }}
+              />
+            </div>
+            <div>
+              <label style={{ display:"block",fontFamily:"'Space Mono',monospace",fontSize:"9px",color:"#444",letterSpacing:"2px",marginBottom:"7px" }}>AVERAGE JOB VALUE ($)</label>
+              <input
+                type="number" min="1" placeholder="500" value={jobValue}
+                onChange={e=>setJobValue(e.target.value)}
+                style={{ ...INP, textAlign:"center", fontSize:"18px", fontWeight:"600" }}
+              />
+            </div>
           </div>
 
-          <button onClick={()=>name&&phone&&setStep(2)} className={name&&phone?"gold-glow-btn":""} style={{ width:"100%",padding:"18px",borderRadius:"8px",fontFamily:"'Space Mono', monospace",fontSize:"13px",fontWeight:"700",border:"none",cursor:name&&phone?"pointer":"not-allowed",background:name&&phone?`linear-gradient(135deg,${GOLD},${GOLDD})`:"#1a1a1a",color:name&&phone?"#000":"#333",letterSpacing:"1px",transition:"all 0.2s" }}>NEXT →</button>
+          <button
+            onClick={()=>canNext1&&setStep(2)}
+            disabled={!canNext1}
+            className={canNext1?"gold-glow-btn":""}
+            style={{ width:"100%",padding:"17px",borderRadius:"9px",fontFamily:"'Space Mono',monospace",fontSize:"12px",fontWeight:"700",border:"none",cursor:canNext1?"pointer":"not-allowed",background:canNext1?`linear-gradient(135deg,${GOLD},${GOLDD})`:"#1a1a1a",color:canNext1?"#000":"#333",letterSpacing:"1px",transition:"all 0.2s" }}
+          >
+            CALCULATE MY LOSS →
+          </button>
         </>}
 
-        {step===2&&<>
-          <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"9px",color:GOLD,letterSpacing:"3px",marginBottom:"8px" }}>STEP 2 OF 2</div>
-          <h2 style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"32px",color:WHITE,margin:"0 0 6px",letterSpacing:"1px" }}>How many calls do you miss?</h2>
-          <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"14px",color:"#555",margin:"0 0 24px" }}>Estimate the number of calls you miss per week (after hours, on jobs, weekends).</p>
+        {/* STEP 2 — Result */}
+        {step===2 && <>
+          <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"9px",color:RED,letterSpacing:"3px",marginBottom:"16px" }}>STEP 2 OF 3 — YOUR MONTHLY LOSS</div>
 
-          <div style={{ marginBottom:"28px" }}>
-            <input
-              type="number" placeholder="e.g. 5" value={calls} onChange={e=>setCalls(e.target.value)} min="1"
-              style={{ width:"100%",padding:"24px 16px",borderRadius:"8px",background:"#141414",border:`1px solid ${GOLD}44`,color:GOLD,fontFamily:"'Bebas Neue', sans-serif",fontSize:"40px",textAlign:"center",outline:"none",boxShadow:`inset 0 0 20px ${GOLD}08` }}
-            />
+          <div style={{ textAlign:"center",padding:"20px 0 28px" }}>
+            <div style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"14px",color:"#555",marginBottom:"10px" }}>You're losing an estimated</div>
+            <div
+              className="red-loss"
+              style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(64px,15vw,100px)",color:REDB,lineHeight:1,letterSpacing:"2px",marginBottom:"8px" }}
+            >
+              {formatMoney(missedMonthly)}
+            </div>
+            <div style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"15px",color:"#777",fontWeight:"500" }}>per month in missed calls.</div>
           </div>
 
-          <div style={{ display:"flex",gap:"12px" }}>
-            <button onClick={()=>setStep(1)} style={{ padding:"16px 20px",borderRadius:"8px",fontFamily:"'DM Sans', sans-serif",fontSize:"13px",cursor:"pointer",background:"transparent",border:"1px solid #222",color:"#555",transition:"all 0.2s" }} onMouseEnter={e=>{ e.currentTarget.style.borderColor="#444"; e.currentTarget.style.color="#ccc"; }} onMouseLeave={e=>{ e.currentTarget.style.borderColor="#222"; e.currentTarget.style.color="#555"; }}>← Back</button>
-            <button onClick={handleCalculate} disabled={!calls || saving} className={calls&&!saving?"gold-glow-btn":""} style={{ flex:1,padding:"16px",borderRadius:"8px",fontFamily:"'Space Mono', monospace",fontSize:"12px",fontWeight:"700",border:"none",cursor:calls&&!saving?"pointer":"not-allowed",background:calls&&!saving?`linear-gradient(135deg,${GOLD},${GOLDD})`:"#1a1a1a",color:calls&&!saving?"#000":"#333",letterSpacing:"1px",transition:"all 0.2s" }}>
-              {saving ? "CALCULATING..." : "CALCULATE MY LOSS →"}
+          <div style={{ background:`linear-gradient(135deg,${RED}12,#080404)`,border:`1px solid ${RED}30`,borderRadius:"10px",padding:"16px 18px",marginBottom:"28px",boxShadow:`0 0 28px ${RED}0e` }}>
+            <div style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"13px",color:REDB,fontWeight:"600",lineHeight:1.6,textShadow:`0 0 8px ${RED}44` }}>
+              That's <strong>{formatMoney(missedMonthly * 12)}/year</strong> going straight to competitors who answer their phone.
+            </div>
+          </div>
+
+          <button
+            onClick={()=>setStep(3)}
+            className="gold-glow-btn"
+            style={{ width:"100%",padding:"17px",borderRadius:"9px",fontFamily:"'Space Mono',monospace",fontSize:"12px",fontWeight:"700",border:"none",cursor:"pointer",background:`linear-gradient(135deg,${GOLD},${GOLDD})`,color:"#000",letterSpacing:"1px" }}
+          >
+            RECOVER MY LOST JOBS →
+          </button>
+          <button onClick={()=>setStep(1)} style={{ width:"100%",marginTop:"10px",padding:"10px",background:"transparent",border:"none",color:"#333",fontFamily:"'DM Sans',sans-serif",fontSize:"12px",cursor:"pointer" }}>← Edit numbers</button>
+        </>}
+
+        {/* STEP 3 — Lead capture */}
+        {step===3 && !submitted && <>
+          <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"9px",color:GOLD,letterSpacing:"3px",marginBottom:"10px" }}>STEP 3 OF 3 — LOCK IN YOUR RECOVERY</div>
+          <h2 style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(24px,5vw,32px)",color:WHITE,margin:"0 0 4px",letterSpacing:"1px",lineHeight:1.1 }}>Where should we send your plan?</h2>
+          <p style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"13px",color:"#555",margin:"0 0 22px",lineHeight:1.6 }}>We'll reach out to show you how Mano recovers your <strong style={{ color:REDB }}>{formatMoney(missedMonthly)}/mo</strong> in missed jobs.</p>
+
+          <div style={{ display:"flex",flexDirection:"column",gap:"12px",marginBottom:"22px" }}>
+            <input type="text" placeholder="Your Name" value={name} onChange={e=>setName(e.target.value)} style={INP} />
+            <input type="tel" placeholder="Mobile Number" value={phone} onChange={e=>setPhone(e.target.value)} style={INP} />
+          </div>
+
+          <button
+            onClick={handleSubmit}
+            disabled={!name||!phone||saving}
+            className={name&&phone&&!saving?"gold-glow-btn":""}
+            style={{ width:"100%",padding:"17px",borderRadius:"9px",fontFamily:"'Space Mono',monospace",fontSize:"12px",fontWeight:"700",border:"none",cursor:name&&phone&&!saving?"pointer":"not-allowed",background:name&&phone&&!saving?`linear-gradient(135deg,${GOLD},${GOLDD})`:"#1a1a1a",color:name&&phone&&!saving?"#000":"#333",letterSpacing:"1px",transition:"all 0.2s" }}
+          >
+            {saving ? "SENDING..." : "RECOVER MY LOST JOBS →"}
+          </button>
+          <div style={{ marginTop:"10px",fontFamily:"'Space Mono',monospace",fontSize:"9px",color:"#222",textAlign:"center",letterSpacing:"1px" }}>No spam. We'll text you within minutes.</div>
+          <button onClick={()=>setStep(2)} style={{ width:"100%",marginTop:"8px",padding:"8px",background:"transparent",border:"none",color:"#2a2a2a",fontFamily:"'DM Sans',sans-serif",fontSize:"12px",cursor:"pointer" }}>← Back</button>
+        </>}
+
+        {/* SUCCESS */}
+        {submitted && <>
+          <div style={{ textAlign:"center",padding:"20px 0" }}>
+            <div style={{ fontSize:"48px",marginBottom:"16px" }}>✅</div>
+            <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"10px",color:GREEN,letterSpacing:"3px",marginBottom:"12px" }}>YOU'RE IN</div>
+            <h2 style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(28px,6vw,40px)",color:WHITE,margin:"0 0 10px",letterSpacing:"1px" }}>Expect a text shortly.</h2>
+            <p style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"14px",color:"#555",margin:"0 0 28px",lineHeight:1.7 }}>
+              We'll show you exactly how Mano recovers your<br/>
+              <strong style={{ color:REDB }}>{formatMoney(missedMonthly)}/month</strong> in missed calls.
+            </p>
+            <button
+              onClick={()=>{window.open(CALENDLY_URL,"_blank");onClose();}}
+              className="gold-glow-btn"
+              style={{ width:"100%",padding:"17px",borderRadius:"9px",fontFamily:"'Space Mono',monospace",fontSize:"11px",fontWeight:"700",border:"none",cursor:"pointer",background:`linear-gradient(135deg,${GOLD},${GOLDD})`,color:"#000",letterSpacing:"1px" }}
+            >
+              BOOK A DEMO NOW →
             </button>
           </div>
         </>}
 
-        {step===3&&<>
-          <div style={{ textAlign:"center",padding:"10px 0" }}>
-            <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"10px",color:RED,letterSpacing:"3px",marginBottom:"16px" }}>YOUR ESTIMATED MONTHLY LOSS</div>
-
-            <div className="red-loss" style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"clamp(56px,10vw,88px)",color:REDB,lineHeight:1,marginBottom:"8px",letterSpacing:"2px" }}>
-              {formatMoney(lowEnd)}–{formatMoney(highEnd)}
-            </div>
-
-            <div style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"16px",color:"#777",fontWeight:"500",marginBottom:"24px" }}>
-              You're losing approximately <strong style={{ color:WHITE }}>{formatMoney(lowEnd)}–{formatMoney(highEnd)}</strong> per month in missed jobs.
-            </div>
-
-            <div style={{ background:`linear-gradient(135deg, ${RED}14, #0a0808)`,border:`1px solid ${RED}33`,borderRadius:"10px",padding:"18px 16px",marginBottom:"32px",boxShadow:`0 0 30px ${RED}10` }}>
-              <span style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"14px",color:REDB,fontWeight:"700",letterSpacing:"0.5px",textShadow:`0 0 10px ${RED}55` }}>That's revenue going straight to your competitors.</span>
-            </div>
-
-            <button onClick={()=>{window.open(CALENDLY_URL,"_blank");onClose();}} className="gold-glow-btn" style={{ width:"100%",padding:"18px",borderRadius:"8px",fontFamily:"'Space Mono', monospace",fontSize:"12px",fontWeight:"700",border:"none",cursor:"pointer",background:`linear-gradient(135deg,${GOLD},${GOLDD})`,color:"#000",letterSpacing:"1px",boxShadow:`0 0 30px ${GOLD}44` }}>
-              BOOK A DEMO TO CAPTURE THESE JOBS →
-            </button>
-          </div>
-        </>}
-
-        <button onClick={onClose} style={{ position:"absolute",top:"16px",right:"20px",background:"none",border:"none",color:"#444",fontSize:"24px",cursor:"pointer",lineHeight:1,transition:"color 0.2s" }} onMouseEnter={e=>e.currentTarget.style.color=WHITE} onMouseLeave={e=>e.currentTarget.style.color="#444"}>✕</button>
+        <button onClick={onClose} style={{ position:"absolute",top:"16px",right:"20px",background:"none",border:"none",color:"#333",fontSize:"22px",cursor:"pointer",lineHeight:1,transition:"color 0.2s" }} onMouseEnter={e=>e.currentTarget.style.color=WHITE} onMouseLeave={e=>e.currentTarget.style.color="#333"}>✕</button>
       </div>
     </div>
   );
