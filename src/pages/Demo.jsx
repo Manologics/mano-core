@@ -418,6 +418,14 @@ export default function Demo() {
   const [showModal, setShowModal] = useState(false);
   const [tab, setTab] = useState("sms");
 
+  const GOLD  = "#f5c518";
+  const GOLDD = "#c9a000";
+  const RED   = "#cc2020";
+  const REDB  = "#FF3B3B";
+  const WHITE = "#ffffff";
+  const GREEN = "#00ff88";
+  const CALENDLY_URL = "https://calendly.com/monkee-bizznus/30min";
+
   const tabs = [
     { id:"sms",      label:"💬  SMS Conversation" },
     { id:"qual",     label:"🔍  Qualification Logic" },
@@ -425,4 +433,218 @@ export default function Demo() {
     { id:"roi",      label:"📈  ROI Panel" },
   ];
 
+  function CTAPrimary({ style={} }) {
+    return (
+      <button
+        onClick={()=>setShowModal(true)}
+        className="gold-glow-btn cta-primary"
+        style={{
+          background: `linear-gradient(135deg, ${GOLD}, ${GOLDD})`,
+          color: "#000", border: "none", padding: "20px 48px",
+          borderRadius: "9px", fontFamily: "'Space Mono', monospace",
+          fontSize: "14px", fontWeight: "700", cursor: "pointer",
+          letterSpacing: "1.5px", transition: "transform 0.2s, box-shadow 0.2s",
+          ...style
+        }}
+      >
+        SHOW ME HOW MUCH I'M LOSING →
+      </button>
+    );
+  }
+
+  function CTASecondary({ style={} }) {
+    return (
+      <button
+        onClick={()=>window.open(CALENDLY_URL,"_blank")}
+        className="cta-secondary"
+        style={{ background:"transparent", color:"#777", border:"1px solid #2a2a2a",
+          padding:"16px 28px", borderRadius:"9px", fontFamily:"'DM Sans', sans-serif",
+          fontSize:"14px", fontWeight:"600", cursor:"pointer", transition:"all 0.2s", ...style }}
+        onMouseEnter={e=>{ e.currentTarget.style.borderColor="#444"; e.currentTarget.style.color="#aaa"; }}
+        onMouseLeave={e=>{ e.currentTarget.style.borderColor="#2a2a2a"; e.currentTarget.style.color="#777"; }}
+      >
+        Book a Demo
+      </button>
+    );
+  }
+
+  return (
+    <div style={{ minHeight:"100vh", background:"#060606", color:"rgba(255,255,255,0.92)" }}>
+      <FontStyle/>
+      {showModal && <CalculatorModal onClose={()=>setShowModal(false)}/>}
+
+      {/* NAV */}
+      <nav style={{ borderBottom:"1px solid #0e0e0e", padding:"18px 28px", display:"flex",
+        alignItems:"center", justifyContent:"space-between", position:"sticky", top:0,
+        background:"rgba(6,6,6,0.97)", backdropFilter:"blur(14px)", zIndex:100 }}>
+        <div>
+          <div style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"22px", color:WHITE, letterSpacing:"3px" }}>MONKEE BIZZ AI</div>
+          <div style={{ fontFamily:"'Space Mono', monospace", fontSize:"8px", color:GREEN, letterSpacing:"3px", marginTop:"-1px" }}>POWERED BY MANOLOGICS</div>
+        </div>
+        <button onClick={()=>setShowModal(true)} className="gold-glow-btn"
+          style={{ background:`linear-gradient(135deg,${GOLD},${GOLDD})`, color:"#000", border:"none",
+            padding:"12px 22px", borderRadius:"7px", fontFamily:"'Space Mono', monospace",
+            fontSize:"10px", fontWeight:"700", cursor:"pointer", letterSpacing:"1px" }}>
+          SHOW ME HOW MUCH I'M LOSING
+        </button>
+      </nav>
+
+      {/* HERO */}
+      <section style={{ maxWidth:"880px", margin:"0 auto", padding:"92px 24px 64px", textAlign:"center" }}>
+        <div style={{ display:"inline-block", background:`${RED}12`, border:`1px solid ${RED}44`,
+          borderRadius:"20px", padding:"5px 18px", marginBottom:"28px", boxShadow:`0 0 16px ${RED}14` }}>
+          <span style={{ fontFamily:"'Space Mono', monospace", fontSize:"9px", color:REDB, letterSpacing:"3px" }}>FOR HVAC CONTRACTORS</span>
+        </div>
+
+        <h1 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(52px,9vw,108px)",
+          color:WHITE, lineHeight:0.95, margin:"0 0 24px", letterSpacing:"2px",
+          textShadow:"0 0 12px rgba(255,255,255,0.08)" }}>
+          Turn <span className="red-loss">Missed Calls</span><br/>
+          Into <span className="gold-headline" style={{ color:GOLD }}>Booked Jobs</span><br/>
+          <span style={{ fontSize:"clamp(30px,5vw,58px)", color:"#555", letterSpacing:"1px" }}>
+            Before Your <span style={{ color:REDB, textShadow:"0 0 8px rgba(255,0,0,0.35)" }}>Competitors</span> Do
+          </span>
+        </h1>
+
+        <p style={{ fontFamily:"'DM Sans', sans-serif", fontSize:"16px", color:`${REDB}cc`,
+          maxWidth:"480px", margin:"0 auto 18px", lineHeight:1.6, fontWeight:"500", fontStyle:"italic" }}>
+          While you're missing calls, your competitors are closing them.
+        </p>
+
+        <p style={{ fontFamily:"'DM Sans', sans-serif", fontSize:"16.5px", color:"#CFCFCF",
+          maxWidth:"500px", margin:"0 auto 16px", lineHeight:1.8, fontWeight:"400" }}>
+          Mano responds in seconds, qualifies the lead, and books the job — automatically.
+        </p>
+
+        <p style={{ fontFamily:"'DM Sans', sans-serif", fontSize:"15px", color:"#555",
+          maxWidth:"420px", margin:"0 auto 48px", lineHeight:1.6 }}>
+          Miss just 5 calls a week? That's{" "}
+          <strong style={{ color:REDB, textShadow:"0 0 8px rgba(255,0,0,0.35)" }}>$2,000–$5,000 in lost jobs</strong> every month.
+        </p>
+
+        <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:"14px", marginBottom:"16px" }}>
+          <CTAPrimary/>
+          <CTASecondary/>
+        </div>
+        <div style={{ fontFamily:"'Space Mono', monospace", fontSize:"10px", color:"#222", letterSpacing:"1px" }}>Free 30-min walkthrough. No pressure.</div>
+      </section>
+
+      {/* 73% PAIN SECTION */}
+      <div style={{ maxWidth:"880px", margin:"0 auto 72px", padding:"0 24px" }}>
+        <div style={{ background:`linear-gradient(135deg,${RED}14,#0a0808 60%,${RED}08)`,
+          border:`1px solid ${RED}33`, borderRadius:"14px", padding:"36px",
+          display:"flex", alignItems:"center", justifyContent:"space-between",
+          flexWrap:"wrap", gap:"28px", boxShadow:`0 0 40px ${RED}0e` }}>
+          <div style={{ flex:1, minWidth:"220px" }}>
+            <div style={{ fontFamily:"'Space Mono', monospace", fontSize:"9px", color:REDB, letterSpacing:"2px", marginBottom:"10px" }}>THE PROBLEM</div>
+            <div style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(22px,3.5vw,36px)",
+              color:WHITE, letterSpacing:"1px", lineHeight:1.15, textShadow:"0 0 12px rgba(255,255,255,0.08)" }}>
+              Every missed call is a job your{" "}
+              <span style={{ color:REDB, textShadow:"0 0 8px rgba(255,0,0,0.35)" }}>competitor</span>{" "}books.
+            </div>
+            <p style={{ fontFamily:"'DM Sans', sans-serif", fontSize:"16px", color:"#E0E0E0", marginTop:"12px", lineHeight:1.6 }}>
+              Most HVAC owners don't realize how many jobs walk out the door every week. Mano closes that gap — permanently.
+            </p>
+          </div>
+          <div style={{ textAlign:"center", padding:"0 8px" }}>
+            <div className="red-loss" style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"64px",
+              fontWeight:"800", color:REDB, lineHeight:1, textShadow:"0 0 18px rgba(255,0,0,0.35)" }}>73%</div>
+            <div style={{ fontFamily:"'Space Mono', monospace", fontSize:"11px", color:"#555",
+              letterSpacing:"1px", marginTop:"6px", maxWidth:"160px", lineHeight:1.5 }}>of callers won't leave a voicemail</div>
+            <div style={{ fontFamily:"'DM Sans', sans-serif", fontSize:"16px", color:"#E0E0E0", marginTop:"8px", maxWidth:"180px", lineHeight:1.5 }}>That's 3 out of 4 leads — gone.</div>
+          </div>
+        </div>
+      </div>
+
+      {/* DEMO SECTION */}
+      <section style={{ maxWidth:"980px", margin:"0 auto", padding:"0 24px 88px" }}>
+        <div style={{ textAlign:"center", marginBottom:"44px" }}>
+          <div style={{ display:"inline-block", background:`${GREEN}0e`, border:`1px solid ${GREEN}28`,
+            borderRadius:"20px", padding:"5px 16px", marginBottom:"14px" }}>
+            <span style={{ fontFamily:"'Space Mono', monospace", fontSize:"9px", color:GREEN, letterSpacing:"3px" }}>● LIVE DEMO</span>
+          </div>
+          <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(32px,5vw,58px)",
+            color:WHITE, margin:"0 0 14px", letterSpacing:"2px", textShadow:"0 0 12px rgba(255,255,255,0.08)" }}>
+            Watch Your AI Employee Work
+          </h2>
+          <p style={{ fontFamily:"'DM Sans', sans-serif", fontSize:"16.5px", color:"#CFCFCF",
+            maxWidth:"480px", margin:"0 auto", lineHeight:1.75 }}>
+            See exactly how Mano handles an inbound HVAC lead — from first contact to{" "}
+            <span style={{ color:GOLD, fontWeight:"600" }}>booked job</span> — without a single human involved.
+          </p>
+        </div>
+
+        <div style={{ display:"flex", gap:"4px", marginBottom:"20px", background:"#0d0d0d",
+          border:"1px solid #181818", borderRadius:"10px", padding:"4px" }}>
+          {tabs.map(t=>(
+            <button key={t.id} onClick={()=>setTab(t.id)}
+              style={{ flex:1, padding:"10px 8px", borderRadius:"7px", fontFamily:"'DM Sans', sans-serif",
+                fontSize:"12px", fontWeight:"600", cursor:"pointer", border:"none", transition:"all 0.2s",
+                background:tab===t.id?"#1c1c1c":"transparent", color:tab===t.id?WHITE:"#555",
+                boxShadow:tab===t.id?"0 1px 8px rgba(0,0,0,0.7)":"none", whiteSpace:"nowrap" }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {tab==="sms"      && <SMSSimulator/>}
+        {tab==="qual"     && <QualLogic/>}
+        {tab==="pipeline" && <Pipeline/>}
+        {tab==="roi"      && <ROIPanel/>}
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section style={{ background:"#0a0a0a", borderTop:"1px solid #111", borderBottom:"1px solid #111", padding:"80px 24px" }}>
+        <div style={{ maxWidth:"880px", margin:"0 auto", textAlign:"center" }}>
+          <div style={{ fontFamily:"'Space Mono', monospace", fontSize:"9px", color:"#2a2a2a", letterSpacing:"3px", marginBottom:"12px" }}>HOW IT WORKS</div>
+          <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(32px,5vw,52px)",
+            color:WHITE, margin:"0 0 12px", letterSpacing:"2px", textShadow:"0 0 12px rgba(255,255,255,0.08)" }}>
+            One System. Five AI Agents.
+          </h2>
+          <p style={{ fontFamily:"'DM Sans', sans-serif", fontSize:"16px", color:"#CFCFCF", margin:"0 0 48px", lineHeight:1.6 }}>
+            Built to run your lead pipeline around the clock — no staff required.
+          </p>
+          <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))", gap:"12px", marginBottom:"52px" }}>
+            {[
+              { n:"01", name:"INTAKE",    icon:"📞", desc:"Answers every call instantly" },
+              { n:"02", name:"QUALIFY",   icon:"🔍", desc:"Scores urgency in real time" },
+              { n:"03", name:"BOOK",      icon:"📅", desc:"Puts jobs on the calendar" },
+              { n:"04", name:"FOLLOW UP", icon:"🔁", desc:"Nurtures every lead automatically" },
+              { n:"05", name:"REPORT",    icon:"📊", desc:"Daily ops summary to your phone" },
+            ].map((a,i)=>(
+              <div key={i} style={{ background:"#0d0d0d", border:"1px solid #141414", borderRadius:"14px", padding:"22px 16px", textAlign:"center" }}>
+                <div style={{ fontSize:"28px", marginBottom:"10px" }}>{a.icon}</div>
+                <div style={{ fontFamily:"'Space Mono', monospace", fontSize:"8px", color:"#2a2a2a", letterSpacing:"2px", marginBottom:"4px" }}>AGENT {a.n}</div>
+                <div style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"18px", color:GOLD, letterSpacing:"2px", marginBottom:"8px" }}>{a.name}</div>
+                <div style={{ fontFamily:"'DM Sans', sans-serif", fontSize:"12px", color:"#CFCFCF", lineHeight:1.55 }}>{a.desc}</div>
+              </div>
+            ))}
+          </div>
+          <CTAPrimary style={{ fontSize:"14px", padding:"20px 44px" }}/>
+        </div>
+      </section>
+
+      {/* BOTTOM CTA */}
+      <section style={{ maxWidth:"680px", margin:"0 auto", padding:"96px 24px", textAlign:"center" }}>
+        <div style={{ fontFamily:"'Space Mono', monospace", fontSize:"9px", color:"#1e1e1e", letterSpacing:"3px", marginBottom:"16px" }}>READY TO STOP LOSING JOBS?</div>
+        <h2 style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"clamp(36px,6vw,72px)",
+          color:WHITE, margin:"0 0 18px", letterSpacing:"2px", lineHeight:1, textShadow:"0 0 12px rgba(255,255,255,0.08)" }}>
+          Find Out Exactly<br/>
+          <span style={{ color:REDB, textShadow:"0 0 8px rgba(255,0,0,0.35)" }}>How Much You're Losing</span>
+        </h2>
+        <p style={{ fontFamily:"'DM Sans', sans-serif", fontSize:"16.5px", color:"#CFCFCF",
+          maxWidth:"480px", margin:"0 auto 40px", lineHeight:1.7 }}>
+          Enter your missed calls per week and get a real number — your monthly revenue at risk, calculated in 60 seconds.
+        </p>
+        <CTAPrimary style={{ fontSize:"15px", padding:"22px 52px", letterSpacing:"1.5px" }}/>
+        <div style={{ fontFamily:"'Space Mono', monospace", fontSize:"10px", color:"#1c1c1c", marginTop:"18px", letterSpacing:"1px" }}>Free. No pitch. Just the number.</div>
+      </section>
+
+      {/* FOOTER */}
+      <footer style={{ borderTop:"1px solid #0d0d0d", padding:"28px 24px", textAlign:"center" }}>
+        <div style={{ fontFamily:"'Bebas Neue', sans-serif", fontSize:"16px", color:"#1e1e1e", letterSpacing:"3px", marginBottom:"6px" }}>MONKEE BIZZ AI</div>
+        <div style={{ fontFamily:"'Space Mono', monospace", fontSize:"8px", color:"#1e1e1e", letterSpacing:"2px" }}>POWERED BY MANOLOGICS</div>
+      </footer>
+    </div>
+  );
 }
