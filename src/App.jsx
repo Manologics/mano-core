@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Demo from './pages/Demo';
 import AgentIntake from './pages/AgentIntake';
-import AgentOps from './pages/AgentOps';
+import AgentOps from './pages/AgentOps.jsx';
 import CommandCenter from './pages/CommandCenter';
 import LeadForm from './pages/LeadForm';
 import Settings from './pages/Settings';

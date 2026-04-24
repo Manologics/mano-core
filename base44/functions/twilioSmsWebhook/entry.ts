@@ -64,7 +64,7 @@ Deno.serve(async (req) => {
 
     const e164 = toE164(From) || From;
 
-    // 2. Load settings
+    // 2. Load settings (needed by STOP/HELP handlers below)
     const settings = await S.entities.AppSettings.list();
     const get = (k, d) => { const s = settings.find(x => x.key === k); return s ? s.value : d; };
     const adminEmail   = get('admin_email',       'info@monkeebizai.com');
@@ -74,12 +74,51 @@ Deno.serve(async (req) => {
     const calendlyUrl  = get('calendly_event_url', '');
     const appUrl       = get('app_url',            'https://app.monkeebizzai.com');
 
-    // 3. Dedup — find existing lead by E.164 phone
+    // 3. STOP / HELP detection (before any lead lookup)
+    const msgTrimmed = Body.trim().toUpperCase();
+    const isSTOP = ['STOP', 'STOPALL', 'UNSUBSCRIBE', 'CANCEL', 'QUIT', 'END'].includes(msgTrimmed);
+    const isHELP = ['HELP', 'INFO', 'SUPPORT'].includes(msgTrimmed);
+
+    // 4. Dedup — find existing lead by E.164 phone
     const allLeads = await S.entities.Lead.list();
     let lead = allLeads.find(l => l.phone && toE164(l.phone) === e164);
     let isNew = false;
 
+    // ── STOP compliance ──────────────────────────────────────────────────────
+    if (isSTOP) {
+      if (lead) {
+        await S.entities.Lead.update(lead.id, { opted_out: true, status: 'Closed — No Response' });
+        await log(lead.id, `[SMS Compliance] STOP opt-out received — lead marked opted_out — future SMS blocked`);
+      }
+      // Twilio handles the actual STOP compliance at the carrier level — we just enforce on our side
+      await log(lead?.id || 'system', `[SMS Compliance] STOP received from ${From}`);
+      return EMPTY_TWIML;
+    }
+
+    // ── HELP compliance ──────────────────────────────────────────────────────
+    if (isHELP) {
+      try {
+        await sendSms(e164, `For support, reply to this number or email ${adminEmail}. To stop messages, reply STOP.`);
+      } catch (_) {}
+      if (lead) await log(lead.id, `[SMS Compliance] HELP request received from ${From} — support message sent`);
+      else await log('system', `[SMS Compliance] HELP request from unknown number ${From}`);
+      // Alert admin
+      try {
+        await S.integrations.Core.SendEmail({
+          to: adminEmail,
+          subject: `📟 HELP Request — ${From}`,
+          body: `<p>A HELP request was received from <strong>${From}</strong>. Please follow up manually.</p>`,
+        });
+      } catch (_) {}
+      return EMPTY_TWIML;
+    }
+
     if (lead) {
+      // ── opted_out check — do not auto-reply if opted out ─────────────────
+      if (lead.opted_out) {
+        await log(lead.id, `[SMS Compliance] Inbound SMS from opted-out lead ${From} — no automated response sent`);
+        return EMPTY_TWIML;
+      }
       // Append inbound SMS to notes, update last_message
       const updatedNotes = [lead.notes, `[Inbound SMS ${now}]: ${Body}`].filter(Boolean).join('\n');
       // If lead was in a terminal state, reactivate
@@ -148,7 +187,7 @@ Deno.serve(async (req) => {
       await log(lead.id, `[twilioSmsWebhook] Admin notification FAILED: ${emailErr.message}`);
     }
 
-    // 6. Intent detection + booking link or auto-reply
+    // 6. Intent detection + booking link or auto-reply (opted_out already blocked above)
     const msg = Body.trim().toLowerCase();
     const SERVICE_KEYWORDS = ['website','seo','marketing','social','ads','branding','design','automation','ai','app','help','need','want','looking','build','create','fix','manage','grow','email','content','video','photo','logo'];
     const hasServiceIntent = SERVICE_KEYWORDS.some(k => msg.includes(k)) || msg.length > 10;

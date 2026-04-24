@@ -175,7 +175,28 @@
     },
     "monthly_loss": {
       "type": "number",
-      "description": "From ROI calculator: calculated monthly revenue at risk (missed_calls_per_week * average_job_value * 4)"
+      "description": "From ROI calculator: calculated monthly revenue at risk"
+    },
+    "opted_out": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true, lead sent STOP \u2014 no automated SMS allowed"
+    },
+    "security_flag": {
+      "type": "string",
+      "description": "Security classification: spam, legal_threat, angry, complaint, etc."
+    },
+    "escalation_reason": {
+      "type": "string",
+      "description": "Reason for last escalation alert"
+    },
+    "last_escalation_at": {
+      "type": "string",
+      "description": "UTC ISO timestamp of last escalation"
+    },
+    "last_security_review_at": {
+      "type": "string",
+      "description": "UTC ISO timestamp of last security review"
     }
   },
   "required": [
