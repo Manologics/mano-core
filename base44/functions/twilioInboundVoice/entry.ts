@@ -18,7 +18,7 @@ Deno.serve(async (req) => {
 
     console.log('[twilioInboundVoice] No digit — returning Gather');
     return new Response(
-      `<?xml version="1.0" encoding="UTF-8"?><Response><Gather input="dtmf" numDigits="1" action="https://mano-app-8159dde8.base44.app/functions/twilioInboundVoice" method="POST" timeout="5"><Say>Hello. This is Monkee Bizz AI. Press 1 to speak to someone.</Say></Gather></Response>`,
+      `<?xml version="1.0" encoding="UTF-8"?><Response><Gather input="dtmf" numDigits="1" action="https://mano-app-8159dde8.base44.app/functions/twilioVoiceDigit" method="POST" timeout="5"><Say>Hello. This is Monkee Bizz AI. Press 1 to speak to someone.</Say></Gather></Response>`,
       { status: 200, headers: { 'Content-Type': 'text/xml; charset=utf-8' } }
     );
   } catch (_) {
