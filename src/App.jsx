@@ -18,6 +18,7 @@ function App() {
         <Route path="/Demo" element={<Demo />} />
         <Route path="/AgentIntake" element={<AgentIntake />} />
         <Route path="/AgentOps" element={<AgentOps />} />
+        <Route path="/agent-ops" element={<AgentOps />} />
         <Route path="/CommandCenter" element={<CommandCenter />} />
         <Route path="/LeadForm" element={<LeadForm />} />
         <Route path="/Settings" element={<Settings />} />
