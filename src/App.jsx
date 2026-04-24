@@ -9,6 +9,7 @@ import DealAccess from './pages/DealAccess';
 import LeadForm from './pages/LeadForm';
 import Settings from './pages/Settings';
 import Demo from './pages/Demo';
+import ChatCenter from './pages/ChatCenter';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
         <Route path="/LeadForm" element={<LeadForm />} />
         <Route path="/Settings" element={<Settings />} />
         <Route path="/Demo" element={<Demo />} />
+        <Route path="/ChatCenter" element={<ChatCenter />} />
       </Routes>
     </BrowserRouter>
   )

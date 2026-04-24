@@ -13,6 +13,7 @@ const NAV = [
   { label: "Agent 3: Follow-Up", path: "/AgentFollowUp", icon: "🤖" },
   { label: "Agent 4: Retention", path: "/AgentRetention", icon: "🤖" },
   { label: "Agent 5: Ops", path: "/AgentOps", icon: "🤖" },
+  { label: "Chat Center", path: "/ChatCenter", icon: "💬" },
   { label: "Settings", path: "/Settings", icon: "⚙️" },
   { label: "📋 Lead Form", path: "/LeadForm", icon: "" },
 ];
