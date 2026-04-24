@@ -48,8 +48,10 @@ export default function ManoChat() {
         setMessages(prev => [...prev, { role: "assistant", content: "MANO had a connection issue. Try again." }]);
       }
     } catch (e) {
-      console.error('[ManoChat] Catch block error:', e);
-      setDebug(prev => ({ ...prev, status: `error: ${e.message}` }));
+      console.error('[ManoChat] Catch error:', e);
+      console.error('[ManoChat] Error details:', { message: e.message, status: e.status, code: e.code });
+      const errorMsg = e.message || 'Connection failed';
+      setDebug(prev => ({ ...prev, status: `error: ${errorMsg}`, response: `Error: ${errorMsg}` }));
       setMessages(prev => [...prev, { role: "assistant", content: "MANO had a connection issue. Try again." }]);
     }
     
@@ -76,9 +78,10 @@ export default function ManoChat() {
       {/* Debug Panel */}
       {debug.lastMessage && (
         <div style={{ background: "#f0f0f0", border: "1px solid #ccc", borderRadius: "4px", padding: "8px 12px", margin: "12px 0", fontSize: "11px", fontFamily: "monospace", color: "#333" }}>
+          <div><strong>Function:</strong> manoAiChat</div>
           <div><strong>Last Message:</strong> {debug.lastMessage.substring(0, 60)}</div>
           <div><strong>Status:</strong> {debug.status}</div>
-          {debug.response && <div><strong>Response:</strong> {debug.response.substring(0, 100)}</div>}
+          {debug.response && <div><strong>Raw Response:</strong> {debug.response.substring(0, 120)}</div>}
         </div>
       )}
 
