@@ -12,14 +12,9 @@ export default function SmsPortal() {
   const bottomRef = useRef(null);
 
   useEffect(() => {
-    base44.asServiceRole?.entities?.Lead?.list?.("-updated_date", 50)
-      .then(l => { setLeads(l); setLoading(false); })
-      .catch(() => setLoading(false));
-
-    // Try without asServiceRole for client-side
     base44.entities.Lead.list("-updated_date", 50)
       .then(l => { setLeads(l); setLoading(false); })
-      .catch(() => {});
+      .catch(() => setLoading(false));
   }, []);
 
   useEffect(() => {
