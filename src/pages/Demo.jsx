@@ -31,12 +31,11 @@ const FontStyle = () => (
       transform: scale(1.05) !important;
     }
     .gold-glow-btn:focus { outline: none; }
-    .red-loss {
-      animation: redFlicker 3s ease-in-out infinite;
-    }
-    .gold-headline {
-      animation: goldText 3s ease-in-out infinite;
-    }
+    .red-loss { animation: redFlicker 3s ease-in-out infinite; }
+    .gold-headline { animation: goldText 3s ease-in-out infinite; }
+    input[type=number]::-webkit-inner-spin-button,
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    input[type=number] { -moz-appearance: textfield; }
   `}</style>
 );
 
@@ -46,9 +45,9 @@ const GOLDD = "#c9a000";
 const RED   = "#cc2020";
 const REDB  = "#e03030";
 const WHITE = "#ffffff";
-const LIGHT = "#eaeaea";   // bright body text
-const MID   = "#cfcfcf";   // subtext
-const DIM   = "#888888";   // muted labels
+const LIGHT = "#eaeaea";
+const MID   = "#cfcfcf";
+const DIM   = "#888888";
 const GREEN = "#00ff88";
 
 const CALENDLY_URL = "https://calendly.com/monkee-bizznus/30min";
@@ -92,6 +91,8 @@ const QUAL_STEPS = [
 ];
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
+const fmt = (n) => "$" + Math.round(n).toLocaleString();
+
 function ScoreBadge({ score }) {
   const map = {
     HOT:  [REDB,  "#cc202025"],
@@ -106,183 +107,7 @@ function ScoreBadge({ score }) {
   );
 }
 
-// ─── MISSED CALL ROI CALCULATOR ───────────────────────────────────────────────
-// Shared submit logic (used by both inline section and modal)
-async function submitROILead({ name, phone, calls, jobValue, monthlyLoss }) {
-  await fetch("https://mano-dd309130.base44.app/functions/landingLeadCapture", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name,
-      phone,
-      missedCallsPerWeek: calls,
-      jobValue,
-      monthlyLoss,
-      source: "HVAC ROI Calculator",
-    }),
-  });
-}
-
-// ─── INLINE ROI SECTION (embedded in landing page) ────────────────────────────
-function InlineROICalculator({ onOpenModal }) {
-  const [calls, setCalls]       = useState("");
-  const [jobValue, setJobValue] = useState("500");
-  const [name, setName]         = useState("");
-  const [phone, setPhone]       = useState("");
-  const [saving, setSaving]     = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-  const [showResult, setShowResult] = useState(false);
-
-  const parsed   = parseInt(calls) || 0;
-  const parsedJV = parseInt(jobValue) || 500;
-  const monthlyLoss = parsed * parsedJV * 4;
-  const fmt = (n) => "$" + n.toLocaleString();
-  const canCalc = parsed > 0;
-
-  const INP = {
-    width:"100%", padding:"14px 16px", borderRadius:"8px",
-    background:"#111", border:"1px solid #2a2a2a", color:WHITE,
-    fontFamily:"'DM Sans', sans-serif", fontSize:"16px", outline:"none",
-    boxSizing:"border-box", transition:"border-color 0.2s",
-  };
-
-  function handleCalc() {
-    if (!canCalc) return;
-    setShowResult(true);
-  }
-
-  async function handleSubmit() {
-    if (!name || !phone) return;
-    setSaving(true);
-    try {
-      await submitROILead({ name, phone, calls, jobValue, monthlyLoss });
-    } catch(e) { console.error("Lead capture failed:", e); }
-    setSaving(false);
-    setSubmitted(true);
-  }
-
-  if (submitted) {
-    return (
-      <div style={{ textAlign:"center", padding:"60px 24px" }}>
-        <div style={{ fontSize:"52px", marginBottom:"18px" }}>✅</div>
-        <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"11px", color:GREEN, letterSpacing:"3px", marginBottom:"14px" }}>YOU'RE IN</div>
-        <h3 style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"clamp(32px,5vw,48px)", color:WHITE, margin:"0 0 12px", letterSpacing:"1px" }}>
-          Expect a Text Shortly.
-        </h3>
-        <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"16px", color:MID, margin:"0 0 28px", lineHeight:1.75 }}>
-          We'll show you exactly how Mano recovers your{" "}
-          <strong style={{ color:GOLD }}>{fmt(monthlyLoss)}/month</strong> in missed jobs.
-        </p>
-        <button
-          onClick={()=>window.open(CALENDLY_URL,"_blank")}
-          className="gold-glow-btn"
-          style={{ padding:"17px 36px", borderRadius:"9px", fontFamily:"'Space Mono',monospace", fontSize:"12px", fontWeight:"700", border:"none", cursor:"pointer", background:`linear-gradient(135deg,${GOLD},${GOLDD})`, color:"#000", letterSpacing:"1px" }}
-        >
-          BOOK A DEMO NOW →
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ maxWidth:"700px", margin:"0 auto" }}>
-      {/* Inputs row */}
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"16px", marginBottom:"20px" }}>
-        <div>
-          <label style={{ display:"block", fontFamily:"'Space Mono',monospace", fontSize:"10px", color:DIM, letterSpacing:"2px", marginBottom:"10px" }}>
-            MISSED CALLS / WEEK
-          </label>
-          <input
-            type="number" min="1" placeholder="e.g. 5" value={calls}
-            onChange={e=>{ setCalls(e.target.value); setShowResult(false); }}
-            style={{ ...INP, border:`1px solid ${calls?GOLD+"55":"#2a2a2a"}`, color:GOLD, fontFamily:"'Bebas Neue',sans-serif", fontSize:"42px", textAlign:"center", padding:"18px 12px" }}
-          />
-        </div>
-        <div>
-          <label style={{ display:"block", fontFamily:"'Space Mono',monospace", fontSize:"10px", color:DIM, letterSpacing:"2px", marginBottom:"10px" }}>
-            AVG JOB VALUE ($)
-          </label>
-          <input
-            type="number" min="1" placeholder="500" value={jobValue}
-            onChange={e=>{ setJobValue(e.target.value); setShowResult(false); }}
-            style={{ ...INP, border:`1px solid ${jobValue?"#444":"#2a2a2a"}`, textAlign:"center", fontSize:"22px", fontWeight:"600", color:LIGHT, padding:"18px 12px" }}
-          />
-        </div>
-      </div>
-
-      {!showResult && (
-        <button
-          onClick={handleCalc}
-          disabled={!canCalc}
-          className={canCalc?"gold-glow-btn":""}
-          style={{ width:"100%", padding:"18px", borderRadius:"9px", fontFamily:"'Space Mono',monospace", fontSize:"13px", fontWeight:"700", border:"none", cursor:canCalc?"pointer":"not-allowed", background:canCalc?`linear-gradient(135deg,${GOLD},${GOLDD})`:"#1a1a1a", color:canCalc?"#000":"#444", letterSpacing:"1px", transition:"all 0.2s" }}
-        >
-          CALCULATE MY MONTHLY LOSS →
-        </button>
-      )}
-
-      {/* Result reveal */}
-      {showResult && (
-        <div>
-          {/* Big loss number */}
-          <div style={{ background:`linear-gradient(135deg,#0e0808,${RED}18,#0e0808)`, border:`1px solid ${RED}55`, borderRadius:"14px", padding:"32px 24px", textAlign:"center", marginBottom:"16px", boxShadow:`0 0 60px ${RED}18` }}>
-            <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"15px", color:MID, marginBottom:"12px", letterSpacing:"0.3px" }}>
-              Based on your numbers, you could be losing
-            </div>
-            <div className="red-loss" style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"clamp(72px,14vw,110px)", color:REDB, lineHeight:1, letterSpacing:"2px", marginBottom:"6px" }}>
-              {fmt(monthlyLoss)}
-            </div>
-            <div style={{ fontFamily:"'Bebas Neue',sans-serif", fontSize:"clamp(22px,4vw,32px)", color:WHITE, letterSpacing:"1px", marginBottom:"16px" }}>
-              per month.
-            </div>
-            <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"15px", color:REDB, fontStyle:"italic", fontWeight:"600" }}>
-              That's money going to competitors who answered first.
-            </div>
-            <div style={{ marginTop:"14px", fontFamily:"'Space Mono',monospace", fontSize:"10px", color:DIM, letterSpacing:"1px" }}>
-              {fmt(monthlyLoss * 12)}/year · {parsed} missed calls/wk × {fmt(parsedJV)} avg job × 4 weeks
-            </div>
-          </div>
-
-          {/* Lead capture */}
-          <div style={{ background:"#0d0d0d", border:`1px solid ${GOLD}22`, borderRadius:"14px", padding:"28px 24px" }}>
-            <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"10px", color:GOLD, letterSpacing:"3px", marginBottom:"10px" }}>
-              RECOVER YOUR LOST JOBS
-            </div>
-            <p style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"15px", color:LIGHT, margin:"0 0 20px", lineHeight:1.7 }}>
-              Drop your info below and we'll show you exactly how Mano recovers{" "}
-              <strong style={{ color:GOLD }}>{fmt(monthlyLoss)}/month</strong> for you — automatically.
-            </p>
-            <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"12px", marginBottom:"16px" }}>
-              <input
-                type="text" placeholder="Your Name" value={name}
-                onChange={e=>setName(e.target.value)}
-                style={{ ...INP, border:`1px solid ${name?"#444":"#2a2a2a"}` }}
-              />
-              <input
-                type="tel" placeholder="Mobile Number" value={phone}
-                onChange={e=>setPhone(e.target.value)}
-                style={{ ...INP, border:`1px solid ${phone?"#444":"#2a2a2a"}` }}
-              />
-            </div>
-            <button
-              onClick={handleSubmit}
-              disabled={!name||!phone||saving}
-              className={name&&phone&&!saving?"gold-glow-btn":""}
-              style={{ width:"100%", padding:"18px", borderRadius:"9px", fontFamily:"'Space Mono',monospace", fontSize:"13px", fontWeight:"700", border:"none", cursor:name&&phone&&!saving?"pointer":"not-allowed", background:name&&phone&&!saving?`linear-gradient(135deg,${GOLD},${GOLDD})`:"#1a1a1a", color:name&&phone&&!saving?"#000":"#444", letterSpacing:"1px", transition:"all 0.2s" }}
-            >
-              {saving ? "SENDING..." : "RECOVER MY LOST JOBS →"}
-            </button>
-            <div style={{ marginTop:"12px", fontFamily:"'Space Mono',monospace", fontSize:"10px", color:DIM, textAlign:"center", letterSpacing:"1px" }}>
-              No spam. We'll text you within minutes.
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─── MODAL WRAPPER (nav CTA & hero CTA) ───────────────────────────────────────
+// ─── MISSED CALL ROI CALCULATOR MODAL ────────────────────────────────────────
 function CalculatorModal({ onClose }) {
   const [step, setStep] = useState(1);
   const [calls, setCalls] = useState("");
@@ -292,155 +117,245 @@ function CalculatorModal({ onClose }) {
   const [saving, setSaving] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
-  const monthlyLoss = (parseInt(calls) || 0) * (parseInt(jobValue) || 500) * 4;
-  const fmt = (n) => "$" + n.toLocaleString();
-  const canNext1 = calls && parseInt(calls) > 0;
+  const missedPerWeek = parseInt(calls) || 0;
+  const avgJob        = parseInt(jobValue) || 500;
+  const monthlyLoss   = missedPerWeek * avgJob * 4;
+  const yearlyLoss    = monthlyLoss * 12;
+  const canNext1      = missedPerWeek > 0;
 
   const INP = {
-    width:"100%", padding:"14px 16px", borderRadius:"8px",
-    background:"#141414", border:"1px solid #333", color:WHITE,
-    fontFamily:"'DM Sans', sans-serif", fontSize:"16px", outline:"none",
-    boxSizing:"border-box",
+    width: "100%", padding: "14px 16px", borderRadius: "9px",
+    background: "#111", border: "1px solid #2a2a2a", color: WHITE,
+    fontFamily: "'DM Sans', sans-serif", fontSize: "16px", outline: "none",
+    boxSizing: "border-box", transition: "border-color 0.2s",
   };
 
   async function handleSubmit() {
-    if (!name || !phone) return;
+    if (!name.trim() || !phone.trim()) return;
     setSaving(true);
     try {
-      await submitROILead({ name, phone, calls, jobValue, monthlyLoss });
+      await fetch("https://mano-dd309130.base44.app/functions/landingLeadCapture", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name, phone,
+          missedCallsPerWeek: calls,
+          jobValue,
+          monthlyLoss,
+          source: "HVAC ROI Calculator",
+        }),
+      });
     } catch(e) { console.error("Lead capture failed:", e); }
     setSaving(false);
     setSubmitted(true);
   }
 
-  const STEPS = 3;
-
   return (
     <div
-      style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.96)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:"16px" }}
+      style={{ position:"fixed",inset:0,background:"rgba(0,0,0,0.97)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:1000,padding:"16px",overflowY:"auto" }}
       onClick={e=>{ if(e.target===e.currentTarget) onClose(); }}
     >
-      <div style={{ background:"#0c0c0c",border:`1px solid ${GOLD}33`,borderRadius:"18px",padding:"clamp(24px,5vw,40px) clamp(20px,5vw,36px)",maxWidth:"480px",width:"100%",position:"relative",boxShadow:`0 0 80px ${GOLD}18, 0 40px 80px rgba(0,0,0,0.8)` }}>
+      <div style={{ background:"#0c0c0c",border:`1px solid ${GOLD}44`,borderRadius:"20px",padding:"clamp(28px,5vw,44px) clamp(22px,5vw,40px)",maxWidth:"500px",width:"100%",position:"relative",boxShadow:`0 0 100px ${GOLD}1a, 0 40px 80px rgba(0,0,0,0.9)`,marginTop:"auto",marginBottom:"auto" }}>
 
+        {/* Title badge */}
+        <div style={{ display:"inline-block",background:`${GOLD}14`,border:`1px solid ${GOLD}33`,borderRadius:"12px",padding:"4px 14px",marginBottom:"22px" }}>
+          <span style={{ fontFamily:"'Space Mono',monospace",fontSize:"9px",color:GOLD,letterSpacing:"3px" }}>MISSED CALL ROI CALCULATOR</span>
+        </div>
+
+        {/* Progress bar */}
         {!submitted && (
-          <div style={{ display:"flex",gap:"6px",marginBottom:"28px" }}>
-            {Array.from({length:STEPS}).map((_,i)=>(
-              <div key={i} style={{ flex:1,height:"3px",borderRadius:"99px",background:step>i?`linear-gradient(90deg,${GOLDD},${GOLD})`:"#2a2a2a",transition:"background 0.4s" }}/>
+          <div style={{ display:"flex",gap:"6px",marginBottom:"30px" }}>
+            {[1,2,3].map(i=>(
+              <div key={i} style={{ flex:1,height:"3px",borderRadius:"99px",background:step>=i?`linear-gradient(90deg,${GOLDD},${GOLD})`:"#222",transition:"background 0.4s" }}/>
             ))}
           </div>
         )}
 
-        {/* STEP 1 */}
-        {step===1 && <>
-          <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"10px",color:GOLD,letterSpacing:"3px",marginBottom:"10px" }}>MISSED CALL ROI CALCULATOR · STEP 1 OF 3</div>
-          <h2 style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(26px,5vw,34px)",color:WHITE,margin:"0 0 6px",letterSpacing:"1px",lineHeight:1.1 }}>How Many Calls Are You Missing?</h2>
-          <p style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"14px",color:MID,margin:"0 0 24px",lineHeight:1.65 }}>Enter your numbers — we'll show you exactly what it's costing you every month.</p>
-
-          <div style={{ display:"flex",flexDirection:"column",gap:"14px",marginBottom:"28px" }}>
-            <div>
-              <label style={{ display:"block",fontFamily:"'Space Mono',monospace",fontSize:"10px",color:DIM,letterSpacing:"2px",marginBottom:"8px" }}>MISSED CALLS PER WEEK</label>
-              <input
-                type="number" min="1" placeholder="e.g. 5" value={calls}
-                onChange={e=>setCalls(e.target.value)}
-                style={{ ...INP, border:`1px solid ${calls?GOLD+"66":"#333"}`, color:GOLD, fontFamily:"'Bebas Neue',sans-serif", fontSize:"40px", textAlign:"center", padding:"20px 16px" }}
-              />
-            </div>
-            <div>
-              <label style={{ display:"block",fontFamily:"'Space Mono',monospace",fontSize:"10px",color:DIM,letterSpacing:"2px",marginBottom:"8px" }}>AVERAGE JOB VALUE ($)</label>
-              <input
-                type="number" min="1" placeholder="500" value={jobValue}
-                onChange={e=>setJobValue(e.target.value)}
-                style={{ ...INP, textAlign:"center", fontSize:"20px", fontWeight:"600", color:LIGHT }}
-              />
-            </div>
-          </div>
-
-          <button
-            onClick={()=>canNext1&&setStep(2)}
-            disabled={!canNext1}
-            className={canNext1?"gold-glow-btn":""}
-            style={{ width:"100%",padding:"17px",borderRadius:"9px",fontFamily:"'Space Mono',monospace",fontSize:"12px",fontWeight:"700",border:"none",cursor:canNext1?"pointer":"not-allowed",background:canNext1?`linear-gradient(135deg,${GOLD},${GOLDD})`:"#1a1a1a",color:canNext1?"#000":"#444",letterSpacing:"1px",transition:"all 0.2s" }}
-          >
-            CALCULATE MY LOSS →
-          </button>
-        </>}
-
-        {/* STEP 2 */}
-        {step===2 && <>
-          <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"10px",color:REDB,letterSpacing:"3px",marginBottom:"16px" }}>STEP 2 OF 3 — YOUR MONTHLY LOSS</div>
-
-          <div style={{ textAlign:"center",padding:"20px 0 20px" }}>
-            <div style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"15px",color:MID,marginBottom:"10px" }}>You could be losing</div>
-            <div className="red-loss" style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(64px,15vw,100px)",color:REDB,lineHeight:1,letterSpacing:"2px",marginBottom:"6px" }}>
-              {fmt(monthlyLoss)}
-            </div>
-            <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(20px,3.5vw,28px)",color:WHITE,letterSpacing:"1px",marginBottom:"18px" }}>per month.</div>
-          </div>
-
-          <div style={{ background:`linear-gradient(135deg,${RED}18,#080404)`,border:`1px solid ${RED}44`,borderRadius:"10px",padding:"16px 18px",marginBottom:"28px",boxShadow:`0 0 28px ${RED}14` }}>
-            <div style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"14px",color:LIGHT,fontWeight:"500",lineHeight:1.65 }}>
-              That's money going to competitors who answered first.{" "}
-              <strong style={{ color:REDB }}>{fmt(monthlyLoss * 12)}/year</strong> — gone.
-            </div>
-          </div>
-
-          <button
-            onClick={()=>setStep(3)}
-            className="gold-glow-btn"
-            style={{ width:"100%",padding:"17px",borderRadius:"9px",fontFamily:"'Space Mono',monospace",fontSize:"12px",fontWeight:"700",border:"none",cursor:"pointer",background:`linear-gradient(135deg,${GOLD},${GOLDD})`,color:"#000",letterSpacing:"1px" }}
-          >
-            RECOVER MY LOST JOBS →
-          </button>
-          <button onClick={()=>setStep(1)} style={{ width:"100%",marginTop:"10px",padding:"10px",background:"transparent",border:"none",color:DIM,fontFamily:"'DM Sans',sans-serif",fontSize:"13px",cursor:"pointer" }}>← Edit numbers</button>
-        </>}
-
-        {/* STEP 3 */}
-        {step===3 && !submitted && <>
-          <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"10px",color:GOLD,letterSpacing:"3px",marginBottom:"10px" }}>STEP 3 OF 3 — LOCK IN YOUR RECOVERY</div>
-          <h2 style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(24px,5vw,32px)",color:WHITE,margin:"0 0 6px",letterSpacing:"1px",lineHeight:1.1 }}>Where Should We Send Your Recovery Plan?</h2>
-          <p style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"14px",color:MID,margin:"0 0 22px",lineHeight:1.65 }}>
-            We'll reach out and show you how Mano recovers your{" "}
-            <strong style={{ color:GOLD }}>{fmt(monthlyLoss)}/mo</strong> in missed jobs.
-          </p>
-
-          <div style={{ display:"flex",flexDirection:"column",gap:"12px",marginBottom:"22px" }}>
-            <input type="text" placeholder="Your Name" value={name} onChange={e=>setName(e.target.value)} style={INP} />
-            <input type="tel" placeholder="Mobile Number" value={phone} onChange={e=>setPhone(e.target.value)} style={INP} />
-          </div>
-
-          <button
-            onClick={handleSubmit}
-            disabled={!name||!phone||saving}
-            className={name&&phone&&!saving?"gold-glow-btn":""}
-            style={{ width:"100%",padding:"17px",borderRadius:"9px",fontFamily:"'Space Mono',monospace",fontSize:"12px",fontWeight:"700",border:"none",cursor:name&&phone&&!saving?"pointer":"not-allowed",background:name&&phone&&!saving?`linear-gradient(135deg,${GOLD},${GOLDD})`:"#1a1a1a",color:name&&phone&&!saving?"#000":"#444",letterSpacing:"1px",transition:"all 0.2s" }}
-          >
-            {saving ? "SENDING..." : "RECOVER MY LOST JOBS →"}
-          </button>
-          <div style={{ marginTop:"10px",fontFamily:"'Space Mono',monospace",fontSize:"10px",color:DIM,textAlign:"center",letterSpacing:"1px" }}>No spam. We'll text you within minutes.</div>
-          <button onClick={()=>setStep(2)} style={{ width:"100%",marginTop:"8px",padding:"8px",background:"transparent",border:"none",color:DIM,fontFamily:"'DM Sans',sans-serif",fontSize:"13px",cursor:"pointer" }}>← Back</button>
-        </>}
-
-        {/* SUCCESS */}
-        {submitted && <>
-          <div style={{ textAlign:"center",padding:"20px 0" }}>
-            <div style={{ fontSize:"48px",marginBottom:"16px" }}>✅</div>
-            <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"10px",color:GREEN,letterSpacing:"3px",marginBottom:"12px" }}>YOU'RE IN</div>
-            <h2 style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(28px,6vw,40px)",color:WHITE,margin:"0 0 10px",letterSpacing:"1px" }}>Expect a Text Shortly.</h2>
-            <p style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"15px",color:MID,margin:"0 0 28px",lineHeight:1.7 }}>
-              We'll show you exactly how Mano recovers your{" "}
-              <strong style={{ color:GOLD }}>{fmt(monthlyLoss)}/month</strong> in missed jobs.
+        {/* ── STEP 1: INPUTS ── */}
+        {step===1 && (
+          <>
+            <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"9px",color:DIM,letterSpacing:"3px",marginBottom:"10px" }}>STEP 1 OF 3</div>
+            <h2 style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(28px,6vw,38px)",color:WHITE,margin:"0 0 10px",letterSpacing:"1px",lineHeight:1.05 }}>
+              How Many Calls Are You Missing?
+            </h2>
+            <p style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"15px",color:MID,margin:"0 0 28px",lineHeight:1.75 }}>
+              Enter your numbers below — we'll calculate exactly how much revenue is walking out the door every month.
             </p>
+
+            <div style={{ display:"flex",flexDirection:"column",gap:"20px",marginBottom:"24px" }}>
+              <div>
+                <label style={{ display:"block",fontFamily:"'Space Mono',monospace",fontSize:"10px",color:GOLD,letterSpacing:"2px",marginBottom:"10px" }}>
+                  MISSED CALLS PER WEEK
+                </label>
+                <input
+                  type="number" min="1" placeholder="5" value={calls}
+                  onChange={e=>setCalls(e.target.value)}
+                  style={{ ...INP, border:`1px solid ${calls?GOLD+"55":"#2a2a2a"}`, color:GOLD, fontFamily:"'Bebas Neue',sans-serif", fontSize:"56px", textAlign:"center", padding:"20px 16px", letterSpacing:"2px" }}
+                />
+                <div style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"12px",color:DIM,marginTop:"7px",textAlign:"center" }}>
+                  Calls that went unanswered or hit voicemail
+                </div>
+              </div>
+              <div>
+                <label style={{ display:"block",fontFamily:"'Space Mono',monospace",fontSize:"10px",color:GOLD,letterSpacing:"2px",marginBottom:"10px" }}>
+                  AVERAGE JOB VALUE ($)
+                </label>
+                <input
+                  type="number" min="1" placeholder="500" value={jobValue}
+                  onChange={e=>setJobValue(e.target.value)}
+                  style={{ ...INP, textAlign:"center", fontSize:"26px", fontWeight:"700", color:LIGHT, border:`1px solid ${jobValue?"#444":"#2a2a2a"}` }}
+                />
+                <div style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"12px",color:DIM,marginTop:"7px",textAlign:"center" }}>
+                  Typical service call, tune-up, or install
+                </div>
+              </div>
+            </div>
+
+            {/* Live preview */}
+            {canNext1 && (
+              <div style={{ background:`${GOLD}0c`,border:`1px solid ${GOLD}33`,borderRadius:"10px",padding:"14px 18px",marginBottom:"20px",textAlign:"center" }}>
+                <div style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"13px",color:MID,marginBottom:"4px" }}>Monthly revenue at risk</div>
+                <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"38px",color:GOLD,letterSpacing:"2px",lineHeight:1 }}>{fmt(monthlyLoss)}</div>
+              </div>
+            )}
+
             <button
-              onClick={()=>{window.open(CALENDLY_URL,"_blank");onClose();}}
+              onClick={()=>canNext1&&setStep(2)}
+              disabled={!canNext1}
+              className={canNext1?"gold-glow-btn":""}
+              style={{ width:"100%",padding:"18px",borderRadius:"10px",fontFamily:"'Space Mono',monospace",fontSize:"12px",fontWeight:"700",border:"none",cursor:canNext1?"pointer":"not-allowed",background:canNext1?`linear-gradient(135deg,${GOLD},${GOLDD})`:"#181818",color:canNext1?"#000":"#3a3a3a",letterSpacing:"1px",transition:"all 0.2s" }}
+            >
+              SHOW ME MY LOSS →
+            </button>
+          </>
+        )}
+
+        {/* ── STEP 2: RESULT ── */}
+        {step===2 && (
+          <>
+            <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"9px",color:DIM,letterSpacing:"3px",marginBottom:"10px" }}>STEP 2 OF 3 — YOUR REVENUE AT RISK</div>
+            <h2 style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(26px,5vw,34px)",color:WHITE,margin:"0 0 22px",letterSpacing:"1px",lineHeight:1.05 }}>
+              Here's What You're Losing
+            </h2>
+
+            {/* Gold result box */}
+            <div style={{ background:"#090909",border:`1px solid ${GOLD}55`,borderRadius:"14px",padding:"28px 24px",textAlign:"center",marginBottom:"14px",boxShadow:`0 0 50px ${GOLD}18` }}>
+              <div style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"16px",color:LIGHT,fontWeight:"500",marginBottom:"8px" }}>
+                You could be losing
+              </div>
+              <div className="gold-headline" style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(68px,14vw,100px)",color:GOLD,lineHeight:1,letterSpacing:"3px",marginBottom:"4px" }}>
+                {fmt(monthlyLoss)}
+              </div>
+              <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"24px",color:LIGHT,letterSpacing:"2px" }}>
+                PER MONTH.
+              </div>
+            </div>
+
+            {/* Red pain line */}
+            <div style={{ background:`linear-gradient(135deg,${RED}1c,#080404 70%)`,border:`1px solid ${RED}55`,borderRadius:"12px",padding:"18px 20px",marginBottom:"22px",boxShadow:`0 0 28px ${RED}18` }}>
+              <div style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"15px",color:WHITE,fontWeight:"700",lineHeight:1.6,marginBottom:"8px" }}>
+                💸 That's money going to competitors who answered first.
+              </div>
+              <div style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"13px",color:MID,lineHeight:1.65 }}>
+                {missedPerWeek} missed calls/week × {fmt(avgJob)} per job × 4 weeks
+                {" "}= <strong style={{ color:REDB }}>{fmt(monthlyLoss)}/month</strong>.
+                That's <strong style={{ color:REDB }}>{fmt(yearlyLoss)}/year</strong> going straight to your competitors.
+              </div>
+            </div>
+
+            <button
+              onClick={()=>setStep(3)}
               className="gold-glow-btn"
-              style={{ width:"100%",padding:"17px",borderRadius:"9px",fontFamily:"'Space Mono',monospace",fontSize:"11px",fontWeight:"700",border:"none",cursor:"pointer",background:`linear-gradient(135deg,${GOLD},${GOLDD})`,color:"#000",letterSpacing:"1px" }}
+              style={{ width:"100%",padding:"18px",borderRadius:"10px",fontFamily:"'Space Mono',monospace",fontSize:"12px",fontWeight:"700",border:"none",cursor:"pointer",background:`linear-gradient(135deg,${GOLD},${GOLDD})`,color:"#000",letterSpacing:"1px",marginBottom:"10px" }}
+            >
+              RECOVER MY LOST JOBS →
+            </button>
+            <button onClick={()=>setStep(1)} style={{ width:"100%",padding:"10px",background:"transparent",border:"none",color:DIM,fontFamily:"'DM Sans',sans-serif",fontSize:"13px",cursor:"pointer" }}>
+              ← Edit my numbers
+            </button>
+          </>
+        )}
+
+        {/* ── STEP 3: LEAD CAPTURE ── */}
+        {step===3 && !submitted && (
+          <>
+            <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"9px",color:DIM,letterSpacing:"3px",marginBottom:"10px" }}>STEP 3 OF 3 — LOCK IN YOUR RECOVERY</div>
+            <h2 style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(26px,5vw,34px)",color:WHITE,margin:"0 0 8px",letterSpacing:"1px",lineHeight:1.05 }}>
+              Let's Recover Your Lost Jobs
+            </h2>
+            <p style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"15px",color:LIGHT,margin:"0 0 8px",lineHeight:1.75 }}>
+              We'll show you exactly how Mano stops the bleed and turns missed calls into booked jobs.
+            </p>
+            <p style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"14px",color:REDB,margin:"0 0 24px",fontWeight:"600",fontStyle:"italic" }}>
+              You're losing {fmt(monthlyLoss)}/month. Every day you wait costs you more.
+            </p>
+
+            <div style={{ display:"flex",flexDirection:"column",gap:"14px",marginBottom:"22px" }}>
+              <div>
+                <label style={{ display:"block",fontFamily:"'Space Mono',monospace",fontSize:"10px",color:DIM,letterSpacing:"2px",marginBottom:"8px" }}>YOUR NAME</label>
+                <input
+                  type="text" placeholder="First & Last Name" value={name}
+                  onChange={e=>setName(e.target.value)}
+                  style={{ ...INP, border:`1px solid ${name?"#555":"#2a2a2a"}` }}
+                />
+              </div>
+              <div>
+                <label style={{ display:"block",fontFamily:"'Space Mono',monospace",fontSize:"10px",color:DIM,letterSpacing:"2px",marginBottom:"8px" }}>MOBILE NUMBER</label>
+                <input
+                  type="tel" placeholder="(555) 000-0000" value={phone}
+                  onChange={e=>setPhone(e.target.value)}
+                  style={{ ...INP, border:`1px solid ${phone?"#555":"#2a2a2a"}` }}
+                />
+              </div>
+            </div>
+
+            <button
+              onClick={handleSubmit}
+              disabled={!name.trim()||!phone.trim()||saving}
+              className={name&&phone&&!saving?"gold-glow-btn":""}
+              style={{ width:"100%",padding:"18px",borderRadius:"10px",fontFamily:"'Space Mono',monospace",fontSize:"12px",fontWeight:"700",border:"none",cursor:name&&phone&&!saving?"pointer":"not-allowed",background:name&&phone&&!saving?`linear-gradient(135deg,${GOLD},${GOLDD})`:"#181818",color:name&&phone&&!saving?"#000":"#3a3a3a",letterSpacing:"1px",marginBottom:"12px",transition:"all 0.2s" }}
+            >
+              {saving ? "SENDING..." : "RECOVER MY LOST JOBS →"}
+            </button>
+            <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"9px",color:DIM,textAlign:"center",letterSpacing:"1px",marginBottom:"10px" }}>
+              No spam. Mano will text you within minutes.
+            </div>
+            <button onClick={()=>setStep(2)} style={{ width:"100%",padding:"8px",background:"transparent",border:"none",color:DIM,fontFamily:"'DM Sans',sans-serif",fontSize:"13px",cursor:"pointer" }}>
+              ← Back
+            </button>
+          </>
+        )}
+
+        {/* ── SUCCESS ── */}
+        {submitted && (
+          <div style={{ textAlign:"center",padding:"16px 0" }}>
+            <div style={{ fontSize:"52px",marginBottom:"16px" }}>✅</div>
+            <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"9px",color:GREEN,letterSpacing:"3px",marginBottom:"14px" }}>YOU'RE ON THE LIST</div>
+            <h2 style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(28px,6vw,42px)",color:WHITE,margin:"0 0 12px",letterSpacing:"1px",lineHeight:1.05 }}>
+              Mano Is On It.
+            </h2>
+            <p style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"15px",color:LIGHT,margin:"0 0 4px",lineHeight:1.75 }}>
+              Expect a text shortly. We'll walk you through exactly how to stop losing
+            </p>
+            <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"34px",color:GOLD,margin:"0 0 24px",letterSpacing:"2px" }}>
+              {fmt(monthlyLoss)}/month
+            </div>
+            <button
+              onClick={()=>{ window.open(CALENDLY_URL,"_blank"); onClose(); }}
+              className="gold-glow-btn"
+              style={{ width:"100%",padding:"18px",borderRadius:"10px",fontFamily:"'Space Mono',monospace",fontSize:"11px",fontWeight:"700",border:"none",cursor:"pointer",background:`linear-gradient(135deg,${GOLD},${GOLDD})`,color:"#000",letterSpacing:"1px" }}
             >
               BOOK A DEMO NOW →
             </button>
           </div>
-        </>}
+        )}
 
-        <button onClick={onClose} style={{ position:"absolute",top:"16px",right:"20px",background:"none",border:"none",color:DIM,fontSize:"22px",cursor:"pointer",lineHeight:1,transition:"color 0.2s" }} onMouseEnter={e=>e.currentTarget.style.color=WHITE} onMouseLeave={e=>e.currentTarget.style.color=DIM}>✕</button>
+        <button
+          onClick={onClose}
+          style={{ position:"absolute",top:"18px",right:"22px",background:"none",border:"none",color:DIM,fontSize:"22px",cursor:"pointer",lineHeight:1,transition:"color 0.2s" }}
+          onMouseEnter={e=>e.currentTarget.style.color=WHITE}
+          onMouseLeave={e=>e.currentTarget.style.color=DIM}
+        >✕</button>
       </div>
     </div>
   );
@@ -639,11 +554,102 @@ function ROIPanel() {
 // ─── SECTION DIVIDER ─────────────────────────────────────────────────────────
 function Divider({ color = GOLD, opacity = 0.12 }) {
   const c = color === "red" ? REDB : GOLD;
+  const hex = Math.round(opacity*255).toString(16).padStart(2,"0");
   return (
     <div style={{ maxWidth:"880px",margin:"0 auto",padding:"0 24px",display:"flex",alignItems:"center",gap:"14px" }}>
-      <div style={{ flex:1,height:"1px",background:`linear-gradient(90deg,transparent,${c}${Math.round(opacity*255).toString(16).padStart(2,"0")},transparent)` }}/>
+      <div style={{ flex:1,height:"1px",background:`linear-gradient(90deg,transparent,${c}${hex},transparent)` }}/>
       <div style={{ width:"5px",height:"5px",borderRadius:"50%",background:c,boxShadow:`0 0 10px 2px ${c}66`,opacity:0.7 }}/>
-      <div style={{ flex:1,height:"1px",background:`linear-gradient(90deg,transparent,${c}${Math.round(opacity*255).toString(16).padStart(2,"0")},transparent)` }}/>
+      <div style={{ flex:1,height:"1px",background:`linear-gradient(90deg,transparent,${c}${hex},transparent)` }}/>
+    </div>
+  );
+}
+
+// ─── INLINE ROI CALCULATOR (page section) ─────────────────────────────────────
+function InlineROICalculator({ onOpenModal }) {
+  const [calls, setCalls] = useState("");
+  const [jobValue, setJobValue] = useState("500");
+
+  const missedPerWeek = parseInt(calls) || 0;
+  const avgJob        = parseInt(jobValue) || 500;
+  const monthlyLoss   = missedPerWeek * avgJob * 4;
+  const hasResult     = missedPerWeek > 0;
+
+  const INP = {
+    background:"#0f0f0f", border:`1px solid #2a2a2a`, color:WHITE,
+    fontFamily:"'DM Sans',sans-serif", fontSize:"16px", outline:"none",
+    borderRadius:"9px", padding:"14px 16px", width:"100%", boxSizing:"border-box",
+    transition:"border-color 0.2s",
+  };
+
+  return (
+    <div style={{ maxWidth:"720px",margin:"0 auto",background:"#0a0a0a",border:`1px solid ${GOLD}33`,borderRadius:"20px",padding:"clamp(28px,5vw,48px)",boxShadow:`0 0 60px ${GOLD}14` }}>
+      <div style={{ textAlign:"center",marginBottom:"32px" }}>
+        <div style={{ display:"inline-block",background:`${GOLD}14`,border:`1px solid ${GOLD}33`,borderRadius:"12px",padding:"4px 16px",marginBottom:"14px" }}>
+          <span style={{ fontFamily:"'Space Mono',monospace",fontSize:"9px",color:GOLD,letterSpacing:"3px" }}>MISSED CALL ROI CALCULATOR</span>
+        </div>
+        <h2 style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(32px,5vw,52px)",color:WHITE,margin:"0 0 10px",letterSpacing:"2px",lineHeight:1 }}>
+          How Much Are You Losing?
+        </h2>
+        <p style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"16px",color:MID,maxWidth:"460px",margin:"0 auto",lineHeight:1.75 }}>
+          Enter your numbers. See your monthly loss instantly — no email required.
+        </p>
+      </div>
+
+      <div style={{ display:"grid",gridTemplateColumns:"1fr 1fr",gap:"20px",marginBottom:"24px" }}>
+        <div>
+          <label style={{ display:"block",fontFamily:"'Space Mono',monospace",fontSize:"10px",color:GOLD,letterSpacing:"2px",marginBottom:"10px" }}>
+            MISSED CALLS / WEEK
+          </label>
+          <input
+            type="number" min="1" placeholder="e.g. 5" value={calls}
+            onChange={e=>setCalls(e.target.value)}
+            style={{ ...INP, border:`1px solid ${calls?GOLD+"55":"#2a2a2a"}`, color:GOLD, fontFamily:"'Bebas Neue',sans-serif", fontSize:"48px", textAlign:"center", padding:"18px 12px" }}
+          />
+        </div>
+        <div>
+          <label style={{ display:"block",fontFamily:"'Space Mono',monospace",fontSize:"10px",color:GOLD,letterSpacing:"2px",marginBottom:"10px" }}>
+            AVG JOB VALUE ($)
+          </label>
+          <input
+            type="number" min="1" placeholder="500" value={jobValue}
+            onChange={e=>setJobValue(e.target.value)}
+            style={{ ...INP, textAlign:"center", fontSize:"24px", fontWeight:"700", color:LIGHT, border:`1px solid ${jobValue?"#444":"#2a2a2a"}` }}
+          />
+        </div>
+      </div>
+
+      {/* Result */}
+      {hasResult ? (
+        <div style={{ background:"#070707",border:`1px solid ${GOLD}44`,borderRadius:"14px",padding:"24px",textAlign:"center",marginBottom:"20px",boxShadow:`0 0 40px ${GOLD}14` }}>
+          <div style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"15px",color:LIGHT,fontWeight:"500",marginBottom:"6px" }}>
+            You could be losing
+          </div>
+          <div className="gold-headline" style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(56px,10vw,88px)",color:GOLD,lineHeight:1,letterSpacing:"3px",marginBottom:"4px" }}>
+            {fmt(monthlyLoss)}
+          </div>
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"22px",color:LIGHT,letterSpacing:"2px",marginBottom:"14px" }}>PER MONTH.</div>
+          <div style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"14px",color:REDB,fontWeight:"600",fontStyle:"italic" }}>
+            That's money going to competitors who answered first.
+          </div>
+        </div>
+      ) : (
+        <div style={{ background:"#090909",border:"1px dashed #222",borderRadius:"14px",padding:"24px",textAlign:"center",marginBottom:"20px" }}>
+          <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"10px",color:DIM,letterSpacing:"2px" }}>
+            ENTER YOUR NUMBERS TO SEE YOUR MONTHLY LOSS
+          </div>
+        </div>
+      )}
+
+      <button
+        onClick={onOpenModal}
+        className="gold-glow-btn"
+        style={{ width:"100%",padding:"18px",borderRadius:"10px",fontFamily:"'Space Mono',monospace",fontSize:"13px",fontWeight:"700",border:"none",cursor:"pointer",background:`linear-gradient(135deg,${GOLD},${GOLDD})`,color:"#000",letterSpacing:"1px" }}
+      >
+        RECOVER MY LOST JOBS →
+      </button>
+      <div style={{ textAlign:"center",marginTop:"10px",fontFamily:"'Space Mono',monospace",fontSize:"9px",color:DIM,letterSpacing:"1px" }}>
+        Free walkthrough. No pressure. Mano texts you back in minutes.
+      </div>
     </div>
   );
 }
@@ -665,22 +671,9 @@ export default function Demo() {
       <button
         onClick={()=>setShowModal(true)}
         className="gold-glow-btn"
-        style={{
-          background: `linear-gradient(135deg, ${GOLD}, ${GOLDD})`,
-          color: "#000",
-          border: "none",
-          padding: "17px 36px",
-          borderRadius: "9px",
-          fontFamily: "'Space Mono', monospace",
-          fontSize: "12px",
-          fontWeight: "700",
-          cursor: "pointer",
-          letterSpacing: "1px",
-          transition: "transform 0.2s, box-shadow 0.2s",
-          ...extraStyle
-        }}
+        style={{ background:`linear-gradient(135deg,${GOLD},${GOLDD})`,color:"#000",border:"none",padding:"17px 36px",borderRadius:"9px",fontFamily:"'Space Mono',monospace",fontSize:"12px",fontWeight:"700",cursor:"pointer",letterSpacing:"1px",transition:"transform 0.2s, box-shadow 0.2s",...extraStyle }}
       >
-        CALCULATE MY MISSED CALL LOSSES →
+        SHOW ME HOW MUCH I'M LOSING →
       </button>
     );
   }
@@ -689,7 +682,7 @@ export default function Demo() {
     return (
       <button
         onClick={()=>setShowModal(true)}
-        style={{ background:"transparent",color:MID,border:`1px solid #333`,padding:"16px 28px",borderRadius:"9px",fontFamily:"'DM Sans', sans-serif",fontSize:"14px",fontWeight:"600",cursor:"pointer",transition:"all 0.2s",...extraStyle }}
+        style={{ background:"transparent",color:MID,border:`1px solid #333`,padding:"16px 28px",borderRadius:"9px",fontFamily:"'DM Sans',sans-serif",fontSize:"14px",fontWeight:"600",cursor:"pointer",transition:"all 0.2s",...extraStyle }}
         onMouseEnter={e=>{ e.currentTarget.style.borderColor=GOLD+"66"; e.currentTarget.style.color=GOLD; }}
         onMouseLeave={e=>{ e.currentTarget.style.borderColor="#333"; e.currentTarget.style.color=MID; }}
       >
@@ -701,31 +694,30 @@ export default function Demo() {
   return (
     <div style={{ minHeight:"100vh",background:"#060606",color:LIGHT }}>
       <FontStyle/>
-      {showModal&&<CalculatorModal onClose={()=>setShowModal(false)}/>}
+      {showModal && <CalculatorModal onClose={()=>setShowModal(false)}/>}
 
       {/* ── NAV ── */}
       <nav style={{ borderBottom:"1px solid #181818",padding:"18px 28px",display:"flex",alignItems:"center",justifyContent:"space-between",position:"sticky",top:0,background:"rgba(6,6,6,0.97)",backdropFilter:"blur(14px)",zIndex:100 }}>
         <div>
-          <div style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"22px",color:WHITE,letterSpacing:"3px" }}>MONKEE BIZZ AI</div>
-          <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"8px",color:GREEN,letterSpacing:"3px",marginTop:"-1px" }}>POWERED BY MANOLOGICS</div>
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"22px",color:WHITE,letterSpacing:"3px" }}>MONKEE BIZZ AI</div>
+          <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"8px",color:GREEN,letterSpacing:"3px",marginTop:"-1px" }}>POWERED BY MANOLOGICS</div>
         </div>
         <button
           onClick={()=>setShowModal(true)}
           className="gold-glow-btn"
-          style={{ background:`linear-gradient(135deg,${GOLD},${GOLDD})`,color:"#000",border:"none",padding:"10px 22px",borderRadius:"7px",fontFamily:"'Space Mono', monospace",fontSize:"10px",fontWeight:"700",cursor:"pointer",letterSpacing:"1px" }}
+          style={{ background:`linear-gradient(135deg,${GOLD},${GOLDD})`,color:"#000",border:"none",padding:"10px 22px",borderRadius:"7px",fontFamily:"'Space Mono',monospace",fontSize:"10px",fontWeight:"700",cursor:"pointer",letterSpacing:"1px" }}
         >
-          ROI CALCULATOR
+          CALCULATE MY LOSS
         </button>
       </nav>
 
       {/* ── HERO ── */}
       <section style={{ maxWidth:"880px",margin:"0 auto",padding:"92px 24px 64px",textAlign:"center" }}>
-
         <div style={{ display:"inline-block",background:`${RED}16`,border:`1px solid ${RED}55`,borderRadius:"20px",padding:"5px 18px",marginBottom:"28px",boxShadow:`0 0 16px ${RED}18` }}>
-          <span style={{ fontFamily:"'Space Mono', monospace",fontSize:"9px",color:REDB,letterSpacing:"3px" }}>FOR HVAC CONTRACTORS</span>
+          <span style={{ fontFamily:"'Space Mono',monospace",fontSize:"9px",color:REDB,letterSpacing:"3px" }}>FOR HVAC CONTRACTORS</span>
         </div>
 
-        <h1 style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"clamp(52px,9vw,108px)",color:WHITE,lineHeight:0.95,margin:"0 0 24px",letterSpacing:"2px",textShadow:"0 0 40px rgba(255,255,255,0.06)" }}>
+        <h1 style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(52px,9vw,108px)",color:WHITE,lineHeight:0.95,margin:"0 0 24px",letterSpacing:"2px",textShadow:"0 0 40px rgba(255,255,255,0.06)" }}>
           Turn <span className="red-loss" style={{ color:REDB }}>Missed Calls</span><br/>
           Into <span className="gold-headline" style={{ color:GOLD }}>Booked Jobs</span><br/>
           <span style={{ fontSize:"clamp(30px,5vw,58px)",color:MID,letterSpacing:"1px" }}>
@@ -733,15 +725,13 @@ export default function Demo() {
           </span>
         </h1>
 
-        <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"16px",color:REDB,maxWidth:"480px",margin:"0 auto 18px",lineHeight:1.65,fontWeight:"600",fontStyle:"italic" }}>
+        <p style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"17px",color:REDB,maxWidth:"480px",margin:"0 auto 18px",lineHeight:1.7,fontWeight:"600",fontStyle:"italic" }}>
           While you're missing calls, your competitors are closing them.
         </p>
-
-        <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"18px",color:LIGHT,maxWidth:"500px",margin:"0 auto 16px",lineHeight:1.8,fontWeight:"400" }}>
+        <p style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"18px",color:LIGHT,maxWidth:"500px",margin:"0 auto 16px",lineHeight:1.8,fontWeight:"400" }}>
           Mano responds in seconds, qualifies the lead, and books the job — automatically.
         </p>
-
-        <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"15px",color:MID,maxWidth:"420px",margin:"0 auto 48px",lineHeight:1.65 }}>
+        <p style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"15px",color:MID,maxWidth:"420px",margin:"0 auto 48px",lineHeight:1.7 }}>
           Miss just 5 calls a week? That's{" "}
           <strong style={{ color:REDB }}>$2,000–$5,000 in lost jobs</strong> every month.
         </p>
@@ -750,56 +740,47 @@ export default function Demo() {
           <CTAPrimary/>
           <CTASecondary/>
         </div>
-        <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"10px",color:DIM,letterSpacing:"1px" }}>Free 30-min walkthrough. No pressure.</div>
+        <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"10px",color:DIM,letterSpacing:"1px" }}>Free 30-min walkthrough. No pressure.</div>
       </section>
 
       <Divider color="red" opacity={0.1}/>
 
-      {/* ── PAIN DIVIDER ── */}
-      <div style={{ maxWidth:"880px",margin:"0 auto 72px",padding:"0 24px" }}>
+      {/* ── PAIN STAT ── */}
+      <div style={{ maxWidth:"880px",margin:"0 auto",padding:"56px 24px" }}>
         <div style={{ background:`linear-gradient(135deg,${RED}18,#0c0808 60%,${RED}0c)`,border:`1px solid ${RED}44`,borderRadius:"14px",padding:"28px 36px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:"24px",boxShadow:`0 0 50px ${RED}14` }}>
           <div style={{ flex:1,minWidth:"220px" }}>
-            <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"10px",color:REDB,letterSpacing:"2px",marginBottom:"8px" }}>THE PROBLEM</div>
-            <div style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"clamp(22px,3.5vw,34px)",color:WHITE,letterSpacing:"1px",lineHeight:1.1,textShadow:"0 0 20px rgba(255,255,255,0.06)" }}>
+            <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"10px",color:REDB,letterSpacing:"2px",marginBottom:"8px" }}>THE PROBLEM</div>
+            <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(22px,3.5vw,34px)",color:WHITE,letterSpacing:"1px",lineHeight:1.1,textShadow:"0 0 20px rgba(255,255,255,0.06)" }}>
               Every missed call is a job your{" "}
               <span style={{ color:REDB,textShadow:`0 0 14px ${RED}88` }}>competitor</span>{" "}books.
             </div>
           </div>
           <div style={{ textAlign:"center",padding:"0 8px" }}>
-            <div className="red-loss" style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"clamp(48px,7vw,80px)",color:WHITE,lineHeight:1,textShadow:`0 0 20px ${REDB}` }}>73%</div>
-            <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"10px",color:MID,letterSpacing:"1px",marginTop:"6px",maxWidth:"160px" }}>of callers won't leave a voicemail</div>
+            <div className="red-loss" style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(48px,7vw,80px)",color:WHITE,lineHeight:1,textShadow:`0 0 20px ${REDB}` }}>73%</div>
+            <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"10px",color:MID,letterSpacing:"1px",marginTop:"6px",maxWidth:"160px" }}>of callers won't leave a voicemail</div>
           </div>
         </div>
       </div>
 
-      {/* ── MISSED CALL ROI CALCULATOR ── */}
-      <section style={{ maxWidth:"980px",margin:"0 auto",padding:"72px 24px" }}>
-        <div style={{ textAlign:"center",marginBottom:"44px" }}>
-          <div style={{ display:"inline-block",background:`${RED}16`,border:`1px solid ${RED}44`,borderRadius:"20px",padding:"5px 18px",marginBottom:"16px",boxShadow:`0 0 16px ${RED}14` }}>
-            <span style={{ fontFamily:"'Space Mono', monospace",fontSize:"9px",color:REDB,letterSpacing:"3px" }}>MISSED CALL ROI CALCULATOR</span>
-          </div>
-          <h2 style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"clamp(36px,6vw,64px)",color:WHITE,margin:"0 0 14px",letterSpacing:"2px",lineHeight:1,textShadow:"0 0 30px rgba(255,255,255,0.06)" }}>
-            See Exactly What You're Losing
-          </h2>
-          <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"17px",color:MID,maxWidth:"460px",margin:"0 auto",lineHeight:1.75 }}>
-            Enter two numbers. We'll show you the real dollar cost of every missed call — then show you how to get it back.
-          </p>
-        </div>
-        <InlineROICalculator/>
-      </section>
-
       <Divider opacity={0.1}/>
 
+      {/* ── INLINE ROI CALCULATOR ── */}
+      <section style={{ padding:"16px 24px 72px" }}>
+        <InlineROICalculator onOpenModal={()=>setShowModal(true)}/>
+      </section>
+
+      <Divider color="red" opacity={0.08}/>
+
       {/* ── WATCH YOUR AI EMPLOYEE WORK ── */}
-      <section style={{ maxWidth:"980px",margin:"0 auto",padding:"0 24px 80px" }}>
+      <section style={{ maxWidth:"980px",margin:"0 auto",padding:"72px 24px 80px" }}>
         <div style={{ textAlign:"center",marginBottom:"40px" }}>
           <div style={{ display:"inline-block",background:`${GREEN}12`,border:`1px solid ${GREEN}33`,borderRadius:"20px",padding:"5px 16px",marginBottom:"14px" }}>
-            <span style={{ fontFamily:"'Space Mono', monospace",fontSize:"9px",color:GREEN,letterSpacing:"3px" }}>● LIVE DEMO</span>
+            <span style={{ fontFamily:"'Space Mono',monospace",fontSize:"9px",color:GREEN,letterSpacing:"3px" }}>● LIVE DEMO</span>
           </div>
-          <h2 style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"clamp(32px,5vw,58px)",color:WHITE,margin:"0 0 14px",letterSpacing:"2px",textShadow:"0 0 30px rgba(255,255,255,0.06)" }}>
+          <h2 style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(32px,5vw,58px)",color:WHITE,margin:"0 0 14px",letterSpacing:"2px",textShadow:"0 0 30px rgba(255,255,255,0.06)" }}>
             Watch Your AI Employee Work
           </h2>
-          <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"16px",color:MID,maxWidth:"480px",margin:"0 auto",lineHeight:1.75 }}>
+          <p style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"16px",color:MID,maxWidth:"480px",margin:"0 auto",lineHeight:1.75 }}>
             See exactly how Mano handles an inbound HVAC lead — from first contact to{" "}
             <span style={{ color:GOLD,fontWeight:"600" }}>booked job</span> — without a single human involved.
           </p>
@@ -807,7 +788,7 @@ export default function Demo() {
 
         <div style={{ display:"flex",gap:"4px",marginBottom:"20px",background:"#0d0d0d",border:"1px solid #222",borderRadius:"10px",padding:"4px" }}>
           {tabs.map(t=>(
-            <button key={t.id} onClick={()=>setTab(t.id)} style={{ flex:1,padding:"10px 8px",borderRadius:"7px",fontFamily:"'DM Sans', sans-serif",fontSize:"12px",fontWeight:"600",cursor:"pointer",border:"none",transition:"all 0.2s",background:tab===t.id?"#1e1e1e":"transparent",color:tab===t.id?WHITE:DIM,boxShadow:tab===t.id?"0 1px 8px rgba(0,0,0,0.7)":"none",whiteSpace:"nowrap" }}>
+            <button key={t.id} onClick={()=>setTab(t.id)} style={{ flex:1,padding:"10px 8px",borderRadius:"7px",fontFamily:"'DM Sans',sans-serif",fontSize:"12px",fontWeight:"600",cursor:"pointer",border:"none",transition:"all 0.2s",background:tab===t.id?"#1e1e1e":"transparent",color:tab===t.id?WHITE:DIM,boxShadow:tab===t.id?"0 1px 8px rgba(0,0,0,0.7)":"none",whiteSpace:"nowrap" }}>
               {t.label}
             </button>
           ))}
@@ -822,9 +803,9 @@ export default function Demo() {
       {/* ── HOW IT WORKS ── */}
       <section style={{ background:"#0a0a0a",borderTop:"1px solid #181818",borderBottom:"1px solid #181818",padding:"72px 24px" }}>
         <div style={{ maxWidth:"880px",margin:"0 auto",textAlign:"center" }}>
-          <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"10px",color:DIM,letterSpacing:"3px",marginBottom:"12px" }}>HOW IT WORKS</div>
-          <h2 style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"clamp(32px,5vw,52px)",color:WHITE,margin:"0 0 12px",letterSpacing:"2px",textShadow:"0 0 30px rgba(255,255,255,0.06)" }}>One System. Five AI Agents.</h2>
-          <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"15px",color:MID,margin:"0 0 44px" }}>Built to run your lead pipeline around the clock — no staff required.</p>
+          <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"10px",color:DIM,letterSpacing:"3px",marginBottom:"12px" }}>HOW IT WORKS</div>
+          <h2 style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(32px,5vw,52px)",color:WHITE,margin:"0 0 12px",letterSpacing:"2px",textShadow:"0 0 30px rgba(255,255,255,0.06)" }}>One System. Five AI Agents.</h2>
+          <p style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"15px",color:MID,margin:"0 0 44px",lineHeight:1.75 }}>Built to run your lead pipeline around the clock — no staff required.</p>
           <div style={{ display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(150px,1fr))",gap:"12px" }}>
             {[
               { n:"01", name:"INTAKE",  icon:"📞", desc:"Answers every call instantly" },
@@ -839,9 +820,9 @@ export default function Demo() {
                 onMouseLeave={e=>{ e.currentTarget.style.borderColor="#1e1e1e"; e.currentTarget.style.boxShadow="none"; }}
               >
                 <div style={{ fontSize:"24px",marginBottom:"10px" }}>{a.icon}</div>
-                <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"9px",color:DIM,marginBottom:"4px",letterSpacing:"1px" }}>AGENT {a.n}</div>
-                <div style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"20px",color:GOLD,marginBottom:"8px",letterSpacing:"2px",textShadow:`0 0 10px ${GOLD}44` }}>{a.name}</div>
-                <div style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"12px",color:MID,lineHeight:1.55 }}>{a.desc}</div>
+                <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"9px",color:DIM,marginBottom:"4px",letterSpacing:"1px" }}>AGENT {a.n}</div>
+                <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"20px",color:GOLD,marginBottom:"8px",letterSpacing:"2px",textShadow:`0 0 10px ${GOLD}44` }}>{a.name}</div>
+                <div style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"12px",color:MID,lineHeight:1.6 }}>{a.desc}</div>
               </div>
             ))}
           </div>
@@ -853,32 +834,32 @@ export default function Demo() {
       {/* ── BOTTOM CTA ── */}
       <section style={{ padding:"96px 24px",textAlign:"center" }}>
         <div style={{ maxWidth:"580px",margin:"0 auto" }}>
-          <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"10px",color:DIM,letterSpacing:"3px",marginBottom:"18px" }}>STOP LEAVING MONEY ON THE TABLE</div>
-          <h2 style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"clamp(40px,6.5vw,68px)",color:WHITE,margin:"0 0 16px",letterSpacing:"2px",lineHeight:0.95,textShadow:"0 0 30px rgba(255,255,255,0.06)" }}>
+          <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"10px",color:DIM,letterSpacing:"3px",marginBottom:"18px" }}>STOP LEAVING MONEY ON THE TABLE</div>
+          <h2 style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"clamp(40px,6.5vw,68px)",color:WHITE,margin:"0 0 16px",letterSpacing:"2px",lineHeight:0.95,textShadow:"0 0 30px rgba(255,255,255,0.06)" }}>
             Ready to Stop <span className="red-loss" style={{ color:REDB }}>Losing</span> Jobs<br/>
             and Start <span className="gold-headline" style={{ color:GOLD }}>Booking</span> Them?
           </h2>
-          <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"16px",color:LIGHT,margin:"0 0 12px",lineHeight:1.75 }}>
+          <p style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"17px",color:LIGHT,margin:"0 0 12px",lineHeight:1.8 }}>
             Book a free 30-minute demo. We'll show you exactly how Mano works — and what it's costing you every day you wait.
           </p>
-          <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"14px",color:REDB,margin:"0 0 36px",fontStyle:"italic",fontWeight:"500" }}>
+          <p style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"14px",color:REDB,margin:"0 0 36px",fontStyle:"italic",fontWeight:"500" }}>
             While you're reading this, your competitors are answering your leads.
           </p>
           <div style={{ display:"flex",gap:"14px",justifyContent:"center",flexWrap:"wrap" }}>
             <CTAPrimary/>
             <CTASecondary/>
           </div>
-          <div style={{ marginTop:"18px",fontFamily:"'Space Mono', monospace",fontSize:"10px",color:DIM,letterSpacing:"1px" }}>Free 30-min walkthrough. No pressure.</div>
+          <div style={{ marginTop:"18px",fontFamily:"'Space Mono',monospace",fontSize:"10px",color:DIM,letterSpacing:"1px" }}>Free 30-min walkthrough. No pressure.</div>
         </div>
       </section>
 
       {/* ── FOOTER ── */}
       <footer style={{ borderTop:"1px solid #1a1a1a",padding:"24px 28px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:"8px" }}>
         <div>
-          <div style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"16px",color:MID,letterSpacing:"3px" }}>MONKEE BIZZ AI</div>
-          <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"8px",color:DIM,letterSpacing:"2px" }}>POWERED BY MANOLOGICS</div>
+          <div style={{ fontFamily:"'Bebas Neue',sans-serif",fontSize:"16px",color:MID,letterSpacing:"3px" }}>MONKEE BIZZ AI</div>
+          <div style={{ fontFamily:"'Space Mono',monospace",fontSize:"8px",color:DIM,letterSpacing:"2px" }}>POWERED BY MANOLOGICS</div>
         </div>
-        <div style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"11px",color:DIM }}>© 2026 Monkee Bizz AI. All rights reserved.</div>
+        <div style={{ fontFamily:"'DM Sans',sans-serif",fontSize:"11px",color:DIM }}>© 2026 Monkee Bizz AI. All rights reserved.</div>
       </footer>
     </div>
   );
