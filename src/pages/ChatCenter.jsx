@@ -1,71 +1,79 @@
 import React, { useState } from "react";
-import SmsPortal from "@/components/chat/SmsPortal";
-import ManoAiChat from "@/components/chat/ManoAiChat";
+import ManoSidebar from "@/components/mano/ManoSidebar";
+import SmsDashboard from "@/components/mano/SmsDashboard";
+import ManoAiPanel from "@/components/mano/ManoAiPanel";
+import LeadPipeline from "@/components/mano/LeadPipeline";
+import ActivityFeed from "@/components/mano/ActivityFeed";
 
-const NAV = [
-  { label: "Command Center", path: "/CommandCenter", icon: "⚡" },
-  { label: "Agent 1: Intake", path: "/AgentIntake", icon: "🤖" },
-  { label: "Agent 2: Booking", path: "/AgentBooking", icon: "🤖" },
-  { label: "Agent 3: Follow-Up", path: "/AgentFollowUp", icon: "🤖" },
-  { label: "Agent 4: Retention", path: "/AgentRetention", icon: "🤖" },
-  { label: "Agent 5: Ops", path: "/AgentOps", icon: "🤖" },
-  { label: "Chat Center", path: "/ChatCenter", icon: "💬" },
-  { label: "Settings", path: "/Settings", icon: "⚙️" },
-  { label: "📋 Lead Form", path: "/LeadForm", icon: "" },
+const GOLD = "#c9973a";
+
+const TABS = [
+  { id: "sms",      label: "💬  SMS Dashboard",   sub: "Conversations & replies" },
+  { id: "ai",       label: "🐒  Mano AI",          sub: "Chat & simulate" },
+  { id: "pipeline", label: "📋  Lead Pipeline",    sub: "New → Booked → Won" },
+  { id: "feed",     label: "⚡  Activity Feed",    sub: "Real-time MANO actions" },
 ];
-
-function Sidebar({ current }) {
-  return (
-    <aside style={{ width: "220px", background: "#0f0f0f", borderRight: "1px solid #1a1a1a", display: "flex", flexDirection: "column", flexShrink: 0, minHeight: "100vh" }}>
-      <div style={{ padding: "18px 14px", borderBottom: "1px solid #1a1a1a", display: "flex", alignItems: "center", gap: "10px" }}>
-        <div style={{ width: "30px", height: "30px", background: "linear-gradient(135deg,#00ff88,#00cc66)", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "15px" }}>🐒</div>
-        <div>
-          <div style={{ fontFamily: "monospace", fontSize: "10px", color: "#00ff88", letterSpacing: "2px", fontWeight: "bold" }}>MONKEE BIZZ AI</div>
-          <div style={{ fontFamily: "monospace", fontSize: "9px", color: "#333" }}>SAOS v1.0</div>
-        </div>
-      </div>
-      <nav style={{ flex: 1, padding: "10px 8px" }}>
-        {NAV.map(n => {
-          const a = current === n.path;
-          return (
-            <a key={n.path} href={n.path} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "9px 10px", borderRadius: "7px", marginBottom: "3px", textDecoration: "none", background: a ? "rgba(0,255,136,0.1)" : "transparent", border: a ? "1px solid rgba(0,255,136,0.25)" : "1px solid transparent" }}>
-              <span style={{ fontSize: "14px" }}>{n.icon}</span>
-              <span style={{ fontSize: "12px", color: a ? "#00ff88" : "#777", fontWeight: a ? "600" : "400" }}>{n.label}</span>
-            </a>
-          );
-        })}
-      </nav>
-      <div style={{ padding: "12px", borderTop: "1px solid #1a1a1a", fontFamily: "monospace", fontSize: "9px", color: "#222" }}>SAOS BUILD 1</div>
-    </aside>
-  );
-}
 
 export default function ChatCenter() {
   const [tab, setTab] = useState("sms");
+  const active = TABS.find(t => t.id === tab);
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", background: "#0a0a0a", color: "#e0e0e0", fontFamily: "'Inter','Segoe UI',sans-serif" }}>
-      <Sidebar current="/ChatCenter" />
-      <main style={{ flex: 1, padding: "28px", overflow: "hidden" }}>
-        <div style={{ fontFamily: "monospace", fontSize: "10px", color: "#00ff88", letterSpacing: "3px", marginBottom: "5px" }}>COMMUNICATIONS</div>
-        <h1 style={{ fontSize: "22px", fontWeight: "700", color: "#fff", margin: "0 0 4px" }}>Chat Center</h1>
-        <p style={{ color: "#555", fontSize: "12px", marginBottom: "18px" }}>SMS inbox and AI ops assistant.</p>
+    <div style={{ display: "flex", minHeight: "100vh", background: "#080706", color: "#e0d8c8", fontFamily: "'Inter','Segoe UI',sans-serif" }}>
+      <ManoSidebar current="/ChatCenter" />
 
-        {/* Tabs */}
-        <div style={{ display: "flex", gap: "4px", marginBottom: "16px", background: "#0d0d0d", border: "1px solid #181818", borderRadius: "10px", padding: "4px", width: "fit-content" }}>
-          {[
-            { id: "sms", label: "💬  SMS Portal" },
-            { id: "ai", label: "🐒  Mano AI" },
-          ].map(t => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              style={{ padding: "9px 20px", borderRadius: "7px", fontFamily: "inherit", fontSize: "13px", fontWeight: "600", cursor: "pointer", border: "none", transition: "all 0.2s", background: tab === t.id ? "#1c1c1c" : "transparent", color: tab === t.id ? "#fff" : "#555", boxShadow: tab === t.id ? "0 1px 8px rgba(0,0,0,0.7)" : "none" }}>
-              {t.label}
-            </button>
-          ))}
+      <main style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", minHeight: "100vh" }}>
+        {/* ── Top Bar ── */}
+        <div style={{ padding: "20px 28px 0", background: "#0a0907", borderBottom: `1px solid #1e1a13` }}>
+          <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: "18px" }}>
+            <div>
+              <div style={{ fontFamily: "monospace", fontSize: "9px", color: GOLD, letterSpacing: "4px", marginBottom: "5px" }}>
+                MANO ADMIN · COMMUNICATIONS HUB
+              </div>
+              <h1 style={{ fontSize: "22px", fontWeight: "700", color: "#e8dfc8", margin: 0 }}>Chat Center</h1>
+              <div style={{ fontSize: "12px", color: "#4a4030", marginTop: "3px" }}>{active?.sub}</div>
+            </div>
+            {/* Live indicator */}
+            <div style={{ display: "flex", alignItems: "center", gap: "8px", padding: "8px 14px", background: "#0f0e0b", border: `1px solid #2a2215`, borderRadius: "8px" }}>
+              <div style={{ width: "7px", height: "7px", borderRadius: "50%", background: "#00cc66", boxShadow: "0 0 8px #00cc66" }} />
+              <span style={{ fontFamily: "monospace", fontSize: "9px", color: "#00cc66", letterSpacing: "1px" }}>MANO ONLINE</span>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div style={{ display: "flex", gap: "2px" }}>
+            {TABS.map(t => {
+              const isActive = tab === t.id;
+              return (
+                <button key={t.id} onClick={() => setTab(t.id)}
+                  style={{
+                    padding: "11px 22px",
+                    fontFamily: "inherit", fontSize: "13px", fontWeight: "600",
+                    cursor: "pointer", border: "none",
+                    background: isActive ? "#0d0c0a" : "transparent",
+                    color: isActive ? "#e8dfc8" : "#4a4030",
+                    borderRadius: "10px 10px 0 0",
+                    borderTop: isActive ? `2px solid ${GOLD}` : "2px solid transparent",
+                    borderLeft: isActive ? `1px solid #2a2215` : "1px solid transparent",
+                    borderRight: isActive ? `1px solid #2a2215` : "1px solid transparent",
+                    transition: "all 0.15s",
+                    marginBottom: "-1px",
+                    position: "relative", zIndex: isActive ? 2 : 1,
+                  }}>
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
-        {tab === "sms" && <SmsPortal />}
-        {tab === "ai" && <ManoAiChat />}
+        {/* ── Content ── */}
+        <div style={{ flex: 1, padding: "20px 28px", overflow: "auto", background: "#0a0907" }}>
+          {tab === "sms"      && <SmsDashboard />}
+          {tab === "ai"       && <ManoAiPanel />}
+          {tab === "pipeline" && <LeadPipeline />}
+          {tab === "feed"     && <ActivityFeed />}
+        </div>
       </main>
     </div>
   );
