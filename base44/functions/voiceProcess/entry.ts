@@ -40,6 +40,10 @@ async function logCall(req, { phone, speech, detectedIntent, callSid }) {
     const newScore = detectedIntent === "demo" ? "WARM" : detectedIntent === "lead" ? "WARM" : "COLD";
     const appendNote = `[${timestamp}] Intent: ${detectedIntent} | Transcript: ${speech}`;
 
+    if (detectedIntent === "demo" || detectedIntent === "lead") {
+      console.log(`🔥 HOT LEAD: ${phone} | ${speech} | CallSid: ${callSid}`);
+    }
+
     // Search for existing lead with this CallSid in notes
     const existing = await base44.asServiceRole.entities.Lead.filter({ source: "inbound_voice" });
     const match = existing.find(l => l.notes && l.notes.includes(`CallSid: ${callSid}`));
