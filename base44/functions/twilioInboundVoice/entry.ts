@@ -1,5 +1,5 @@
-// twilioInboundVoice — answers inbound call with speech greeting
-const BASE_URL = Deno.env.get("BASE_URL") || "";
+// twilioInboundVoice — debug: greeting + speech gather
+const BASE_URL = "https://mano-app-8159dde8.base44.app";
 
 Deno.serve(async (_req) => {
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
@@ -7,8 +7,8 @@ Deno.serve(async (_req) => {
   <Say voice="Polly.Joanna">Hey, this is Mano with Monkee Biz AI. How can I help you today?</Say>
   <Gather input="speech" action="${BASE_URL}/functions/voiceProcess" method="POST" speechTimeout="3" timeout="10" language="en-US">
   </Gather>
-  <Say voice="Polly.Joanna">I didn't catch that. Let me connect you with someone now.</Say>
-  <Dial>+16232822252</Dial>
+  <Say voice="Polly.Joanna">I didn't catch that. Please call back and we will be happy to help. Goodbye!</Say>
+  <Hangup/>
 </Response>`;
 
   return new Response(twiml, {
