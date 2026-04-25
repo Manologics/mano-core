@@ -3,11 +3,15 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const body = await req.json();
-    const toNumber = body.phone;
+    let toNumber = "+16232822252"; // default test number
 
-    if (!toNumber) {
-      return Response.json({ success: false, error: "Phone number required" }, { status: 400 });
+    try {
+      const body = await req.json();
+      if (body?.phone) {
+        toNumber = body.phone;
+      }
+    } catch (e) {
+      // ignore JSON parsing errors and use default number
     }
 
     const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
