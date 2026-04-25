@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
 import ReactMarkdown from "react-markdown";
 import ManoSidebar from "@/components/mano/ManoSidebar";
 
@@ -34,12 +33,20 @@ export default function BuilderChat() {
     setInput("");
     setLoading(true);
     try {
-      const res = await base44.functions.invoke('manoAiChat', { message: msg, history: messages.slice(-12) });
-      console.log("RAW RESPONSE:", res);
-      console.log("RESPONSE.DATA:", res?.data);
-      console.log("RESPONSE.REPLY:", res?.data?.reply);
-      const reply = res?.data?.reply || res?.reply || null;
-      setMessages(prev => [...prev, { role: "assistant", content: reply || "⚠ Empty response from Mano." }]);
+      const res = await fetch(`${window.location.origin}/functions/manoAiChat`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg, history: messages.slice(-12) }),
+      });
+      const data = await res.json();
+      console.log("RAW RESPONSE:", data);
+      console.log("RESPONSE.REPLY:", data?.reply);
+      const reply = data?.reply || null;
+      if (reply) {
+        setMessages(prev => [...prev, { role: "assistant", content: reply }]);
+      } else {
+        setMessages(prev => [...prev, { role: "assistant", content: `⚠ Error: ${data?.error || "Empty response"}` }]);
+      }
     } catch (e) {
       setMessages(prev => [...prev, { role: "assistant", content: `⚠ Error: ${e.message}` }]);
     }
