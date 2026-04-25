@@ -2,47 +2,34 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
-    console.log('[manoAiChat] ====== REQUEST START ======');
-    
-    const base44 = createClientFromRequest(req);
-
     const body = await req.json();
     const message = body.message;
     const history = body.history || [];
-    
-    console.log('[manoAiChat] Message:', message);
-    console.log('[manoAiChat] History length:', history.length);
-    
+
     if (!message || !message.trim()) {
-      console.log('[manoAiChat] Empty message, returning 400');
-      return Response.json({ success: false, error: 'Message required' }, { status: 400 });
+      return Response.json({ success: false, error: "Message required" }, { status: 400 });
     }
+
+    // Use asServiceRole only — never call auth.me() or user context
+    const base44 = createClientFromRequest(req);
 
     const systemPrompt = `You are Mano, an AI Revenue Operator for service businesses like HVAC, plumbing, and contractors. Help explain how MANO helps capture missed leads, respond instantly, qualify customers, and book jobs. Be conversational and friendly.`;
 
-    const prompt = `${systemPrompt}\n\nUser: ${message}`;
-    
-    console.log('[manoAiChat] Calling InvokeLLM...');
-    const llmResponse = await base44.asServiceRole.integrations.Core.InvokeLLM({
-      prompt: prompt,
-    });
+    const historyText = history.map(m => `${m.role === "user" ? "User" : "Mano"}: ${m.content}`).join("\n");
+    const prompt = `${systemPrompt}\n\nConversation history:\n${historyText}\n\nUser: ${message}`;
 
-    console.log('[manoAiChat] LLM Response type:', typeof llmResponse);
-    console.log('[manoAiChat] LLM Response:', llmResponse ? llmResponse.substring(0, 100) : 'null');
-    
-    const replyText = llmResponse ? String(llmResponse).trim() : '';
-    
-    if (!replyText) {
-      console.log('[manoAiChat] Empty LLM response');
-      return Response.json({ success: false, error: 'Empty response from AI' }, { status: 500 });
+    const llmResponse = await base44.asServiceRole.integrations.Core.InvokeLLM({ prompt });
+
+    const reply = typeof llmResponse === "string" ? llmResponse.trim() : "";
+
+    if (!reply) {
+      return Response.json({ success: false, error: "Empty response from AI" }, { status: 500 });
     }
 
-    console.log('[manoAiChat] Returning success response');
-    return Response.json({ success: true, reply: replyText });
-    
+    return Response.json({ success: true, reply });
+
   } catch (error) {
-    console.error('[manoAiChat] ERROR:', error);
-    console.error('[manoAiChat] Error message:', error.message);
-    return Response.json({ success: false, error: error.message || 'Server error' }, { status: 500 });
+    console.error("[manoAiChat] ERROR:", error.message);
+    return Response.json({ success: false, error: error.message || "Server error" }, { status: 500 });
   }
 });
