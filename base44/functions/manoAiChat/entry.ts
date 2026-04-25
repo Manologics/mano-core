@@ -5,13 +5,6 @@ Deno.serve(async (req) => {
     console.log('[manoAiChat] ====== REQUEST START ======');
     
     const base44 = createClientFromRequest(req);
-    const user = await base44.auth.me();
-    console.log('[manoAiChat] User:', user?.email);
-    
-    if (!user) {
-      console.log('[manoAiChat] No user, returning 401');
-      return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    }
 
     const body = await req.json();
     const message = body.message;
