@@ -4,6 +4,34 @@ import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 const BASE_URL = "https://mano-app-8159dde8.base44.app";
 const HUMAN = "+16232822252";
 
+async function sendSmsFollowUp(phone) {
+  try {
+    const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+    const authToken = Deno.env.get("TWILIO_AUTH_TOKEN");
+    const fromNumber = Deno.env.get("TWILIO_NUMBER");
+    if (!accountSid || !authToken || !fromNumber || !phone) return;
+
+    const params = new URLSearchParams({
+      To: phone,
+      From: fromNumber,
+      Body: "Hey — this is Mano with Monkee Biz AI. I just spoke with you. Want to lock in your demo? Reply YES and we'll get you scheduled.",
+    });
+
+    await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
+      method: "POST",
+      headers: {
+        Authorization: `Basic ${btoa(`${accountSid}:${authToken}`)}`,
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: params.toString(),
+    });
+
+    console.log("[voiceProcess] SMS follow-up sent to:", phone);
+  } catch (e) {
+    console.error("[voiceProcess] SMS follow-up failed:", e.message);
+  }
+}
+
 async function logCall(req, { phone, speech, detectedIntent, callSid }) {
   try {
     const base44 = createClientFromRequest(req);
@@ -27,7 +55,7 @@ async function logCall(req, { phone, speech, detectedIntent, callSid }) {
       });
       console.log("[voiceProcess] Lead UPDATED for CallSid:", callSid, "| id:", match.id);
     } else {
-      // First interaction — create new lead
+      // First interaction — create new lead and send SMS follow-up
       await base44.asServiceRole.entities.Lead.create({
         name: `Voice Call — ${phone || "Unknown"}`,
         phone: phone || null,
@@ -39,6 +67,8 @@ async function logCall(req, { phone, speech, detectedIntent, callSid }) {
         last_message: speech || null,
       });
       console.log("[voiceProcess] Lead CREATED for CallSid:", callSid, "| phone:", phone);
+      // Fire SMS asynchronously — do not await
+      sendSmsFollowUp(phone);
     }
   } catch (e) {
     console.error("[voiceProcess] Logging failed:", e.message);
