@@ -33,17 +33,14 @@ export default function BuilderChat() {
     setInput("");
     setLoading(true);
     try {
-      const res = await fetch(`${window.location.origin}/functions/manoAiChat`, {
+      const res = await fetch("https://mano-dd309130.base44.app/functions/manoAiChat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: msg, history: messages.slice(-12) }),
       });
       const data = await res.json();
-      console.log("RAW RESPONSE:", data);
-      console.log("RESPONSE.REPLY:", data?.reply);
-      const reply = data?.reply || null;
-      if (reply) {
-        setMessages(prev => [...prev, { role: "assistant", content: reply }]);
+      if (data.success && data.reply) {
+        setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
       } else {
         setMessages(prev => [...prev, { role: "assistant", content: `⚠ Error: ${data?.error || "Empty response"}` }]);
       }
