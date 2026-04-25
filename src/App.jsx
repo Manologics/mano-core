@@ -11,6 +11,7 @@ import Settings from './pages/Settings';
 import Demo from './pages/Demo';
 import ChatCenter from './pages/ChatCenter';
 import ManoChat from './pages/ManoChat';
+import BuilderChat from './pages/BuilderChat';
 
 function App() {
   return (
@@ -29,6 +30,7 @@ function App() {
         <Route path="/Demo" element={<Demo />} />
         <Route path="/ChatCenter" element={<ChatCenter />} />
         <Route path="/ManoChat" element={<ManoChat />} />
+        <Route path="/BuilderChat" element={<BuilderChat />} />
       </Routes>
     </BrowserRouter>
   )
