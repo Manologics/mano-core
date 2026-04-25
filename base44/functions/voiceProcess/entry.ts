@@ -8,20 +8,38 @@ async function logCall(req, { phone, speech, detectedIntent, callSid }) {
   try {
     const base44 = createClientFromRequest(req);
     const timestamp = new Date().toISOString();
+    const newStatus = detectedIntent === "demo" ? "Action Required" : detectedIntent === "support" ? "Contacted" : "New";
+    const newScore = detectedIntent === "demo" ? "WARM" : detectedIntent === "lead" ? "WARM" : "COLD";
+    const appendNote = `[${timestamp}] Intent: ${detectedIntent} | Transcript: ${speech}`;
 
-    // Log to Lead entity
-    await base44.asServiceRole.entities.Lead.create({
-      name: `Voice Call — ${phone || "Unknown"}`,
-      phone: phone || null,
-      source: "inbound_voice",
-      service_need: speech || null,
-      status: detectedIntent === "demo" ? "Action Required" : detectedIntent === "support" ? "Contacted" : "New",
-      score: detectedIntent === "demo" ? "WARM" : detectedIntent === "lead" ? "WARM" : "COLD",
-      notes: `[Voice Call] Intent: ${detectedIntent} | CallSid: ${callSid} | Time: ${timestamp}\nTranscript: ${speech}`,
-      last_message: speech || null,
-    });
+    // Search for existing lead with this CallSid in notes
+    const existing = await base44.asServiceRole.entities.Lead.filter({ source: "inbound_voice" });
+    const match = existing.find(l => l.notes && l.notes.includes(`CallSid: ${callSid}`));
 
-    console.log("[voiceProcess] Lead logged for:", phone, "| intent:", detectedIntent);
+    if (match) {
+      // Update existing lead — append transcript, update status/score if escalating
+      const updatedNotes = `${match.notes}\n${appendNote}`;
+      await base44.asServiceRole.entities.Lead.update(match.id, {
+        last_message: speech || null,
+        notes: updatedNotes,
+        status: newStatus,
+        score: newScore,
+      });
+      console.log("[voiceProcess] Lead UPDATED for CallSid:", callSid, "| id:", match.id);
+    } else {
+      // First interaction — create new lead
+      await base44.asServiceRole.entities.Lead.create({
+        name: `Voice Call — ${phone || "Unknown"}`,
+        phone: phone || null,
+        source: "inbound_voice",
+        service_need: speech || null,
+        status: newStatus,
+        score: newScore,
+        notes: `[Voice Call] CallSid: ${callSid} | Time: ${timestamp}\n${appendNote}`,
+        last_message: speech || null,
+      });
+      console.log("[voiceProcess] Lead CREATED for CallSid:", callSid, "| phone:", phone);
+    }
   } catch (e) {
     console.error("[voiceProcess] Logging failed:", e.message);
   }
