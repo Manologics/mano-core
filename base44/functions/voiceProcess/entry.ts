@@ -80,44 +80,47 @@ Deno.serve(async (req) => {
       );
     }
 
-    // ── Confirm connect after demo offer ──────────────────────────────────────
-    if (intent === "confirm_connect") {
-      if (/\b(yes|yeah|sure|connect|now|please|ok|okay)\b/.test(speech)) {
+    // ── Confirm connect or schedule after demo/lead offer ────────────────────
+    if (intent === "confirm_connect" || intent === "confirm_lead") {
+      if (/\b(connect|now|call|talk|speak|yes|yeah|sure|please|ok|okay)\b/.test(speech)) {
         return twiml(
           `<Say voice="Polly.Joanna">Great, connecting you now. One moment.</Say>` +
           dial(HUMAN)
         );
-      } else {
+      } else if (/\b(schedule|book|appointment|day|week|monday|tuesday|wednesday|thursday|friday|saturday|sunday|morning|afternoon|tomorrow|next)\b/.test(speech)) {
         return twiml(
-          `<Say voice="Polly.Joanna">No problem. Someone from MonkeeBiz AI will follow up shortly. Have a great day!</Say>` +
+          `<Say voice="Polly.Joanna">Perfect. What day works best for you?</Say>` +
+          `<Gather input="speech" action="${BASE_URL}/functions/voiceProcess?intent=capture_day" method="POST" speechTimeout="4" timeout="10" language="en-US"></Gather>` +
+          `<Say voice="Polly.Joanna">No worries. Someone from MonkeeBiz AI will follow up with you shortly. Take care!</Say>` +
+          `<Hangup/>`
+        );
+      } else {
+        // Unclear — re-ask with the new next-step prompt
+        return twiml(
+          `<Say voice="Polly.Joanna">I can get you scheduled or connect you now. What would you prefer?</Say>` +
+          `<Gather input="speech" action="${BASE_URL}/functions/voiceProcess?intent=confirm_connect" method="POST" speechTimeout="4" timeout="10" language="en-US"></Gather>` +
+          `<Say voice="Polly.Joanna">Someone from MonkeeBiz AI will be in touch shortly. Take care!</Say>` +
           `<Hangup/>`
         );
       }
     }
 
-    // ── Confirm connect after lead/revenue offer ──────────────────────────────
-    if (intent === "confirm_lead") {
-      if (/\b(yes|yeah|sure|connect|now|please|ok|okay)\b/.test(speech)) {
-        return twiml(
-          `<Say voice="Polly.Joanna">Perfect, connecting you now. One moment.</Say>` +
-          dial(HUMAN)
-        );
-      } else {
-        return twiml(
-          `<Say voice="Polly.Joanna">Understood. Someone from MonkeeBiz AI will reach out to you soon. Take care!</Say>` +
-          `<Hangup/>`
-        );
-      }
+    // ── Capture preferred day for scheduling ──────────────────────────────────
+    if (intent === "capture_day") {
+      return twiml(
+        `<Say voice="Polly.Joanna">Got it. We will get that on the calendar and reach out to confirm. Talk soon!</Say>` +
+        `<Hangup/>`
+      );
     }
 
     // ── Demo / appointment / consultation / meeting ───────────────────────────
     if (/\b(demo|appointment|consultation|meeting|schedule|book)\b/.test(speech)) {
       logCall(req, { phone, speech, detectedIntent: "demo", callSid });
       return twiml(
-        `<Say voice="Polly.Joanna">Absolutely. I can help get that started. I will have someone follow up shortly, or I can connect you now.</Say>` +
-        `<Say voice="Polly.Joanna">Would you like me to connect you now?</Say>` +
-        `<Gather input="speech" action="${BASE_URL}/functions/voiceProcess?intent=confirm_connect" method="POST" speechTimeout="3" timeout="10" language="en-US"></Gather>` +
-        `<Say voice="Polly.Joanna">No worries. Someone from MonkeeBiz AI will follow up shortly.</Say>` +
+        `<Say voice="Polly.Joanna">Absolutely. I can help get that started.</Say>` +
+        `<Say voice="Polly.Joanna">I can get you scheduled or connect you now. What would you prefer?</Say>` +
+        `<Gather input="speech" action="${BASE_URL}/functions/voiceProcess?intent=confirm_connect" method="POST" speechTimeout="4" timeout="10" language="en-US"></Gather>` +
+        `<Say voice="Polly.Joanna">Someone from MonkeeBiz AI will follow up shortly. Take care!</Say>` +
         `<Hangup/>`
       );
     }
@@ -136,8 +139,8 @@ Deno.serve(async (req) => {
       logCall(req, { phone, speech, detectedIntent: "lead", callSid });
       return twiml(
         `<Say voice="Polly.Joanna">That is exactly what MANO helps with. We capture missed calls, respond instantly, qualify leads, and help book jobs automatically.</Say>` +
-        `<Say voice="Polly.Joanna">Would you like to speak with someone now?</Say>` +
-        `<Gather input="speech" action="${BASE_URL}/functions/voiceProcess?intent=confirm_lead" method="POST" speechTimeout="3" timeout="10" language="en-US"></Gather>` +
+        `<Say voice="Polly.Joanna">I can get you scheduled or connect you now. What would you prefer?</Say>` +
+        `<Gather input="speech" action="${BASE_URL}/functions/voiceProcess?intent=confirm_lead" method="POST" speechTimeout="4" timeout="10" language="en-US"></Gather>` +
         `<Say voice="Polly.Joanna">Someone from MonkeeBiz AI will follow up with you soon. Take care!</Say>` +
         `<Hangup/>`
       );
