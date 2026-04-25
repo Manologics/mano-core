@@ -42,10 +42,10 @@ export default function BuilderChat() {
       if (data.success && data.reply) {
         setMessages(prev => [...prev, { role: "assistant", content: data.reply }]);
       } else {
-        setMessages(prev => [...prev, { role: "assistant", content: `⚠ Error: ${data?.error || "Empty response"}` }]);
+        console.error("[BuilderChat] No reply:", data);
       }
     } catch (e) {
-      setMessages(prev => [...prev, { role: "assistant", content: `⚠ Error: ${e.message}` }]);
+      console.error("[BuilderChat] Fetch error:", e.message);
     }
     setLoading(false);
   };
