@@ -19,11 +19,13 @@ function dial(number) {
 
 Deno.serve(async (req) => {
   try {
+    const url = new URL(req.url);
     const body = await req.text();
     const params = new URLSearchParams(body);
     const speech = (params.get("SpeechResult") || "").toLowerCase().trim();
     const callSid = params.get("CallSid") || "unknown";
-    const intent = params.get("intent") || "first";
+    // intent comes from query string (e.g. ?intent=confirm_lead), not POST body
+    const intent = url.searchParams.get("intent") || "first";
 
     console.log("[voiceProcess] CallSid:", callSid, "| intent:", intent, "| speech:", JSON.stringify(speech));
 
