@@ -35,7 +35,11 @@ export default function BuilderChat() {
     setLoading(true);
     try {
       const res = await base44.functions.invoke('manoAiChat', { message: msg, history: messages.slice(-12) });
-      setMessages(prev => [...prev, { role: "assistant", content: res.reply || "No response." }]);
+      console.log("RAW RESPONSE:", res);
+      console.log("RESPONSE.DATA:", res?.data);
+      console.log("RESPONSE.REPLY:", res?.data?.reply);
+      const reply = res?.data?.reply || res?.reply || null;
+      setMessages(prev => [...prev, { role: "assistant", content: reply || "⚠ Empty response from Mano." }]);
     } catch (e) {
       setMessages(prev => [...prev, { role: "assistant", content: `⚠ Error: ${e.message}` }]);
     }
