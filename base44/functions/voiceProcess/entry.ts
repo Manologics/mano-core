@@ -224,6 +224,33 @@ Deno.serve(async (req) => {
       );
     }
 
+    // ── Pricing — already gave the spiel, now just dial ──────────────────────
+    if (intent === "pricing_offered") {
+      const isPricingAgain = /\b(price|pricing|cost|charge|monthly|how much|expensive|fee|fees)\b/.test(speech.toLowerCase());
+      logCall(req, { phone, speech, detectedIntent: "pricing", callSid });
+      if (isPricingAgain) {
+        return twiml(
+          el("That's exactly why I should connect you with the team. One moment.") +
+          dial(HUMAN)
+        );
+      }
+      // Treat their response as a connect/schedule choice
+      const lower = speech.toLowerCase();
+      if (/\b(connect|now|call|talk|speak|yes|yeah|sure|please|ok|okay)\b/.test(lower)) {
+        return twiml(el("Great, connecting you now. One moment.") + dial(HUMAN));
+      }
+      if (/\b(schedule|book|appointment|day|week|monday|tuesday|wednesday|thursday|friday|saturday|sunday|morning|afternoon|tomorrow|next)\b/.test(lower)) {
+        return twiml(
+          el("Perfect. What day works best for you?") +
+          gatherWithIntent("capture_day") +
+          el("Someone from MonkeeBiz AI will follow up shortly. Take care!") +
+          `<Hangup/>`
+        );
+      }
+      // Unclear — connect to human
+      return twiml(el("Let me connect you with someone who can help. One moment.") + dial(HUMAN));
+    }
+
     // ── followup_route: caller responded after small_talk or unknown ──────────
     // followup_route_1 = first attempt, followup_route_2 = second (final) attempt
     if (intent === "followup_route_1" || intent === "followup_route_2") {
@@ -249,7 +276,16 @@ Deno.serve(async (req) => {
           `<Hangup/>`
         );
       }
-      if (aiIntent2 === "demo" || aiIntent2 === "missed_leads" || aiIntent2 === "pricing") {
+      if (aiIntent2 === "pricing") {
+        logCall(req, { phone, speech, detectedIntent: "pricing", callSid });
+        return twiml(
+          el("Pricing depends on call volume, automation depth, and how much revenue we're recovering. Most businesses start with a private implementation plan. I can connect you now or get you scheduled. Which would you prefer?") +
+          gatherWithIntent("pricing_offered") +
+          el("Someone from MonkeeBiz AI will follow up shortly. Take care!") +
+          `<Hangup/>`
+        );
+      }
+      if (aiIntent2 === "demo" || aiIntent2 === "missed_leads") {
         return twiml(
           el(reply2) +
           gatherWithIntent("confirm_connect") +
@@ -271,6 +307,17 @@ Deno.serve(async (req) => {
       return twiml(
         el("I can help with demos, missed lead recovery, or support. Which one do you need?") +
         gatherWithIntent("followup_route_2") +
+        el("Someone from MonkeeBiz AI will follow up shortly. Take care!") +
+        `<Hangup/>`
+      );
+    }
+
+    // ── Pricing keyword intercept (before AI) ─────────────────────────────────
+    if (/\b(price|pricing|cost|charge|monthly|how much|expensive|fee|fees)\b/.test(speech.toLowerCase())) {
+      logCall(req, { phone, speech, detectedIntent: "pricing", callSid });
+      return twiml(
+        el("Pricing depends on call volume, automation depth, and how much revenue we're recovering. Most businesses start with a private implementation plan. I can connect you now or get you scheduled. Which would you prefer?") +
+        gatherWithIntent("pricing_offered") +
         el("Someone from MonkeeBiz AI will follow up shortly. Take care!") +
         `<Hangup/>`
       );
@@ -327,7 +374,7 @@ Deno.serve(async (req) => {
     }
 
     // Demo or missed_leads — offer connect or schedule
-    if (aiIntent === "demo" || aiIntent === "missed_leads" || aiIntent === "pricing") {
+    if (aiIntent === "demo" || aiIntent === "missed_leads") {
       return twiml(
         el(reply) +
         gatherWithIntent("confirm_connect") +
