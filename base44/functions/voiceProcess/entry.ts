@@ -312,6 +312,32 @@ Deno.serve(async (req) => {
       );
     }
 
+    // ── Owner request intercept (before AI) ───────────────────────────────────
+    if (/\b(tex|owner|mr\.?\s*monks?|tex\s*taylor)\b/.test(speech.toLowerCase()) ||
+        /\b(is\s+(tex|the\s+owner)\s+(in|there|available))\b/.test(speech.toLowerCase()) ||
+        /\b(talk|speak|get|reach)\s+(to\s+)?(tex|the\s+owner)\b/.test(speech.toLowerCase()) ||
+        /i\s+know\s+the\s+owner/.test(speech.toLowerCase())) {
+      logCall(req, { phone, speech, detectedIntent: "owner_request", callSid });
+      try {
+        const base44 = createClientFromRequest(req);
+        const existing = await base44.asServiceRole.entities.Lead.filter({ source: "inbound_voice" });
+        const match = existing.find(l => l.notes && l.notes.includes(`CallSid: ${callSid}`));
+        if (match) {
+          await base44.asServiceRole.entities.Lead.update(match.id, {
+            status: "Action Required",
+            score: "HOT",
+            notes: match.notes + "\nCaller requested Tex / owner directly.",
+          });
+        }
+      } catch (e) {
+        console.error("[voiceProcess] owner_request lead update failed:", e.message);
+      }
+      return twiml(
+        el("Absolutely. Let me see if I can get Tex for you now. One moment.") +
+        dial(HUMAN)
+      );
+    }
+
     // ── Pricing keyword intercept (before AI) ─────────────────────────────────
     if (/\b(price|pricing|cost|charge|monthly|how much|expensive|fee|fees)\b/.test(speech.toLowerCase())) {
       logCall(req, { phone, speech, detectedIntent: "pricing", callSid });
