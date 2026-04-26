@@ -1,7 +1,7 @@
 // generateVoiceAudio — converts text to speech using ElevenLabs API
 // Voice: Eric (premium male), Model: eleven_turbo_v2
 
-const VOICE_ID = "cjVigY5qzO58G2mP4cmz"; // Eric — ElevenLabs premium male voice
+const VOICE_ID = "AVIlLDn2TVmdaDycgbo3"; // Eric — ElevenLabs premium male voice
 const MODEL_ID = "eleven_turbo_v2";
 
 Deno.serve(async (req) => {
