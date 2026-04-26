@@ -224,6 +224,58 @@ Deno.serve(async (req) => {
       );
     }
 
+    // ── followup_route: caller responded after small_talk or unknown ──────────
+    // followup_route_1 = first attempt, followup_route_2 = second (final) attempt
+    if (intent === "followup_route_1" || intent === "followup_route_2") {
+      const isSecondAttempt = intent === "followup_route_2";
+      const ai2 = await classifyIntent(req, speech);
+
+      if (!ai2) {
+        // AI failed — forward to human
+        return twiml(el("Let me get someone for you right now.") + dial(HUMAN));
+      }
+
+      const { intent: aiIntent2, reply: reply2, shouldDial: sd2, shouldSchedule: ss2 } = ai2;
+      logCall(req, { phone, speech, detectedIntent: aiIntent2, callSid });
+
+      if (sd2 || aiIntent2 === "connect" || aiIntent2 === "support") {
+        return twiml(el(reply2) + dial(HUMAN));
+      }
+      if (ss2 || aiIntent2 === "schedule") {
+        return twiml(
+          el(reply2) +
+          gatherWithIntent("capture_day") +
+          el("Someone from MonkeeBiz AI will follow up shortly. Take care!") +
+          `<Hangup/>`
+        );
+      }
+      if (aiIntent2 === "demo" || aiIntent2 === "missed_leads" || aiIntent2 === "pricing") {
+        return twiml(
+          el(reply2) +
+          gatherWithIntent("confirm_connect") +
+          el("Someone from MonkeeBiz AI will follow up shortly. Take care!") +
+          `<Hangup/>`
+        );
+      }
+
+      // Still unclear
+      if (isSecondAttempt) {
+        // Two strikes — forward to human
+        return twiml(
+          el("Let me connect you with someone who can help. One moment.") +
+          dial(HUMAN)
+        );
+      }
+
+      // First attempt still unclear — one more try
+      return twiml(
+        el("I can help with demos, missed lead recovery, or support. Which one do you need?") +
+        gatherWithIntent("followup_route_2") +
+        el("Someone from MonkeeBiz AI will follow up shortly. Take care!") +
+        `<Hangup/>`
+      );
+    }
+
     // ── AI-assisted intent classification for all other speech ────────────────
     const ai = await classifyIntent(req, speech);
 
@@ -284,10 +336,22 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Small talk or unknown — redirect back to main options
+    // Small talk — acknowledge once, then gather with followup_route
+    if (aiIntent === "small_talk") {
+      return twiml(
+        el(reply) +
+        gatherWithIntent("followup_route_1") +
+        el("Someone from MonkeeBiz AI will follow up shortly. Take care!") +
+        `<Hangup/>`
+      );
+    }
+
+    // Unknown — redirect with followup_route
     return twiml(
       el(reply) +
-      gather("voiceProcess")
+      gatherWithIntent("followup_route_1") +
+      el("Someone from MonkeeBiz AI will follow up shortly. Take care!") +
+      `<Hangup/>`
     );
 
   } catch (error) {
