@@ -1,55 +1,138 @@
-// voiceProcess — AI-assisted intent classification + ElevenLabs TTS
+// voiceProcess — optimized MANO voice handler
+// Fast-path regex → LLM only for vague/unknown → fire-and-forget logging
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const BASE_URL = "https://mano-app-8159dde8.base44.app";
 const HUMAN = "+16232822252";
 
-// ── ElevenLabs audio helper ───────────────────────────────────────────────────
+// ── ElevenLabs audio (with Twilio Say fallback) ───────────────────────────────
 function el(text) {
   const encoded = encodeURIComponent(text);
   return `<Play>${BASE_URL}/functions/serveVoiceAudio?text=${encoded}</Play>`;
 }
 
-// ── AI Intent Classification ──────────────────────────────────────────────────
-// Classifies caller speech into structured intent + short reply
-async function classifyIntent(req, speech) {
+// ── TwiML helpers ─────────────────────────────────────────────────────────────
+function twiml(body) {
+  return new Response(`<?xml version="1.0" encoding="UTF-8"?><Response>${body}</Response>`, {
+    status: 200,
+    headers: { "Content-Type": "text/xml; charset=utf-8" },
+  });
+}
+
+function gather(intentParam) {
+  const action = intentParam
+    ? `${BASE_URL}/functions/voiceProcess?intent=${intentParam}`
+    : `${BASE_URL}/functions/voiceProcess`;
+  return `<Gather input="speech" action="${action}" method="POST" speechTimeout="3" timeout="10" language="en-US"></Gather>`;
+}
+
+function dial() {
+  return `<Dial>${HUMAN}</Dial>`;
+}
+
+function hangup(fallbackMsg) {
+  return el(fallbackMsg) + `<Hangup/>`;
+}
+
+// ── Fire-and-forget logging ───────────────────────────────────────────────────
+function logCall(req, { phone, speech, detectedIntent, callSid }) {
+  const run = async () => {
+    try {
+      const base44 = createClientFromRequest(req);
+      const timestamp = new Date().toISOString();
+      const hotIntents = ["demo", "missed_leads", "connect", "schedule", "pricing", "owner_request"];
+      const newStatus = hotIntents.includes(detectedIntent) ? "Action Required" : detectedIntent === "support" ? "Contacted" : "New";
+      const newScore = ["demo", "missed_leads", "connect", "schedule", "pricing", "owner_request"].includes(detectedIntent) ? "WARM" : "COLD";
+      const appendNote = `[${timestamp}] Intent: ${detectedIntent} | Transcript: ${speech}`;
+
+      if (hotIntents.includes(detectedIntent)) {
+        console.log(`🔥 HOT: ${phone} | ${detectedIntent} | ${speech} | ${callSid}`);
+      }
+
+      const existing = await base44.asServiceRole.entities.Lead.filter({ source: "inbound_voice" });
+      const match = existing.find(l => l.notes && l.notes.includes(`CallSid: ${callSid}`));
+
+      if (match) {
+        await base44.asServiceRole.entities.Lead.update(match.id, {
+          last_message: speech || null,
+          notes: `${match.notes}\n${appendNote}`,
+          status: newStatus,
+          score: newScore,
+        });
+      } else {
+        await base44.asServiceRole.entities.Lead.create({
+          name: `Voice Call — ${phone || "Unknown"}`,
+          phone: phone || null,
+          source: "inbound_voice",
+          service_need: speech || null,
+          status: newStatus,
+          score: newScore,
+          notes: `[Voice Call] CallSid: ${callSid} | Time: ${timestamp}\n${appendNote}`,
+          last_message: speech || null,
+        });
+        // SMS follow-up — also fire-and-forget
+        sendSms(phone);
+      }
+    } catch (e) {
+      console.error("[voiceProcess] logCall failed:", e.message);
+    }
+  };
+  run(); // intentionally no await
+}
+
+// ── Fire-and-forget SMS ───────────────────────────────────────────────────────
+function sendSms(phone) {
+  const run = async () => {
+    try {
+      const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
+      const authToken = Deno.env.get("TWILIO_AUTH_TOKEN");
+      const fromNumber = Deno.env.get("TWILIO_NUMBER");
+      if (!accountSid || !authToken || !fromNumber || !phone) return;
+      const params = new URLSearchParams({
+        To: phone,
+        From: fromNumber,
+        Body: "Hey — this is Mano with Monkee Biz AI. I just spoke with you. Want to lock in your demo? Reply YES and we'll get you scheduled.",
+      });
+      await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${btoa(`${accountSid}:${authToken}`)}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: params.toString(),
+      });
+    } catch (e) {
+      console.error("[voiceProcess] sendSms failed:", e.message);
+    }
+  };
+  run();
+}
+
+// ── LLM fallback — only for vague/unknown speech ──────────────────────────────
+async function classifyWithLLM(req, speech) {
   try {
     const base44 = createClientFromRequest(req);
     const result = await base44.asServiceRole.integrations.Core.InvokeLLM({
-      prompt: `You are MANO, a voice AI for Monkee Biz AI — a service that helps HVAC contractors and service businesses capture missed leads, respond instantly, qualify customers, and book jobs automatically.
+      prompt: `You are MANO, a voice AI for Monkee Biz AI — helping HVAC contractors capture missed leads and book jobs.
 
-A caller just said: "${speech}"
+Caller said: "${speech}"
 
-Classify their intent and generate a SHORT, natural, conversion-focused reply (1-2 sentences max). Do NOT freestyle. Always guide back to business outcomes.
+Classify intent and write a SHORT 1-sentence reply.
 
-Intent options:
-- demo: wants a demo or to learn more
-- connect: wants to speak with someone now
-- schedule: wants to book an appointment or pick a time
-- support: existing customer with an issue or billing question
-- missed_leads: asking about missed calls, leads, or revenue recovery
-- pricing: asking about cost or pricing
-- small_talk: off-topic, weather, casual conversation
-- unknown: unclear or unrelated
+Intent options: demo, connect, schedule, support, missed_leads, pricing, small_talk, unknown
 
-Rules for reply:
-- demo/missed_leads: "I can get you scheduled or connect you with our team now. What would you prefer?"
-- connect/support: "Absolutely, let me connect you right now."
-- schedule: "Of course! What day works best for you?"
-- pricing: "Great question. Let me connect you with someone who can walk you through options. Or I can get you scheduled for a quick demo."
-- small_talk: Briefly acknowledge (1 sentence), then redirect: "Real quick — are you calling about a demo, missed leads, or support?"
-- unknown: "I can help with demos, missed lead recovery, or support. Which one are you calling about?"
+Rules:
+- demo/missed_leads → offer connect or schedule
+- connect/support → dial immediately
+- schedule → ask for day
+- pricing → pricing scripted response
+- small_talk → brief acknowledge + redirect
+- unknown → ask what they need
 
-Respond ONLY with valid JSON, no markdown:
-{
-  "intent": "...",
-  "reply": "...",
-  "shouldDial": false,
-  "shouldSchedule": false
-}
+Respond ONLY with valid JSON:
+{"intent":"...","reply":"...","shouldDial":false,"shouldSchedule":false}
 
-Set shouldDial=true only for connect or support.
-Set shouldSchedule=true only for schedule.`,
+shouldDial=true only for connect/support. shouldSchedule=true only for schedule.`,
       response_json_schema: {
         type: "object",
         properties: {
@@ -61,107 +144,23 @@ Set shouldSchedule=true only for schedule.`,
         required: ["intent", "reply", "shouldDial", "shouldSchedule"],
       },
     });
-    console.log("[voiceProcess] AI classification:", JSON.stringify(result));
     return result;
   } catch (e) {
-    console.error("[voiceProcess] classifyIntent failed:", e.message);
+    console.error("[voiceProcess] LLM classify failed:", e.message);
     return null;
   }
 }
 
-// ── SMS follow-up ─────────────────────────────────────────────────────────────
-async function sendSmsFollowUp(phone) {
-  try {
-    const accountSid = Deno.env.get("TWILIO_ACCOUNT_SID");
-    const authToken = Deno.env.get("TWILIO_AUTH_TOKEN");
-    const fromNumber = Deno.env.get("TWILIO_NUMBER");
-    if (!accountSid || !authToken || !fromNumber || !phone) return;
-
-    const params = new URLSearchParams({
-      To: phone,
-      From: fromNumber,
-      Body: "Hey — this is Mano with Monkee Biz AI. I just spoke with you. Want to lock in your demo? Reply YES and we'll get you scheduled.",
-    });
-
-    await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
-      method: "POST",
-      headers: {
-        Authorization: `Basic ${btoa(`${accountSid}:${authToken}`)}`,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: params.toString(),
-    });
-
-    console.log("[voiceProcess] SMS follow-up sent to:", phone);
-  } catch (e) {
-    console.error("[voiceProcess] SMS follow-up failed:", e.message);
-  }
-}
-
-// ── Lead logging ──────────────────────────────────────────────────────────────
-async function logCall(req, { phone, speech, detectedIntent, callSid }) {
-  try {
-    const base44 = createClientFromRequest(req);
-    const timestamp = new Date().toISOString();
-    const hotIntents = ["demo", "missed_leads", "connect", "schedule", "pricing"];
-    const newStatus = hotIntents.includes(detectedIntent) ? "Action Required" : detectedIntent === "support" ? "Contacted" : "New";
-    const newScore = hotIntents.includes(detectedIntent) ? "WARM" : "COLD";
-    const appendNote = `[${timestamp}] Intent: ${detectedIntent} | Transcript: ${speech}`;
-
-    if (hotIntents.includes(detectedIntent)) {
-      console.log(`🔥 HOT LEAD: ${phone} | intent: ${detectedIntent} | ${speech} | CallSid: ${callSid}`);
-    }
-
-    // Dedup: search for existing lead with this CallSid
-    const existing = await base44.asServiceRole.entities.Lead.filter({ source: "inbound_voice" });
-    const match = existing.find(l => l.notes && l.notes.includes(`CallSid: ${callSid}`));
-
-    if (match) {
-      await base44.asServiceRole.entities.Lead.update(match.id, {
-        last_message: speech || null,
-        notes: `${match.notes}\n${appendNote}`,
-        status: newStatus,
-        score: newScore,
-      });
-      console.log("[voiceProcess] Lead UPDATED for CallSid:", callSid, "| id:", match.id);
-    } else {
-      await base44.asServiceRole.entities.Lead.create({
-        name: `Voice Call — ${phone || "Unknown"}`,
-        phone: phone || null,
-        source: "inbound_voice",
-        service_need: speech || null,
-        status: newStatus,
-        score: newScore,
-        notes: `[Voice Call] CallSid: ${callSid} | Time: ${timestamp}\n${appendNote}`,
-        last_message: speech || null,
-      });
-      console.log("[voiceProcess] Lead CREATED for CallSid:", callSid, "| phone:", phone);
-      sendSmsFollowUp(phone); // async, no await
-    }
-  } catch (e) {
-    console.error("[voiceProcess] Logging failed:", e.message);
-  }
-}
-
-// ── TwiML helpers ─────────────────────────────────────────────────────────────
-function gather(action) {
-  return `<Gather input="speech" action="${BASE_URL}/functions/${action}" method="POST" speechTimeout="3" timeout="10" language="en-US"></Gather>`;
-}
-
-function gatherWithIntent(intent) {
-  return `<Gather input="speech" action="${BASE_URL}/functions/voiceProcess?intent=${intent}" method="POST" speechTimeout="4" timeout="10" language="en-US"></Gather>`;
-}
-
-function twiml(body) {
-  return new Response(`<?xml version="1.0" encoding="UTF-8"?><Response>${body}</Response>`, {
-    status: 200,
-    headers: { "Content-Type": "text/xml; charset=utf-8" },
-  });
-}
-
-function dial(number) {
-  return `<Dial>${number}</Dial>`;
-}
+// ── Regex fast-paths ──────────────────────────────────────────────────────────
+const RE = {
+  owner:      /\b(tex|owner|mr\.?\s*monks?|tex\s*taylor)\b|is\s+(tex|the\s+owner)\s+(in|there|available)|\b(talk|speak|get|reach)\s+(to\s+)?(tex|the\s+owner)\b|i\s+know\s+the\s+owner/i,
+  pricing:    /\b(price|pricing|cost|charge|monthly|how much|expensive|fee|fees)\b/i,
+  demo:       /\b(demo|demonstration|show me|learn more|find out|tell me more|interested)\b/i,
+  schedule:   /\b(schedule|book|appointment|calendar|pick a time|set up a time|meeting)\b/i,
+  connect:    /\b(connect|speak with|talk to|call me|transfer|real person|human|agent|someone)\b/i,
+  missed:     /\b(missed (calls?|leads?)|lost calls?|revenue|hvac|contractor|service business|answering)\b/i,
+  support:    /\b(support|billing|issue|problem|account|existing customer|help with my)\b/i,
+};
 
 // ── Main handler ──────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
@@ -173,258 +172,240 @@ Deno.serve(async (req) => {
     const callSid = params.get("CallSid") || "unknown";
     const phone = params.get("From") || null;
     const intent = url.searchParams.get("intent") || "first";
+    const lower = speech.toLowerCase();
 
-    console.log("[voiceProcess] CallSid:", callSid, "| From:", phone, "| intent:", intent, "| speech:", JSON.stringify(speech));
+    console.log("[voiceProcess] intent:", intent, "| speech:", JSON.stringify(speech));
 
-    // ── No speech detected ────────────────────────────────────────────────────
+    // ── No speech ─────────────────────────────────────────────────────────────
     if (!speech) {
       return twiml(
-        el("I didn't catch that. Can you say that one more time?") +
-        gather("voiceProcess")
+        el("I didn't catch that. Go ahead and speak.") +
+        gather()
       );
     }
 
-    // ── Scripted follow-up intents (no AI needed) ─────────────────────────────
-
-    // After offering connect or schedule — confirm which
+    // ── State: confirm_connect ────────────────────────────────────────────────
     if (intent === "confirm_connect" || intent === "confirm_lead") {
-      const lower = speech.toLowerCase();
       if (/\b(connect|now|call|talk|speak|yes|yeah|sure|please|ok|okay)\b/.test(lower)) {
+        logCall(req, { phone, speech, detectedIntent: "connect", callSid });
+        return twiml(el("Great, connecting you now. One moment.") + dial());
+      }
+      if (/\b(schedule|book|day|week|monday|tuesday|wednesday|thursday|friday|morning|afternoon|tomorrow|next)\b/.test(lower)) {
+        logCall(req, { phone, speech, detectedIntent: "schedule", callSid });
         return twiml(
-          el("Great, connecting you now. One moment.") +
-          dial(HUMAN)
-        );
-      } else if (/\b(schedule|book|appointment|day|week|monday|tuesday|wednesday|thursday|friday|saturday|sunday|morning|afternoon|tomorrow|next)\b/.test(lower)) {
-        return twiml(
-          el("Perfect. What day works best for you?") +
-          gatherWithIntent("capture_day") +
-          el("No worries. Someone from MonkeeBiz AI will follow up with you shortly. Take care!") +
-          `<Hangup/>`
-        );
-      } else {
-        // Unclear — run AI on this too
-        const ai = await classifyIntent(req, speech);
-        if (ai && ai.shouldDial) {
-          return twiml(el("Let me connect you now. One moment.") + dial(HUMAN));
-        }
-        return twiml(
-          el("I can get you scheduled or connect you now. What would you prefer?") +
-          gatherWithIntent("confirm_connect") +
-          el("Someone from MonkeeBiz AI will be in touch shortly. Take care!") +
-          `<Hangup/>`
+          el("Perfect. What day works best?") +
+          gather("capture_day") +
+          hangup("Someone from Monkee Biz AI will follow up. Take care!")
         );
       }
+      // Unclear — one more prompt then dial
+      return twiml(
+        el("Connect now or schedule? Just say which.") +
+        gather("confirm_connect") +
+        hangup("Someone from Monkee Biz AI will follow up. Take care!")
+      );
     }
 
-    // Caller stated a preferred day for scheduling
+    // ── State: capture_day ────────────────────────────────────────────────────
     if (intent === "capture_day") {
+      logCall(req, { phone, speech, detectedIntent: "schedule", callSid });
       return twiml(
-        el("Got it. We will get that on the calendar and reach out to confirm. Talk soon!") +
+        el("Got it. We'll reach out to confirm. Talk soon!") +
         `<Hangup/>`
       );
     }
 
-    // ── Pricing — already gave the spiel, now just dial ──────────────────────
+    // ── State: pricing_offered ────────────────────────────────────────────────
     if (intent === "pricing_offered") {
-      const isPricingAgain = /\b(price|pricing|cost|charge|monthly|how much|expensive|fee|fees)\b/.test(speech.toLowerCase());
       logCall(req, { phone, speech, detectedIntent: "pricing", callSid });
-      if (isPricingAgain) {
+      if (RE.pricing.test(lower)) {
+        return twiml(el("That's exactly why you should talk to the team. One moment.") + dial());
+      }
+      if (/\b(connect|now|yes|yeah|sure|ok|okay|talk|speak)\b/.test(lower)) {
+        return twiml(el("Connecting you now. One moment.") + dial());
+      }
+      if (/\b(schedule|book|day|week|morning|afternoon|tomorrow|next)\b/.test(lower)) {
         return twiml(
-          el("That's exactly why I should connect you with the team. One moment.") +
-          dial(HUMAN)
+          el("What day works best?") +
+          gather("capture_day") +
+          hangup("Someone from Monkee Biz AI will follow up. Take care!")
         );
       }
-      // Treat their response as a connect/schedule choice
-      const lower = speech.toLowerCase();
-      if (/\b(connect|now|call|talk|speak|yes|yeah|sure|please|ok|okay)\b/.test(lower)) {
-        return twiml(el("Great, connecting you now. One moment.") + dial(HUMAN));
-      }
-      if (/\b(schedule|book|appointment|day|week|monday|tuesday|wednesday|thursday|friday|saturday|sunday|morning|afternoon|tomorrow|next)\b/.test(lower)) {
-        return twiml(
-          el("Perfect. What day works best for you?") +
-          gatherWithIntent("capture_day") +
-          el("Someone from MonkeeBiz AI will follow up shortly. Take care!") +
-          `<Hangup/>`
-        );
-      }
-      // Unclear — connect to human
-      return twiml(el("Let me connect you with someone who can help. One moment.") + dial(HUMAN));
+      return twiml(el("Let me connect you with someone who can help. One moment.") + dial());
     }
 
-    // ── followup_route: caller responded after small_talk or unknown ──────────
-    // followup_route_1 = first attempt, followup_route_2 = second (final) attempt
+    // ── State: followup_route_1 / followup_route_2 ────────────────────────────
     if (intent === "followup_route_1" || intent === "followup_route_2") {
-      const isSecondAttempt = intent === "followup_route_2";
-      const ai2 = await classifyIntent(req, speech);
+      const isSecond = intent === "followup_route_2";
 
-      if (!ai2) {
-        // AI failed — forward to human
-        return twiml(el("Let me get someone for you right now.") + dial(HUMAN));
+      // Try regex fast-path first
+      if (RE.owner.test(lower)) {
+        logCall(req, { phone, speech, detectedIntent: "owner_request", callSid });
+        return twiml(el("Let me get Tex for you now. One moment.") + dial());
       }
-
-      const { intent: aiIntent2, reply: reply2, shouldDial: sd2, shouldSchedule: ss2 } = ai2;
-      logCall(req, { phone, speech, detectedIntent: aiIntent2, callSid });
-
-      if (sd2 || aiIntent2 === "connect" || aiIntent2 === "support") {
-        return twiml(el(reply2) + dial(HUMAN));
-      }
-      if (ss2 || aiIntent2 === "schedule") {
-        return twiml(
-          el(reply2) +
-          gatherWithIntent("capture_day") +
-          el("Someone from MonkeeBiz AI will follow up shortly. Take care!") +
-          `<Hangup/>`
-        );
-      }
-      if (aiIntent2 === "pricing") {
+      if (RE.pricing.test(lower)) {
         logCall(req, { phone, speech, detectedIntent: "pricing", callSid });
         return twiml(
-          el("Pricing depends on call volume, automation depth, and how much revenue we're recovering. Most businesses start with a private implementation plan. I can connect you now or get you scheduled. Which would you prefer?") +
-          gatherWithIntent("pricing_offered") +
-          el("Someone from MonkeeBiz AI will follow up shortly. Take care!") +
-          `<Hangup/>`
+          el("Pricing depends on call volume and setup. I can connect you now or get you scheduled. Which do you prefer?") +
+          gather("pricing_offered") +
+          hangup("Someone from Monkee Biz AI will follow up. Take care!")
         );
       }
-      if (aiIntent2 === "demo" || aiIntent2 === "missed_leads") {
-        return twiml(
-          el(reply2) +
-          gatherWithIntent("confirm_connect") +
-          el("Someone from MonkeeBiz AI will follow up shortly. Take care!") +
-          `<Hangup/>`
-        );
+      if (RE.connect.test(lower) || RE.support.test(lower)) {
+        logCall(req, { phone, speech, detectedIntent: "connect", callSid });
+        return twiml(el("Connecting you now. One moment.") + dial());
       }
-
-      // Still unclear
-      if (isSecondAttempt) {
-        // Two strikes — forward to human
-        return twiml(
-          el("Let me connect you with someone who can help. One moment.") +
-          dial(HUMAN)
-        );
-      }
-
-      // First attempt still unclear — one more try
-      return twiml(
-        el("I can help with demos, missed lead recovery, or support. Which one do you need?") +
-        gatherWithIntent("followup_route_2") +
-        el("Someone from MonkeeBiz AI will follow up shortly. Take care!") +
-        `<Hangup/>`
-      );
-    }
-
-    // ── Owner request intercept (before AI) ───────────────────────────────────
-    if (/\b(tex|owner|mr\.?\s*monks?|tex\s*taylor)\b/.test(speech.toLowerCase()) ||
-        /\b(is\s+(tex|the\s+owner)\s+(in|there|available))\b/.test(speech.toLowerCase()) ||
-        /\b(talk|speak|get|reach)\s+(to\s+)?(tex|the\s+owner)\b/.test(speech.toLowerCase()) ||
-        /i\s+know\s+the\s+owner/.test(speech.toLowerCase())) {
-      logCall(req, { phone, speech, detectedIntent: "owner_request", callSid });
-      try {
-        const base44 = createClientFromRequest(req);
-        const existing = await base44.asServiceRole.entities.Lead.filter({ source: "inbound_voice" });
-        const match = existing.find(l => l.notes && l.notes.includes(`CallSid: ${callSid}`));
-        if (match) {
-          await base44.asServiceRole.entities.Lead.update(match.id, {
-            status: "Action Required",
-            score: "HOT",
-            notes: match.notes + "\nCaller requested Tex / owner directly.",
-          });
-        }
-      } catch (e) {
-        console.error("[voiceProcess] owner_request lead update failed:", e.message);
-      }
-      return twiml(
-        el("Absolutely. Let me see if I can get Tex for you now. One moment.") +
-        dial(HUMAN)
-      );
-    }
-
-    // ── Pricing keyword intercept (before AI) ─────────────────────────────────
-    if (/\b(price|pricing|cost|charge|monthly|how much|expensive|fee|fees)\b/.test(speech.toLowerCase())) {
-      logCall(req, { phone, speech, detectedIntent: "pricing", callSid });
-      return twiml(
-        el("Pricing depends on call volume, automation depth, and how much revenue we're recovering. Most businesses start with a private implementation plan. I can connect you now or get you scheduled. Which would you prefer?") +
-        gatherWithIntent("pricing_offered") +
-        el("Someone from MonkeeBiz AI will follow up shortly. Take care!") +
-        `<Hangup/>`
-      );
-    }
-
-    // ── AI-assisted intent classification for all other speech ────────────────
-    const ai = await classifyIntent(req, speech);
-
-    // Fallback if AI fails — use keyword routing
-    if (!ai) {
-      const lower = speech.toLowerCase();
-      if (/\b(demo|appointment|consultation|meeting)\b/.test(lower)) {
+      if (RE.demo.test(lower) || RE.missed.test(lower)) {
         logCall(req, { phone, speech, detectedIntent: "demo", callSid });
         return twiml(
-          el("Absolutely. I can get you scheduled or connect you with our team now. What would you prefer?") +
-          gatherWithIntent("confirm_connect") +
-          el("Someone from MonkeeBiz AI will follow up shortly. Take care!") +
-          `<Hangup/>`
+          el("Absolutely. I can connect you now or schedule you. Which works better?") +
+          gather("confirm_connect") +
+          hangup("Someone from Monkee Biz AI will follow up. Take care!")
         );
       }
-      if (/\b(support|billing|issue|problem|account)\b/.test(lower)) {
-        logCall(req, { phone, speech, detectedIntent: "support", callSid });
-        return twiml(el("Let me connect you now.") + dial(HUMAN));
+      if (RE.schedule.test(lower)) {
+        logCall(req, { phone, speech, detectedIntent: "schedule", callSid });
+        return twiml(
+          el("What day works best for you?") +
+          gather("capture_day") +
+          hangup("Someone from Monkee Biz AI will follow up. Take care!")
+        );
       }
+
+      // Fall to LLM
+      const ai = await classifyWithLLM(req, speech);
+      if (!ai) {
+        return twiml(el("Let me get someone for you now.") + dial());
+      }
+
+      const { intent: ai2, reply: r2, shouldDial: sd2, shouldSchedule: ss2 } = ai;
+      logCall(req, { phone, speech, detectedIntent: ai2, callSid });
+
+      if (sd2 || ai2 === "connect" || ai2 === "support") return twiml(el(r2) + dial());
+      if (ss2 || ai2 === "schedule") return twiml(el(r2) + gather("capture_day") + hangup("Someone from Monkee Biz AI will follow up. Take care!"));
+      if (ai2 === "pricing") return twiml(el("Pricing depends on call volume and setup. Connect now or schedule?") + gather("pricing_offered") + hangup("Someone from Monkee Biz AI will follow up. Take care!"));
+      if (ai2 === "demo" || ai2 === "missed_leads") return twiml(el(r2) + gather("confirm_connect") + hangup("Someone from Monkee Biz AI will follow up. Take care!"));
+
+      if (isSecond) return twiml(el("Let me connect you with someone who can help. One moment.") + dial());
+
+      return twiml(
+        el("I can help with demos, missed lead recovery, or support. Which one?") +
+        gather("followup_route_2") +
+        hangup("Someone from Monkee Biz AI will follow up. Take care!")
+      );
+    }
+
+    // ── Regex fast-paths (main flow) ──────────────────────────────────────────
+
+    // Owner request
+    if (RE.owner.test(lower)) {
+      logCall(req, { phone, speech, detectedIntent: "owner_request", callSid });
+      // Update existing lead note async
+      (async () => {
+        try {
+          const base44 = createClientFromRequest(req);
+          const existing = await base44.asServiceRole.entities.Lead.filter({ source: "inbound_voice" });
+          const match = existing.find(l => l.notes && l.notes.includes(`CallSid: ${callSid}`));
+          if (match) {
+            await base44.asServiceRole.entities.Lead.update(match.id, {
+              status: "Action Required", score: "HOT",
+              notes: match.notes + "\nCaller requested Tex / owner directly.",
+            });
+          }
+        } catch (e) { console.error("[voiceProcess] owner note update failed:", e.message); }
+      })();
+      return twiml(el("Absolutely. Let me see if I can get Tex for you now. One moment.") + dial());
+    }
+
+    // Pricing
+    if (RE.pricing.test(lower)) {
+      logCall(req, { phone, speech, detectedIntent: "pricing", callSid });
+      return twiml(
+        el("Pricing depends on call volume and setup. I can connect you now or get you scheduled. Which do you prefer?") +
+        gather("pricing_offered") +
+        hangup("Someone from Monkee Biz AI will follow up. Take care!")
+      );
+    }
+
+    // Missed leads / HVAC / revenue
+    if (RE.missed.test(lower)) {
+      logCall(req, { phone, speech, detectedIntent: "missed_leads", callSid });
+      return twiml(
+        el("MANO recovers missed calls with instant SMS, AI voice, and booking automation. Want to connect now or schedule?") +
+        gather("confirm_connect") +
+        hangup("Someone from Monkee Biz AI will follow up. Take care!")
+      );
+    }
+
+    // Demo / learn more
+    if (RE.demo.test(lower)) {
+      logCall(req, { phone, speech, detectedIntent: "demo", callSid });
+      return twiml(
+        el("Absolutely. I can connect you now or schedule you. Which works better?") +
+        gather("confirm_connect") +
+        hangup("Someone from Monkee Biz AI will follow up. Take care!")
+      );
+    }
+
+    // Schedule
+    if (RE.schedule.test(lower)) {
+      logCall(req, { phone, speech, detectedIntent: "schedule", callSid });
+      return twiml(
+        el("Of course. What day works best for you?") +
+        gather("capture_day") +
+        hangup("Someone from Monkee Biz AI will follow up. Take care!")
+      );
+    }
+
+    // Connect / speak with someone
+    if (RE.connect.test(lower)) {
+      logCall(req, { phone, speech, detectedIntent: "connect", callSid });
+      return twiml(el("Absolutely, connecting you now. One moment.") + dial());
+    }
+
+    // Support
+    if (RE.support.test(lower)) {
+      logCall(req, { phone, speech, detectedIntent: "support", callSid });
+      return twiml(el("Let me connect you with the team now. One moment.") + dial());
+    }
+
+    // ── LLM fallback for small talk / vague / unknown ─────────────────────────
+    const ai = await classifyWithLLM(req, speech);
+
+    if (!ai) {
       logCall(req, { phone, speech, detectedIntent: "unknown", callSid });
       return twiml(
-        el("I can help with demos, missed lead recovery, or support. Which one are you calling about?") +
-        gather("voiceProcess")
+        el("I can help with demos, missed lead recovery, or support. Which one?") +
+        gather("followup_route_1") +
+        hangup("Someone from Monkee Biz AI will follow up. Take care!")
       );
     }
 
-    // ── Route based on AI classification ──────────────────────────────────────
     const { intent: aiIntent, reply, shouldDial, shouldSchedule } = ai;
-
-    // Log the call (fire async, don't block response)
     logCall(req, { phone, speech, detectedIntent: aiIntent, callSid });
 
-    // Dial immediately
     if (shouldDial || aiIntent === "connect" || aiIntent === "support") {
-      return twiml(
-        el(reply) +
-        dial(HUMAN)
-      );
+      return twiml(el(reply) + dial());
     }
-
-    // Ask for preferred day
     if (shouldSchedule || aiIntent === "schedule") {
+      return twiml(el(reply) + gather("capture_day") + hangup("Someone from Monkee Biz AI will follow up. Take care!"));
+    }
+    if (aiIntent === "pricing") {
       return twiml(
-        el(reply) +
-        gatherWithIntent("capture_day") +
-        el("No worries. Someone from MonkeeBiz AI will follow up with you shortly. Take care!") +
-        `<Hangup/>`
+        el("Pricing depends on call volume and setup. Connect now or schedule?") +
+        gather("pricing_offered") +
+        hangup("Someone from Monkee Biz AI will follow up. Take care!")
       );
     }
-
-    // Demo or missed_leads — offer connect or schedule
     if (aiIntent === "demo" || aiIntent === "missed_leads") {
-      return twiml(
-        el(reply) +
-        gatherWithIntent("confirm_connect") +
-        el("Someone from MonkeeBiz AI will follow up with you shortly. Take care!") +
-        `<Hangup/>`
-      );
+      return twiml(el(reply) + gather("confirm_connect") + hangup("Someone from Monkee Biz AI will follow up. Take care!"));
     }
 
-    // Small talk — acknowledge once, then gather with followup_route
-    if (aiIntent === "small_talk") {
-      return twiml(
-        el(reply) +
-        gatherWithIntent("followup_route_1") +
-        el("Someone from MonkeeBiz AI will follow up shortly. Take care!") +
-        `<Hangup/>`
-      );
-    }
-
-    // Unknown — redirect with followup_route
+    // Small talk or unknown — one redirect, then followup_route
     return twiml(
       el(reply) +
-      gatherWithIntent("followup_route_1") +
-      el("Someone from MonkeeBiz AI will follow up shortly. Take care!") +
-      `<Hangup/>`
+      gather("followup_route_1") +
+      hangup("Someone from Monkee Biz AI will follow up. Take care!")
     );
 
   } catch (error) {
