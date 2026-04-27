@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
-import { base44 } from "@/api/base44Client";
+import { manoAiChat } from "@/functions/manoAiChat";
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
 const G = {
@@ -421,7 +421,6 @@ export default function ManoChatPage() {
     setInput("");
     setLoading(true);
     try {
-      const { manoAiChat } = await import("@/functions/manoAiChat");
       const res = await manoAiChat({ message: msg, history: messages.slice(-10) });
       const data = res.data;
       if (data && data.reply) {
