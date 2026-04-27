@@ -33,6 +33,13 @@ const FontStyle = () => (
       0%, 100% { text-shadow: 0 0 20px #f5c51855, 0 0 40px #f5c51830; }
       50%       { text-shadow: 0 0 35px #f5c51888, 0 0 60px #f5c51844; }
     }
+    @keyframes redNumberPulse {
+      0%, 100% { text-shadow: 0 0 8px rgba(255,0,0,0.40), 0 0 24px rgba(255,0,0,0.20); }
+      50%       { text-shadow: 0 0 20px rgba(255,0,0,0.75), 0 0 48px rgba(255,0,0,0.35); }
+    }
+    .red-number-pulse {
+      animation: redNumberPulse 1.8s ease-in-out infinite;
+    }
     .gold-glow-btn {
       animation: goldPulse 2.8s ease-in-out infinite;
     }
@@ -189,50 +196,63 @@ function CalculatorModal({ onClose }) {
         {step===2&&<>
           <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"9px",color:GOLD,letterSpacing:"3px",marginBottom:"8px" }}>STEP 2 OF 2</div>
           <h2 style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"32px",color:WHITE,margin:"0 0 6px",letterSpacing:"1px" }}>How many calls do you miss?</h2>
-          <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"14px",color:"#888",margin:"0 0 24px",lineHeight:1.6 }}>Estimate the number of calls you miss per week (after hours, on jobs, weekends).</p>
+          <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"14px",color:"#888",margin:"0 0 24px",lineHeight:1.6 }}>Estimate how many inbound jobs you lose per week when you can't answer the phone.</p>
           <div style={{ marginBottom:"28px" }}>
             <input type="number" placeholder="e.g. 5" value={calls} onChange={e=>setCalls(e.target.value)} min="1"
               style={{ width:"100%",padding:"24px 16px",borderRadius:"8px",background:"rgba(255,255,255,0.05)",border:`1px solid ${GOLD}44`,color:GOLD,fontFamily:"'Bebas Neue', sans-serif",fontSize:"28px",letterSpacing:"2px",outline:"none",textAlign:"center" }}
             />
             {calls && parseInt(calls) > 0 && (
-              <div style={{ marginTop:"16px",padding:"14px",background:"#0a0a0a",border:`1px solid ${GOLD}22`,borderRadius:"8px",textAlign:"center" }}>
-                <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"10px",color:"#444",letterSpacing:"2px",marginBottom:"6px" }}>ESTIMATED MONTHLY LOSS</div>
-                <div style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"36px",color:REDB,fontWeight:"800",textShadow:"0 0 8px rgba(255,0,0,0.35)" }}>
+              <div style={{ marginTop:"16px",padding:"18px 16px",background:"#0a0808",border:`1px solid ${REDB}33`,borderRadius:"8px",textAlign:"center",boxShadow:`0 0 24px rgba(255,59,59,0.08)` }}>
+                <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"10px",color:"#555",letterSpacing:"2px",marginBottom:"10px" }}>ESTIMATED MONTHLY LOSS</div>
+                <div className="red-number-pulse" style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"38px",color:REDB,fontWeight:"800",lineHeight:1,marginBottom:"10px" }}>
                   {formatMoney(Math.round(parseInt(calls)*4*0.3*500))} – {formatMoney(Math.round(parseInt(calls)*4*0.3*1000))}
+                </div>
+                <div style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"12px",color:`${REDB}99`,fontStyle:"italic" }}>
+                  This is revenue going to your competitors every single month.
                 </div>
               </div>
             )}
           </div>
           <button onClick={handleCalculate} disabled={saving||!calls} className={calls&&!saving?"gold-glow-btn cta-primary":""} style={{ width:"100%",padding:"18px 24px",borderRadius:"8px",fontFamily:"'Space Mono', monospace",fontSize:"13px",fontWeight:"700",border:"none",cursor:calls&&!saving?"pointer":"not-allowed",background:calls&&!saving?`linear-gradient(135deg,${GOLD},${GOLDD})`:"#1a1a1a",color:calls&&!saving?"#000":"#333",letterSpacing:"1px",transition:"all 0.2s" }}>
-            {saving?"CALCULATING...":"SHOW ME HOW MUCH I'M LOSING →"}
+            {saving?"CALCULATING...":"SHOW ME MY LOST REVENUE →"}
           </button>
         </>}
 
         {step===3&&<>
-          <div style={{ textAlign:"center",marginBottom:"24px" }}>
-            <div style={{ fontSize:"44px",marginBottom:"16px" }}>🔥</div>
-            <h2 style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"30px",color:WHITE,margin:"0 0 8px",letterSpacing:"1px" }}>Here's Your Loss Report, {name.split(" ")[0]}</h2>
-            <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"14px",color:"#888",lineHeight:1.6 }}>Based on your missed calls, you're losing approximately:</p>
+          <div style={{ textAlign:"center",marginBottom:"20px" }}>
+            <h2 style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"28px",color:WHITE,margin:"0 0 8px",letterSpacing:"1px",lineHeight:1.2 }}>
+              🔥 Here's what missed calls are costing you, {name.split(" ")[0]}
+            </h2>
+            <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"13px",color:"#777",lineHeight:1.6 }}>
+              Based on your missed calls, here's how much revenue is slipping through the cracks every month:
+            </p>
           </div>
 
           {/* BIG RESULT NUMBER */}
-          <div style={{ background:`linear-gradient(135deg,${REDB}12,#0a0808)`,border:`1px solid ${REDB}33`,borderRadius:"12px",padding:"24px",marginBottom:"20px",textAlign:"center",boxShadow:`0 0 30px rgba(255,59,59,0.1)` }}>
-            <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"10px",color:"#555",letterSpacing:"2px",marginBottom:"8px" }}>MONTHLY REVENUE AT RISK</div>
-            <div style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"36px",fontWeight:"800",color:REDB,textShadow:"0 0 8px rgba(255,0,0,0.35)",lineHeight:1 }}>
+          <div style={{ background:`linear-gradient(135deg,${REDB}12,#0a0808)`,border:`1px solid ${REDB}44`,borderRadius:"12px",padding:"24px",marginBottom:"14px",textAlign:"center",boxShadow:`0 0 40px rgba(255,59,59,0.12)` }}>
+            <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"10px",color:"#555",letterSpacing:"2px",marginBottom:"10px" }}>MONTHLY REVENUE AT RISK</div>
+            <div className="red-number-pulse" style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"40px",fontWeight:"800",color:REDB,lineHeight:1,marginBottom:"10px" }}>
               {formatMoney(lowEnd)} – {formatMoney(highEnd)}
             </div>
-            <div style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"13px",color:"#666",marginTop:"8px" }}>
-              per month in missed jobs going to competitors
+            <div style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"12px",color:`${REDB}88`,fontStyle:"italic" }}>
+              Every day you wait, more of this goes to your competitors.
             </div>
           </div>
 
-          <div style={{ background:`linear-gradient(135deg,${RED}14,#0a0808)`,border:`1px solid ${RED}33`,borderRadius:"10px",padding:"18px 16px",marginBottom:"32px",boxShadow:`0 0 30px ${RED}10` }}>
-            <span style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"14px",color:REDB,fontWeight:"700",letterSpacing:"0.5px",textShadow:`0 0 10px ${RED}55` }}>That's revenue going straight to your competitors.</span>
+          {/* Urgency block */}
+          <div style={{ background:"#0d0d0d",border:`1px solid ${GOLD}22`,borderRadius:"10px",padding:"14px 16px",marginBottom:"20px",display:"flex",alignItems:"center",gap:"12px" }}>
+            <span style={{ fontSize:"18px",flexShrink:0 }}>⚡</span>
+            <span style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"13px",color:"#C8C8C8",lineHeight:1.55 }}>
+              If you fix this now, you can start capturing these jobs <strong style={{ color:GOLD }}>immediately.</strong>
+            </span>
           </div>
 
-          <button onClick={()=>{window.open(CALENDLY_URL,"_blank");onClose();}} className="gold-glow-btn cta-primary" style={{ width:"100%",padding:"18px 24px",borderRadius:"8px",fontFamily:"'Space Mono', monospace",fontSize:"13px",fontWeight:"700",border:"none",cursor:"pointer",background:`linear-gradient(135deg,${GOLD},${GOLDD})`,color:"#000",letterSpacing:"1px",boxShadow:`0 0 30px ${GOLD}44` }}>
-            BOOK A DEMO TO CAPTURE THESE JOBS →
+          <button onClick={()=>{window.open(CALENDLY_URL,"_blank");onClose();}} className="gold-glow-btn cta-primary" style={{ width:"100%",padding:"20px 24px",borderRadius:"8px",fontFamily:"'Space Mono', monospace",fontSize:"12px",fontWeight:"700",border:"none",cursor:"pointer",background:`linear-gradient(135deg,${GOLD},${GOLDD})`,color:"#000",letterSpacing:"1px",boxShadow:`0 0 40px ${GOLD}55`,marginBottom:"10px" }}>
+            BOOK DEMO & START CAPTURING THESE JOBS →
           </button>
+          <div style={{ textAlign:"center",fontFamily:"'DM Sans', sans-serif",fontSize:"12px",color:"#444" }}>
+            See Mano recover missed calls in real time. Takes 2 minutes.
+          </div>
         </>}
 
         <button onClick={onClose} style={{ position:"absolute",top:"16px",right:"20px",background:"none",border:"none",color:"#444",fontSize:"24px",cursor:"pointer",lineHeight:1,transition:"color 0.2s" }} onMouseEnter={e=>e.currentTarget.style.color=WHITE} onMouseLeave={e=>e.currentTarget.style.color="#444"}>✕</button>
