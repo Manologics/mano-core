@@ -180,9 +180,9 @@ function CalculatorModal({ onClose }) {
 
         {step===1&&<>
           <div style={{ fontFamily:"'Space Mono', monospace",fontSize:"9px",color:GOLD,letterSpacing:"3px",marginBottom:"8px" }}>STEP 1 OF 2</div>
-          <h2 style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"32px",color:WHITE,margin:"0 0 6px",letterSpacing:"1px" }}>Who are we calculating for?</h2>
-          <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"14px",color:"#888",margin:"0 0 24px",lineHeight:1.6 }}>Enter your details to generate your custom loss report.</p>
-          <div style={{ display:"flex",flexDirection:"column",gap:"16px",marginBottom:"28px" }}>
+          <h2 style={{ fontFamily:"'Bebas Neue', sans-serif",fontSize:"32px",color:WHITE,margin:"0 0 6px",letterSpacing:"1px" }}>Let's calculate how much you're losing</h2>
+          <p style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"14px",color:"#888",margin:"0 0 24px",lineHeight:1.6 }}>Enter your details to see how much missed calls are costing you every month.</p>
+          <div style={{ display:"flex",flexDirection:"column",gap:"16px",marginBottom:"12px" }}>
             <input type="text" placeholder="Your Name" value={name} onChange={e=>setName(e.target.value)}
               style={{ padding:"16px",borderRadius:"8px",background:"rgba(255,255,255,0.05)",border:"1px solid #222",color:WHITE,fontFamily:"'DM Sans', sans-serif",fontSize:"18px",outline:"none" }}
             />
@@ -190,7 +190,12 @@ function CalculatorModal({ onClose }) {
               style={{ padding:"16px",borderRadius:"8px",background:"rgba(255,255,255,0.05)",border:"1px solid #222",color:WHITE,fontFamily:"'DM Sans', sans-serif",fontSize:"18px",outline:"none" }}
             />
           </div>
-          <button onClick={()=>name&&phone&&setStep(2)} className={name&&phone?"gold-glow-btn cta-primary":""} style={{ width:"100%",padding:"18px",borderRadius:"8px",fontFamily:"'Space Mono', monospace",fontSize:"13px",fontWeight:"700",border:"none",cursor:name&&phone?"pointer":"not-allowed",background:name&&phone?`linear-gradient(135deg,${GOLD},${GOLDD})`:"#1a1a1a",color:name&&phone?"#000":"#333",letterSpacing:"1px",transition:"all 0.2s" }}>NEXT →</button>
+          <div style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"11px",color:"#444",marginBottom:"24px",paddingLeft:"2px",lineHeight:1.5 }}>
+            🔒 We'll send your results + a live demo showing how to recover these jobs. No spam.
+          </div>
+          <button onClick={()=>name&&phone&&setStep(2)} className={name&&phone?"gold-glow-btn cta-primary":""} style={{ width:"100%",padding:"18px",borderRadius:"8px",fontFamily:"'Space Mono', monospace",fontSize:"13px",fontWeight:"700",border:"none",cursor:name&&phone?"pointer":"not-allowed",background:name&&phone?`linear-gradient(135deg,${GOLD},${GOLDD})`:"#1a1a1a",color:name&&phone?"#000":"#333",letterSpacing:"1px",transition:"all 0.2s" }}>
+            {name&&phone?"CALCULATE MY LOST REVENUE →":"CALCULATE MY LOST REVENUE"}
+          </button>
         </>}
 
         {step===2&&<>
