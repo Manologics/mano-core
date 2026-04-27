@@ -193,9 +193,27 @@ function CalculatorModal({ onClose }) {
           <div style={{ fontFamily:"'DM Sans', sans-serif",fontSize:"11px",color:"#444",marginBottom:"24px",paddingLeft:"2px",lineHeight:1.5 }}>
             🔒 We'll send your results + a live demo showing how to recover these jobs. No spam.
           </div>
-          <button onClick={()=>name&&phone&&setStep(2)} className={name&&phone?"gold-glow-btn cta-primary":""} style={{ width:"100%",padding:"18px",borderRadius:"8px",fontFamily:"'Space Mono', monospace",fontSize:"13px",fontWeight:"700",border:"none",cursor:name&&phone?"pointer":"not-allowed",background:name&&phone?`linear-gradient(135deg,${GOLD},${GOLDD})`:"#1a1a1a",color:name&&phone?"#000":"#333",letterSpacing:"1px",transition:"all 0.2s" }}>
-            {name&&phone?"CALCULATE MY LOST REVENUE →":"CALCULATE MY LOST REVENUE"}
+          <button
+            onClick={()=>name&&phone&&setStep(2)}
+            className={name&&phone?"gold-glow-btn":""}
+            style={{
+              width:"100%", padding:"18px", borderRadius:"8px",
+              fontFamily:"'Space Mono', monospace", fontSize:"13px", fontWeight:"700",
+              letterSpacing:"1px", transition:"all 0.25s", cursor:name&&phone?"pointer":"not-allowed",
+              border: name&&phone ? "none" : `1px solid ${GOLD}55`,
+              background: name&&phone ? `linear-gradient(135deg,${GOLD},${GOLDD})` : "#1a1208",
+              color: name&&phone ? "#000" : GOLDD,
+              opacity: name&&phone ? 1 : 0.7,
+              boxShadow: name&&phone ? `0 0 28px ${GOLD}55` : `0 0 10px ${GOLD}18`,
+            }}
+          >
+            CALCULATE MY LOST REVENUE {name&&phone?"→":""}
           </button>
+          {!(name&&phone) && (
+            <div style={{ textAlign:"center",fontFamily:"'DM Sans', sans-serif",fontSize:"11px",color:"#3a3010",marginTop:"8px" }}>
+              Enter name + phone to unlock your loss report.
+            </div>
+          )}
         </>}
 
         {step===2&&<>
