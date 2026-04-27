@@ -1,6 +1,10 @@
 // voiceProcess — optimized MANO voice handler
 // Fast-path regex → LLM only for vague/unknown → fire-and-forget logging
+// First SMS fires immediately on new callers before any CRM/AI work
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
+
+const FIRST_SMS     = "Hey, sorry we missed you. Is this repair, replacement, or emergency service?";
+const STATUS_CB_URL = `${Deno.env.get("BASE_URL") || ""}/functions/twilioStatusCallback`;
 
 const BASE_URL = "https://mano-app-8159dde8.base44.app";
 const HUMAN = "+16232822252";
@@ -32,6 +36,38 @@ function dial() {
 
 function hangup(fallbackMsg) {
   return el(fallbackMsg) + `<Hangup/>`;
+}
+
+// ── Fire instant first SMS for new callers ────────────────────────────────────
+function fireInstantSms(phone) {
+  if (!phone) return;
+  const run = async () => {
+    try {
+      const sid    = Deno.env.get("TWILIO_ACCOUNT_SID");
+      const token  = Deno.env.get("TWILIO_AUTH_TOKEN");
+      const msgSid = Deno.env.get("TWILIO_MESSAGING_SERVICE_SID");
+      const from   = Deno.env.get("TWILIO_NUMBER");
+
+      const params = new URLSearchParams({ To: phone, Body: FIRST_SMS });
+      if (msgSid) params.set("MessagingServiceSid", msgSid);
+      else params.set("From", from);
+      params.set("StatusCallback", STATUS_CB_URL);
+
+      const res  = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${btoa(`${sid}:${token}`)}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: params.toString(),
+      });
+      const data = await res.json();
+      console.log("[voiceProcess] Instant SMS fired:", data.sid, "→", phone);
+    } catch (e) {
+      console.error("[voiceProcess] Instant SMS FAILED:", e.message);
+    }
+  };
+  run(); // fire-and-forget — never awaited
 }
 
 // ── Fire-and-forget logging ───────────────────────────────────────────────────
@@ -175,6 +211,11 @@ Deno.serve(async (req) => {
     const lower = speech.toLowerCase();
 
     console.log("[voiceProcess] intent:", intent, "| speech:", JSON.stringify(speech));
+
+    // ── Fire instant SMS immediately on first inbound turn (before any AI/CRM) ──
+    if (intent === "first" && phone) {
+      fireInstantSms(phone);
+    }
 
     // ── No speech ─────────────────────────────────────────────────────────────
     if (!speech) {
