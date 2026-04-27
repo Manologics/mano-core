@@ -421,11 +421,19 @@ export default function ManoChatPage() {
     setInput("");
     setLoading(true);
     try {
-      const res = await base44.functions.invoke("manoAiChat", { message: msg, history: messages.slice(-10) });
-      if (res && res.reply) {
-        setMessages(prev => [...prev, { role: "assistant", content: res.reply, ts: ts() }]);
+      const res = await fetch("https://mano-dd309130.base44.app/functions/manoAiChat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: msg, history: messages.slice(-10) }),
+      });
+      const data = await res.json();
+      if (data && data.reply) {
+        setMessages(prev => [...prev, { role: "assistant", content: data.reply, ts: ts() }]);
+      } else {
+        setMessages(prev => [...prev, { role: "assistant", content: "MANO didn't respond. Try again.", ts: ts() }]);
       }
-    } catch {
+    } catch (e) {
+      console.error("[ManoChat]", e);
       setMessages(prev => [...prev, { role: "assistant", content: "Connection issue — try again.", ts: ts() }]);
     }
     setLoading(false);
