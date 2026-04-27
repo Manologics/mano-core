@@ -42,25 +42,17 @@ const GLOBAL_CSS = `
     from { opacity: 0; transform: translateY(10px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-  @keyframes shimmer {
-    0%   { background-position: -200% center; }
-    100% { background-position: 200% center; }
-  }
-  @keyframes revealLine {
-    from { width: 0; }
-    to   { width: 100%; }
-  }
 
-  .gold-card    { animation: goldGlow 3.5s ease-in-out infinite; }
-  .pulse-dot    { animation: pulseDot 1.8s ease-in-out infinite; }
-  .fade-up      { animation: fadeUp 0.4s ease forwards; }
+  .gold-card { animation: goldGlow 3.5s ease-in-out infinite; }
+  .pulse-dot { animation: pulseDot 1.8s ease-in-out infinite; }
+  .fade-up   { animation: fadeUp 0.35s ease forwards; }
 
   .run-btn {
     background: linear-gradient(135deg, #D4AF37 0%, #A8891F 100%);
     color: #000;
     border: none;
-    padding: 16px 36px;
-    border-radius: 10px;
+    padding: 18px 40px;
+    border-radius: 12px;
     font-family: 'Space Mono', monospace;
     font-size: 13px;
     font-weight: 700;
@@ -68,11 +60,15 @@ const GLOBAL_CSS = `
     cursor: pointer;
     box-shadow: 0 0 32px rgba(212,175,55,0.35), 0 4px 16px rgba(0,0,0,0.4);
     transition: transform 0.15s ease, box-shadow 0.15s ease;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
   .run-btn:hover:not(:disabled) {
     transform: translateY(-1px);
     box-shadow: 0 0 48px rgba(212,175,55,0.5), 0 6px 20px rgba(0,0,0,0.5);
   }
+  .run-btn:active:not(:disabled) { transform: scale(0.98); }
   .run-btn:disabled {
     background: #1e1e1e;
     color: #3a3a3a;
@@ -84,23 +80,27 @@ const GLOBAL_CSS = `
     background: transparent;
     border: 1px solid #2a2a2a;
     color: #666;
-    padding: 10px 20px;
-    border-radius: 8px;
+    padding: 14px 22px;
+    border-radius: 10px;
     font-family: 'Space Mono', monospace;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 700;
     letter-spacing: 1px;
     cursor: pointer;
     transition: border-color 0.2s, color 0.2s;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
   .ghost-btn:hover { border-color: #444; color: #999; }
+  .ghost-btn:active { opacity: 0.7; }
 
   .action-btn {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
-    padding: 11px 20px;
-    border-radius: 9px;
+    padding: 13px 20px;
+    border-radius: 10px;
     font-family: 'Space Mono', monospace;
     font-size: 10px;
     font-weight: 700;
@@ -110,36 +110,59 @@ const GLOBAL_CSS = `
     border: 1px solid #222;
     background: #111;
     color: #777;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    min-height: 44px;
   }
-  .action-btn:hover { border-color: #3a3a3a; color: #ccc; background: #161616; }
+  .action-btn:hover  { border-color: #3a3a3a; color: #ccc; background: #161616; }
+  .action-btn:active { opacity: 0.8; transform: scale(0.98); }
   .action-btn.primary {
     background: linear-gradient(135deg, #D4AF37, #A8891F);
     color: #000;
     border-color: transparent;
     box-shadow: 0 0 20px rgba(212,175,55,0.25);
   }
-  .action-btn.primary:hover {
-    box-shadow: 0 0 32px rgba(212,175,55,0.4);
-    transform: translateY(-1px);
+  .action-btn.primary:hover  { box-shadow: 0 0 32px rgba(212,175,55,0.4); transform: translateY(-1px); }
+  .action-btn.primary:active { transform: scale(0.97); }
+
+  /* ── Tablet (≤ 1024px) */
+  @media (max-width: 1024px) {
+    .kpi-grid       { grid-template-columns: repeat(3, 1fr) !important; }
+    .grid-rev-auto  { grid-template-columns: 1fr !important; }
   }
 
-  /* Mobile breakpoints */
-  @media (max-width: 900px) {
-    .grid-2col { grid-template-columns: 1fr !important; }
-    .grid-3col { grid-template-columns: 1fr 1fr !important; }
-    .hide-mobile { display: none !important; }
-    .pipeline-grid { grid-template-columns: repeat(3, 1fr) !important; }
-    .demo-header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
-    .demo-header .demo-btn-row { align-self: stretch !important; }
-    .demo-header .demo-btn-row button { width: 100% !important; }
-    .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
-    .actions-wrap { flex-wrap: wrap !important; }
-    .main-pad { padding: 20px 16px 48px !important; }
+  /* ── Mobile (≤ 768px) — single column everything */
+  @media (max-width: 768px) {
+    .main-pad       { padding: 20px 16px 64px !important; }
+    .kpi-grid       { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+    .grid-2col      { grid-template-columns: 1fr !important; gap: 16px !important; }
+    .grid-rev-auto  { grid-template-columns: 1fr !important; }
+    .hide-mobile    { display: none !important; }
+    .actions-wrap   { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+    .actions-wrap .primary-action { grid-column: 1 / -1 !important; }
+
+    /* Demo engine — full mobile */
+    .demo-inner-pad  { padding: 24px 20px 20px !important; }
+    .demo-timeline   { grid-template-columns: 1fr 1fr !important; }
+    .demo-result     { padding: 20px !important; flex-direction: column !important; align-items: flex-start !important; }
+    .run-btn         { width: 100% !important; padding: 18px !important; font-size: 14px !important; }
+    .ghost-btn       { width: 100% !important; }
+    .demo-btn-row    { width: 100% !important; flex-direction: column !important; gap: 10px !important; }
+
+    /* Pipeline — horizontal scroll on mobile */
+    .pipeline-scroll { overflow-x: auto !important; -webkit-overflow-scrolling: touch !important; padding-bottom: 12px !important; }
+    .pipeline-inner  { display: flex !important; gap: 12px !important; width: max-content !important; min-width: 100% !important; }
+    .pipeline-col    { width: 160px !important; flex-shrink: 0 !important; }
+
+    /* Conversation + activity: uncap height */
+    .conv-messages   { min-height: 260px !important; max-height: 340px !important; }
   }
-  @media (max-width: 600px) {
-    .kpi-grid { grid-template-columns: 1fr 1fr !important; }
-    .pipeline-grid { grid-template-columns: 1fr 1fr !important; }
-    .grid-2col { grid-template-columns: 1fr !important; }
+
+  /* ── Small phones (≤ 420px) */
+  @media (max-width: 420px) {
+    .kpi-grid        { grid-template-columns: 1fr 1fr !important; }
+    .demo-timeline   { grid-template-columns: 1fr !important; }
+    .main-pad        { padding: 16px 14px 64px !important; }
   }
 `;
 
@@ -335,20 +358,20 @@ function LiveDemoEngine({ onDemoComplete }) {
       }}
     >
       {/* Hero header */}
-      <div style={{ padding:"36px 36px 28px", background:"linear-gradient(180deg, #141414 0%, #121212 100%)" }}>
+      <div className="demo-inner-pad" style={{ padding:"36px 36px 28px", background:"linear-gradient(180deg, #141414 0%, #121212 100%)" }}>
         <div className="demo-header" style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:"24px" }}>
-          <div>
+          <div style={{ flex:1, minWidth:0 }}>
             <Label style={{ marginBottom:"12px" }}>LIVE REVENUE RECOVERY DEMO</Label>
             <h2 style={{
               fontFamily: "'DM Sans',sans-serif",
-              fontSize: "clamp(22px, 3vw, 32px)",
+              fontSize: "clamp(20px, 3vw, 32px)",
               fontWeight: 800,
               color: G.white,
               margin: "0 0 8px",
-              lineHeight: 1.15,
+              lineHeight: 1.2,
               letterSpacing: "-0.5px",
             }}>
-              Watch MANO convert a missed call<br className="hide-mobile" /> into a booked job — live.
+              Watch MANO convert a missed call into a booked job — live.
             </h2>
             <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"14px", color:G.gray, lineHeight:1.6 }}>
               No human involved. Avg response: <span style={{ color:G.gold, fontWeight:600 }}>4.8 seconds.</span>
@@ -357,11 +380,7 @@ function LiveDemoEngine({ onDemoComplete }) {
 
           <div className="demo-btn-row" style={{ display:"flex", gap:"10px", alignItems:"center", flexShrink:0 }}>
             {done && <button className="ghost-btn" onClick={reset}>RESET</button>}
-            <button
-              className="run-btn"
-              disabled={running}
-              onClick={runDemo}
-            >
+            <button className="run-btn" disabled={running} onClick={runDemo}>
               {running ? "RUNNING…" : done ? "▶  RUN AGAIN" : "▶  RUN DEMO"}
             </button>
           </div>
@@ -381,7 +400,7 @@ function LiveDemoEngine({ onDemoComplete }) {
       <Divider />
 
       {/* Timeline grid */}
-      <div style={{ padding:"28px 36px", display:"grid", gridTemplateColumns:"repeat(4, 1fr)", gap:"0" }}>
+      <div className="demo-timeline" style={{ padding:"28px 36px", display:"grid", gridTemplateColumns:"repeat(4, 1fr)", gap:"0" }}>
         {DEMO_STEPS.map((step, i) => {
           const active   = !!steps.find(s => s.id === step.id);
           const isLast   = i === DEMO_STEPS.length - 1;
@@ -432,7 +451,7 @@ function LiveDemoEngine({ onDemoComplete }) {
       {done && (
         <div className="fade-up">
           <Divider />
-          <div style={{ padding:"24px 36px", background:"linear-gradient(135deg, rgba(212,175,55,0.06), transparent)", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:"16px" }}>
+          <div className="demo-result" style={{ padding:"24px 36px", background:"linear-gradient(135deg, rgba(212,175,55,0.06), transparent)", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:"16px" }}>
             <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
               <span style={{ fontSize:"24px" }}>💰</span>
               <div>
@@ -498,7 +517,7 @@ function ConversationPanel({ demoRan }) {
       </div>
 
       {/* Messages */}
-      <div style={{ flex:1, minHeight:"320px", maxHeight:"360px", overflowY:"auto", display:"flex", flexDirection:"column", gap:"14px", paddingRight:"2px" }}>
+      <div className="conv-messages" style={{ flex:1, minHeight:"320px", maxHeight:"360px", overflowY:"auto", display:"flex", flexDirection:"column", gap:"14px", paddingRight:"2px" }}>
         {visible.length === 0 && !typing && (
           <div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:"12px", padding:"40px 0" }}>
             <div style={{ fontSize:"28px" }}>💬</div>
@@ -641,42 +660,44 @@ function PipelinePanel({ demoRan }) {
         </div>
       </div>
 
-      <div className="pipeline-grid" style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:"10px" }}>
-        {PIPELINE_STAGES.map(stage => {
-          const stageLeads = leads.filter(l => l.stage === stage.key);
-          const highlight  = stage.key === "booked" || stage.key === "closed";
-          return (
-            <div key={stage.key}>
-              <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"10px" }}>
-                <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"8px", color:stage.color, letterSpacing:"2px", fontWeight:700 }}>{stage.label}</span>
-                <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"9px", color:stage.color, background:`${stage.color}12`, border:`1px solid ${stage.color}30`, borderRadius:"10px", padding:"1px 7px" }}>{stageLeads.length}</span>
-              </div>
-              <div style={{ display:"flex", flexDirection:"column", gap:"8px", minHeight:"44px" }}>
-                {stageLeads.map(lead => (
-                  <div
-                    key={lead.id}
-                    className="fade-up"
-                    style={{
-                      background: "#0C0C0C",
-                      border: `1px solid ${highlight ? G.goldBd : G.borderDim}`,
-                      borderRadius: "10px", padding: "12px",
-                      boxShadow: highlight ? `0 0 14px rgba(212,175,55,0.07)` : "none",
-                    }}
-                  >
-                    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"6px" }}>
-                      <span style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"12px", fontWeight:700, color:G.white }}>{lead.name.split(" ")[0]}</span>
-                      <ScoreBadge score={lead.score} />
+      <div className="pipeline-scroll">
+        <div className="pipeline-inner" style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:"10px" }}>
+          {PIPELINE_STAGES.map(stage => {
+            const stageLeads = leads.filter(l => l.stage === stage.key);
+            const highlight  = stage.key === "booked" || stage.key === "closed";
+            return (
+              <div key={stage.key} className="pipeline-col">
+                <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"10px" }}>
+                  <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"8px", color:stage.color, letterSpacing:"2px", fontWeight:700 }}>{stage.label}</span>
+                  <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"9px", color:stage.color, background:`${stage.color}12`, border:`1px solid ${stage.color}30`, borderRadius:"10px", padding:"1px 7px" }}>{stageLeads.length}</span>
+                </div>
+                <div style={{ display:"flex", flexDirection:"column", gap:"8px", minHeight:"44px" }}>
+                  {stageLeads.map(lead => (
+                    <div
+                      key={lead.id}
+                      className="fade-up"
+                      style={{
+                        background: "#0C0C0C",
+                        border: `1px solid ${highlight ? G.goldBd : G.borderDim}`,
+                        borderRadius: "10px", padding: "14px",
+                        boxShadow: highlight ? `0 0 14px rgba(212,175,55,0.07)` : "none",
+                      }}
+                    >
+                      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"6px" }}>
+                        <span style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"13px", fontWeight:700, color:G.white }}>{lead.name.split(" ")[0]}</span>
+                        <ScoreBadge score={lead.score} />
+                      </div>
+                      <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"12px", color:G.gray, marginBottom:"6px" }}>{lead.service}</div>
+                      <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"12px", color:highlight ? G.gold : G.dim, fontWeight:highlight ? 700 : 400 }}>
+                        ${lead.value.toLocaleString()}
+                      </div>
                     </div>
-                    <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"11px", color:G.gray, marginBottom:"6px" }}>{lead.service}</div>
-                    <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"11px", color:highlight ? G.gold : G.dim, fontWeight:highlight ? 700 : 400 }}>
-                      ${lead.value.toLocaleString()}
-                    </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
       </div>
     </Panel>
   );
@@ -786,7 +807,7 @@ function QuickActions({ onRunDemo }) {
   return (
     <div className="actions-wrap" style={{ display:"flex", gap:"10px", marginBottom:"32px", flexWrap:"wrap" }}>
       {actions.map((a, i) => (
-        <button key={i} onClick={a.action} className={`action-btn${a.gold?" primary":""}`}>
+        <button key={i} onClick={a.action} className={`action-btn${a.gold?" primary primary-action":""}`}>
           {a.label}
         </button>
       ))}
@@ -868,7 +889,7 @@ export default function ManoCommandCenter() {
         </div>
 
         {/* ── Revenue + Automations */}
-        <div className="grid-2col" style={{ display:"grid", gridTemplateColumns:"3fr 2fr", gap:"16px" }}>
+        <div className="grid-2col grid-rev-auto" style={{ display:"grid", gridTemplateColumns:"3fr 2fr", gap:"16px" }}>
           <RevenueChart revenue={revenue} />
           <AutomationPanel />
         </div>
