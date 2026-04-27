@@ -195,29 +195,33 @@ function CalculatorModal({ onClose }) {
           </div>
           <button
             onClick={()=>name&&phone&&setStep(2)}
-            className="gold-glow-btn"
             style={{
               width:"100%", height:"64px", borderRadius:"8px",
               fontFamily:"'Space Mono', monospace", fontSize:"13px", fontWeight:"700",
-              letterSpacing:"1.5px", transition:"all 0.2s",
+              letterSpacing:"1.5px", transition:"transform 0.15s ease, box-shadow 0.15s ease",
               cursor: name&&phone ? "pointer" : "not-allowed",
-              border: "none",
-              background: name&&phone
-                ? `linear-gradient(135deg, #FFD84D 0%, #D4AF37 100%)`
-                : `linear-gradient(135deg, #D4AF37 0%, #B8941F 100%)`,
+              border: "1px solid #FFD84D",
+              background: "linear-gradient(135deg, #FFD84D 0%, #D4AF37 100%)",
               color: "#000",
-              boxShadow: name&&phone
-                ? `0 0 40px rgba(212,175,55,0.65), 0 0 80px rgba(212,175,55,0.25), 0 4px 16px rgba(0,0,0,0.5)`
-                : `0 0 28px rgba(212,175,55,0.40), 0 0 50px rgba(212,175,55,0.15), 0 4px 12px rgba(0,0,0,0.4)`,
-              opacity: name&&phone ? 1 : 0.92,
+              boxShadow: "0 0 32px rgba(212,175,55,0.55), 0 0 64px rgba(212,175,55,0.20), 0 4px 14px rgba(0,0,0,0.5)",
+              opacity: 1,
+              display: "block",
             }}
-            onMouseEnter={e => { if (name&&phone) { e.currentTarget.style.transform="scale(1.02)"; e.currentTarget.style.boxShadow=`0 0 60px rgba(212,175,55,0.80), 0 0 100px rgba(212,175,55,0.35), 0 6px 20px rgba(0,0,0,0.5)`; } }}
-            onMouseLeave={e => { e.currentTarget.style.transform="scale(1)"; e.currentTarget.style.boxShadow = name&&phone ? `0 0 40px rgba(212,175,55,0.65), 0 0 80px rgba(212,175,55,0.25), 0 4px 16px rgba(0,0,0,0.5)` : `0 0 28px rgba(212,175,55,0.40), 0 0 50px rgba(212,175,55,0.15), 0 4px 12px rgba(0,0,0,0.4)`; }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = "scale(1.02)";
+              e.currentTarget.style.boxShadow = "0 0 52px rgba(255,216,77,0.80), 0 0 100px rgba(212,175,55,0.35), 0 6px 20px rgba(0,0,0,0.5)";
+              e.currentTarget.style.background = "linear-gradient(135deg, #FFE566 0%, #E5C040 100%)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = "scale(1)";
+              e.currentTarget.style.boxShadow = "0 0 32px rgba(212,175,55,0.55), 0 0 64px rgba(212,175,55,0.20), 0 4px 14px rgba(0,0,0,0.5)";
+              e.currentTarget.style.background = "linear-gradient(135deg, #FFD84D 0%, #D4AF37 100%)";
+            }}
           >
             CALCULATE MY LOST REVENUE {name&&phone ? "→" : ""}
           </button>
           {!(name&&phone) && (
-            <div style={{ textAlign:"center", fontFamily:"'DM Sans', sans-serif", fontSize:"11px", color:"#5a4a20", marginTop:"10px" }}>
+            <div style={{ textAlign:"center", fontFamily:"'DM Sans', sans-serif", fontSize:"11px", color:"#7a6520", marginTop:"10px" }}>
               Enter name + phone to continue.
             </div>
           )}
