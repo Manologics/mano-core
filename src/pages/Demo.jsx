@@ -247,7 +247,7 @@ function CalculatorModal({ onClose }) {
               </div>
             )}
           </div>
-          <button onClick={handleCalculate} disabled={saving||!calls} className={calls&&!saving?"gold-glow-btn cta-primary":""} style={{ width:"100%",padding:"18px 24px",borderRadius:"8px",fontFamily:"'Space Mono', monospace",fontSize:"13px",fontWeight:"700",border:"none",cursor:calls&&!saving?"pointer":"not-allowed",background:calls&&!saving?`linear-gradient(135deg,${GOLD},${GOLDD})`:"#1a1a1a",color:calls&&!saving?"#000":"#333",letterSpacing:"1px",transition:"all 0.2s" }}>
+          <button onClick={handleCalculate} disabled={saving||!calls} style={{ width:"100%",padding:"18px 24px",borderRadius:"8px",fontFamily:"'Space Mono', monospace",fontSize:"13px",fontWeight:"700",border:"1px solid #FFD84D",cursor:calls&&!saving?"pointer":"not-allowed",background:`linear-gradient(135deg,#FFD84D 0%,#D4AF37 100%)`,color:"#000",letterSpacing:"1px",transition:"all 0.2s",opacity:saving?"0.85":1,boxShadow:"0 0 28px rgba(212,175,55,0.50), 0 4px 12px rgba(0,0,0,0.4)" }}>
             {saving?"CALCULATING...":"SHOW ME MY LOST REVENUE →"}
           </button>
         </>}
