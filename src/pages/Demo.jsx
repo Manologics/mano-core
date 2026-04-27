@@ -195,23 +195,30 @@ function CalculatorModal({ onClose }) {
           </div>
           <button
             onClick={()=>name&&phone&&setStep(2)}
-            className={name&&phone?"gold-glow-btn":""}
+            className="gold-glow-btn"
             style={{
-              width:"100%", padding:"18px", borderRadius:"8px",
+              width:"100%", height:"64px", borderRadius:"8px",
               fontFamily:"'Space Mono', monospace", fontSize:"13px", fontWeight:"700",
-              letterSpacing:"1px", transition:"all 0.25s", cursor:name&&phone?"pointer":"not-allowed",
-              border: name&&phone ? "none" : `1px solid ${GOLD}55`,
-              background: name&&phone ? `linear-gradient(135deg,${GOLD},${GOLDD})` : "#1a1208",
-              color: name&&phone ? "#000" : GOLDD,
-              opacity: name&&phone ? 1 : 0.7,
-              boxShadow: name&&phone ? `0 0 28px ${GOLD}55` : `0 0 10px ${GOLD}18`,
+              letterSpacing:"1.5px", transition:"all 0.2s",
+              cursor: name&&phone ? "pointer" : "not-allowed",
+              border: "none",
+              background: name&&phone
+                ? `linear-gradient(135deg, #FFD84D 0%, #D4AF37 100%)`
+                : `linear-gradient(135deg, #D4AF37 0%, #B8941F 100%)`,
+              color: "#000",
+              boxShadow: name&&phone
+                ? `0 0 40px rgba(212,175,55,0.65), 0 0 80px rgba(212,175,55,0.25), 0 4px 16px rgba(0,0,0,0.5)`
+                : `0 0 28px rgba(212,175,55,0.40), 0 0 50px rgba(212,175,55,0.15), 0 4px 12px rgba(0,0,0,0.4)`,
+              opacity: name&&phone ? 1 : 0.92,
             }}
+            onMouseEnter={e => { if (name&&phone) { e.currentTarget.style.transform="scale(1.02)"; e.currentTarget.style.boxShadow=`0 0 60px rgba(212,175,55,0.80), 0 0 100px rgba(212,175,55,0.35), 0 6px 20px rgba(0,0,0,0.5)`; } }}
+            onMouseLeave={e => { e.currentTarget.style.transform="scale(1)"; e.currentTarget.style.boxShadow = name&&phone ? `0 0 40px rgba(212,175,55,0.65), 0 0 80px rgba(212,175,55,0.25), 0 4px 16px rgba(0,0,0,0.5)` : `0 0 28px rgba(212,175,55,0.40), 0 0 50px rgba(212,175,55,0.15), 0 4px 12px rgba(0,0,0,0.4)`; }}
           >
-            CALCULATE MY LOST REVENUE {name&&phone?"→":""}
+            CALCULATE MY LOST REVENUE {name&&phone ? "→" : ""}
           </button>
           {!(name&&phone) && (
-            <div style={{ textAlign:"center",fontFamily:"'DM Sans', sans-serif",fontSize:"11px",color:"#3a3010",marginTop:"8px" }}>
-              Enter name + phone to unlock your loss report.
+            <div style={{ textAlign:"center", fontFamily:"'DM Sans', sans-serif", fontSize:"11px", color:"#5a4a20", marginTop:"10px" }}>
+              Enter name + phone to continue.
             </div>
           )}
         </>}
