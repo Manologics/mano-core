@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
-import { manoAiChat } from "@/functions/manoAiChat";
+import { base44 } from "@/api/base44Client";
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
 const G = {
@@ -421,13 +421,11 @@ export default function ManoChatPage() {
     setInput("");
     setLoading(true);
     try {
-      const res = await manoAiChat({ message: msg, history: messages.slice(-10) });
-      const data = res.data;
-      if (data && data.reply) {
-        setMessages(prev => [...prev, { role: "assistant", content: data.reply, ts: ts() }]);
-      } else {
-        setMessages(prev => [...prev, { role: "assistant", content: "MANO didn't respond. Try again.", ts: ts() }]);
-      }
+      const history = messages.slice(-10).map(m => `${m.role === "user" ? "User" : "MANO"}: ${m.content}`).join("\n");
+      const reply = await base44.integrations.Core.InvokeLLM({
+        prompt: `${DEFAULT_INSTRUCTIONS}\n\nConversation so far:\n${history}\n\nUser: ${msg}\n\nMANO:`,
+      });
+      setMessages(prev => [...prev, { role: "assistant", content: reply, ts: ts() }]);
     } catch (e) {
       console.error("[ManoChat]", e);
       setMessages(prev => [...prev, { role: "assistant", content: "Connection issue — try again.", ts: ts() }]);
