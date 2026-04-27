@@ -1,0 +1,122 @@
+{
+  "name": "DailyReports",
+  "type": "object",
+  "properties": {
+    "report_date": {
+      "type": "string",
+      "description": "Date string YYYY-MM-DD \u2014 unique per day"
+    },
+    "generated_at": {
+      "type": "string",
+      "description": "UTC ISO timestamp of generation"
+    },
+    "total_leads": {
+      "type": "integer"
+    },
+    "hot_leads": {
+      "type": "integer"
+    },
+    "warm_leads": {
+      "type": "integer"
+    },
+    "cold_leads": {
+      "type": "integer"
+    },
+    "new_leads_today": {
+      "type": "integer"
+    },
+    "bookings_requested": {
+      "type": "integer"
+    },
+    "bookings_confirmed": {
+      "type": "integer"
+    },
+    "bookings_completed": {
+      "type": "integer"
+    },
+    "no_shows": {
+      "type": "integer"
+    },
+    "followups_active": {
+      "type": "integer"
+    },
+    "followups_due_today": {
+      "type": "integer"
+    },
+    "followups_overdue": {
+      "type": "integer"
+    },
+    "retention_pending": {
+      "type": "integer"
+    },
+    "retention_due_today": {
+      "type": "integer"
+    },
+    "retention_overdue": {
+      "type": "integer"
+    },
+    "hot_not_booked": {
+      "type": "integer"
+    },
+    "no_shows_not_reengaged": {
+      "type": "integer"
+    },
+    "failed_sends": {
+      "type": "integer"
+    },
+    "open_alerts": {
+      "type": "integer"
+    },
+    "critical_alerts": {
+      "type": "integer"
+    },
+    "pipeline_value_est": {
+      "type": "integer"
+    },
+    "at_risk_value_est": {
+      "type": "integer"
+    },
+    "booked_pipeline_value": {
+      "type": "integer"
+    },
+    "completed_revenue_month": {
+      "type": "integer"
+    },
+    "retention_opportunity": {
+      "type": "integer"
+    },
+    "report_json": {
+      "type": "string",
+      "description": "Full report as JSON string"
+    },
+    "email_sent": {
+      "type": "boolean",
+      "default": false
+    }
+  },
+  "required": [
+    "report_date"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

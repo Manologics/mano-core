@@ -1,0 +1,65 @@
+{
+  "name": "ReportHistory",
+  "type": "object",
+  "properties": {
+    "report_type": {
+      "type": "string",
+      "enum": [
+        "daily_ops_summary",
+        "weekly_performance_digest",
+        "manual_report"
+      ],
+      "description": "Type of report"
+    },
+    "generated_at": {
+      "type": "string",
+      "description": "UTC ISO timestamp"
+    },
+    "subject": {
+      "type": "string",
+      "description": "Email subject line used"
+    },
+    "summary_json": {
+      "type": "string",
+      "description": "Full report data as JSON string"
+    },
+    "email_sent": {
+      "type": "boolean",
+      "default": false
+    },
+    "email_sent_at": {
+      "type": "string",
+      "description": "UTC ISO timestamp when email was sent"
+    },
+    "status": {
+      "type": "string",
+      "default": "Sent"
+    }
+  },
+  "required": [
+    "report_type",
+    "subject"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

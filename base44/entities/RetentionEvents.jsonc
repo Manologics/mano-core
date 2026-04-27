@@ -1,0 +1,53 @@
+{
+  "name": "RetentionEvents",
+  "type": "object",
+  "properties": {
+    "lead_id": {
+      "type": "string",
+      "description": "Foreign key to Lead"
+    },
+    "event_type": {
+      "type": "string",
+      "enum": [
+        "satisfaction_check",
+        "review_request",
+        "referral_ask",
+        "upsell_trigger",
+        "past_client_reengage",
+        "manual_reengage"
+      ],
+      "description": "Type of retention event"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Sent",
+        "Failed",
+        "Responded",
+        "Skipped"
+      ],
+      "default": "Pending"
+    },
+    "scheduled_at": {
+      "type": "string",
+      "description": "UTC ISO timestamp when to send"
+    },
+    "sent_at": {
+      "type": "string",
+      "description": "UTC ISO timestamp when actually sent"
+    },
+    "response_received": {
+      "type": "boolean",
+      "default": false
+    },
+    "response_at": {
+      "type": "string",
+      "description": "UTC ISO timestamp of response"
+    }
+  },
+  "required": [
+    "lead_id",
+    "event_type"
+  ]
+}

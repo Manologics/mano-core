@@ -66,34 +66,32 @@ Deno.serve(async (req) => {
       webhook_status: 'none',
     });
 
-    // Send confirmation SMS
+    // ── Fire instant SMS immediately — do not await full pipeline ────────────
     const e164 = toE164(phone);
     let smsSid = null;
     let smsError = null;
+
     if (e164) {
       try {
-        smsSid = await sendSms(e164, '🔥 You\'re in. We got your info and will text you next steps shortly.');
+        // Call instantSms which sends first SMS immediately and runs async pipeline
+        const smsRes = await base44.asServiceRole.functions.invoke("instantSms", {
+          phone: e164,
+          name,
+          source,
+          leadId: lead.id,
+          token,
+          triggerMessage: service_need || "",
+        });
+        smsSid   = smsRes?.sms_sid || null;
+        smsError = smsRes?.sms_error || null;
       } catch (err) {
         smsError = err.message;
+        console.error("[submitLead] instantSms invoke failed:", smsError);
       }
     }
 
-    await S.entities.ActivityLog.create({
-      lead_id: lead.id,
-      event: smsSid
-        ? `SMS confirmation sent — ${e164} — sid: ${smsSid}`
-        : `SMS FAILED — ${e164 || 'unparseable number'} — error: ${smsError || 'could not parse phone'}`,
-      created_at: new Date().toISOString(),
-    }).catch(() => {});
-
-    // If SMS failed, add a clear flag on the lead notes for manual follow-up
-    if (!smsSid) {
-      await S.entities.Lead.update(lead.id, {
-        notes: `⚠️ SMS delivery not confirmed - manual text/call needed\nPhone on file: ${phone}\nError: ${smsError || 'phone could not be parsed to E.164'}`,
-      }).catch(() => {});
-    }
-
-    await S.entities.ActivityLog.create({
+    // Log submission event (non-blocking)
+    S.entities.ActivityLog.create({
       lead_id: lead.id,
       event: `Lead submitted via public form — token: ${token}`,
       created_at: new Date().toISOString(),

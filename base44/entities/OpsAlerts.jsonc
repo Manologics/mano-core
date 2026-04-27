@@ -1,0 +1,105 @@
+{
+  "name": "OpsAlerts",
+  "type": "object",
+  "properties": {
+    "alert_type": {
+      "type": "string",
+      "enum": [
+        "hot_lead_stale",
+        "overdue_followup",
+        "booking_failure",
+        "calendly_failure",
+        "email_failure",
+        "no_show_unhandled",
+        "retention_overdue",
+        "retention_rebook_conflict",
+        "duplicate_sequence_attempt",
+        "invalid_status_conflict",
+        "pipeline_bottleneck",
+        "summary_generation_failure",
+        "orphaned_record",
+        "manual_review_needed",
+        "lead_flow_stopped",
+        "no_bookings_this_week",
+        "contract_violation"
+      ],
+      "description": "Type of operational alert"
+    },
+    "severity": {
+      "type": "string",
+      "enum": [
+        "low",
+        "medium",
+        "high",
+        "critical"
+      ],
+      "description": "Alert severity level"
+    },
+    "source_agent": {
+      "type": "string",
+      "description": "Which agent is the source of this alert"
+    },
+    "lead_id": {
+      "type": "string",
+      "description": "Related lead ID (nullable)"
+    },
+    "booking_id": {
+      "type": "string",
+      "description": "Related booking ID (nullable)"
+    },
+    "followup_id": {
+      "type": "string",
+      "description": "Related follow-up ID (nullable)"
+    },
+    "retention_event_id": {
+      "type": "string",
+      "description": "Related retention event ID (nullable)"
+    },
+    "title": {
+      "type": "string",
+      "description": "Alert title"
+    },
+    "description": {
+      "type": "string",
+      "description": "Full alert description"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Open",
+        "Acknowledged",
+        "Resolved",
+        "Ignored"
+      ],
+      "default": "Open",
+      "description": "Current alert status"
+    },
+    "detected_at": {
+      "type": "string",
+      "description": "UTC ISO timestamp when detected"
+    },
+    "acknowledged_at": {
+      "type": "string",
+      "description": "UTC ISO timestamp when acknowledged"
+    },
+    "resolved_at": {
+      "type": "string",
+      "description": "UTC ISO timestamp when resolved"
+    },
+    "assigned_to": {
+      "type": "string",
+      "description": "Assigned admin email"
+    },
+    "metadata_json": {
+      "type": "string",
+      "description": "Additional metadata as JSON string"
+    }
+  },
+  "required": [
+    "alert_type",
+    "severity",
+    "source_agent",
+    "title",
+    "description"
+  ]
+}

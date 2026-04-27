@@ -1,0 +1,117 @@
+{
+  "name": "Booking",
+  "type": "object",
+  "properties": {
+    "lead_id": {
+      "type": "string",
+      "description": "Foreign key to Lead"
+    },
+    "calendly_event_id": {
+      "type": "string",
+      "description": "Unique Calendly event identifier"
+    },
+    "calendly_event_url": {
+      "type": "string",
+      "description": "Calendly event URL"
+    },
+    "scheduled_date": {
+      "type": "string",
+      "format": "date",
+      "description": "Appointment date"
+    },
+    "scheduled_time": {
+      "type": "string",
+      "description": "Appointment time"
+    },
+    "timezone": {
+      "type": "string",
+      "description": "Timezone for appointment"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Requested",
+        "Confirmed",
+        "Rescheduled",
+        "Completed",
+        "No-Show",
+        "Cancelled"
+      ],
+      "default": "Requested",
+      "description": "Booking status"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Appointment notes"
+    },
+    "confirmation_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "Confirmation email sent"
+    },
+    "reminder_24hr_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "24hr reminder sent"
+    },
+    "reminder_1hr_sent": {
+      "type": "boolean",
+      "default": false,
+      "description": "1hr reminder sent"
+    },
+    "no_show_flagged": {
+      "type": "boolean",
+      "default": false,
+      "description": "No-show flag"
+    },
+    "rescheduled_from": {
+      "type": "string",
+      "format": "date",
+      "description": "Previous appointment date"
+    },
+    "rescheduled_count": {
+      "type": "integer",
+      "default": 0,
+      "description": "Number of reschedules"
+    },
+    "booking_source": {
+      "type": "string",
+      "enum": [
+        "Admin",
+        "Lead",
+        "Reminder Link",
+        "Reschedule",
+        "Manual Override"
+      ],
+      "default": "Admin",
+      "description": "Booking origin"
+    }
+  },
+  "required": [
+    "lead_id",
+    "scheduled_date",
+    "scheduled_time"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

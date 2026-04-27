@@ -1,0 +1,54 @@
+{
+  "name": "FollowUp",
+  "type": "object",
+  "properties": {
+    "lead_id": {
+      "type": "string",
+      "description": "Foreign key to Lead"
+    },
+    "sequence_type": {
+      "type": "string",
+      "enum": [
+        "standard",
+        "no_show"
+      ],
+      "description": "Type of follow-up sequence"
+    },
+    "attempt_number": {
+      "type": "integer",
+      "description": "Attempt number 1, 2, or 3"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "Pending",
+        "Sent",
+        "Failed",
+        "Responded",
+        "Skipped"
+      ],
+      "default": "Pending"
+    },
+    "scheduled_at": {
+      "type": "string",
+      "description": "UTC ISO timestamp when to send"
+    },
+    "sent_at": {
+      "type": "string",
+      "description": "UTC ISO timestamp when actually sent"
+    },
+    "response_received": {
+      "type": "boolean",
+      "default": false
+    },
+    "response_at": {
+      "type": "string",
+      "description": "UTC ISO timestamp of response"
+    }
+  },
+  "required": [
+    "lead_id",
+    "sequence_type",
+    "attempt_number"
+  ]
+}
