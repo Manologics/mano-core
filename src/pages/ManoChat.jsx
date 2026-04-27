@@ -421,12 +421,9 @@ export default function ManoChatPage() {
     setInput("");
     setLoading(true);
     try {
-      const res = await fetch("https://mano-dd309130.base44.app/functions/manoAiChat", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: msg, history: messages.slice(-10) }),
-      });
-      const data = await res.json();
+      const { manoAiChat } = await import("@/functions/manoAiChat");
+      const res = await manoAiChat({ message: msg, history: messages.slice(-10) });
+      const data = res.data;
       if (data && data.reply) {
         setMessages(prev => [...prev, { role: "assistant", content: data.reply, ts: ts() }]);
       } else {
