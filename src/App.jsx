@@ -5,6 +5,7 @@ import AgentIntake from './pages/AgentIntake';
 import AgentOps from './pages/AgentOps';
 import AgentRetention from './pages/AgentRetention';
 import CommandCenter from './pages/CommandCenter';
+import ManoCommandCenter from './pages/ManoCommandCenter';
 import DealAccess from './pages/DealAccess';
 import LeadForm from './pages/LeadForm';
 import Settings from './pages/Settings';
@@ -24,7 +25,8 @@ function App() {
         <Route path="/AgentIntake" element={<AgentIntake />} />
         <Route path="/AgentOps" element={<AgentOps />} />
         <Route path="/AgentRetention" element={<AgentRetention />} />
-        <Route path="/CommandCenter" element={<CommandCenter />} />
+        <Route path="/CommandCenter" element={<ManoCommandCenter />} />
+        <Route path="/CommandCenter/legacy" element={<CommandCenter />} />
         <Route path="/DealAccess" element={<DealAccess />} />
         <Route path="/LeadForm" element={<LeadForm />} />
         <Route path="/Settings" element={<Settings />} />

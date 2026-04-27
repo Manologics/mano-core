@@ -1,7 +1,7 @@
 import React from "react";
 
 const NAV = [
-  { label: "Command Center", path: "/CommandCenter", icon: "⚡" },
+  { label: "MANO Command Center", path: "/CommandCenter", icon: "⚡" },
   { label: "Agent 1: Intake",    path: "/AgentIntake",    icon: "🤖" },
   { label: "Agent 2: Booking",   path: "/AgentBooking",   icon: "🤖" },
   { label: "Agent 3: Follow-Up", path: "/AgentFollowUp",  icon: "🤖" },
