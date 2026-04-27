@@ -1,49 +1,162 @@
 import React, { useState, useEffect, useRef } from "react";
 import ManoSidebar from "@/components/mano/ManoSidebar";
 
-// ── Design tokens ─────────────────────────────────────────────────────────────
+// ─── Design System ────────────────────────────────────────────────────────────
 const G = {
   gold:    "#D4AF37",
   goldDim: "#A8891F",
-  goldBg:  "rgba(212,175,55,0.08)",
-  goldBd:  "rgba(212,175,55,0.20)",
+  goldBg:  "rgba(212,175,55,0.07)",
+  goldBd:  "rgba(212,175,55,0.22)",
+  goldGlow:"rgba(212,175,55,0.18)",
   green:   "#22C55E",
-  greenBg: "rgba(34,197,94,0.08)",
-  greenBd: "rgba(34,197,94,0.18)",
+  greenBg: "rgba(34,197,94,0.07)",
+  greenBd: "rgba(34,197,94,0.20)",
+  red:     "#EF4444",
   white:   "#FFFFFF",
-  gray:    "#9A9A9A",
-  muted:   "#555555",
-  panel:   "#111111",
-  panel2:  "#161616",
-  border:  "#1E1E1E",
-  bg:      "#0A0A0A",
+  offwhite:"#E8E8E8",
+  gray:    "#888888",
+  dim:     "#444444",
+  panel:   "#121212",
+  panel2:  "#0E0E0E",
+  border:  "#222222",
+  borderDim:"#1A1A1A",
+  bg:      "#080808",
 };
 
-const css = `
-  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700&display=swap');
-  @keyframes goldGlow { 0%,100%{box-shadow:0 0 20px rgba(212,175,55,0.25)} 50%{box-shadow:0 0 40px rgba(212,175,55,0.45)} }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-  @keyframes slideIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
-  @keyframes countUp { from{opacity:0} to{opacity:1} }
-  .gold-glow { animation: goldGlow 3s ease-in-out infinite; }
-  .pulse-dot { animation: pulse 1.5s ease-in-out infinite; }
-  .slide-in  { animation: slideIn 0.35s ease forwards; }
+const GLOBAL_CSS = `
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600;700;800&display=swap');
+  * { box-sizing: border-box; }
+  ::-webkit-scrollbar { width: 3px; height: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #2a2a2a; border-radius: 2px; }
+
+  @keyframes goldGlow {
+    0%,100% { box-shadow: 0 0 0 1px rgba(212,175,55,0.15), 0 0 32px rgba(212,175,55,0.12); }
+    50%      { box-shadow: 0 0 0 1px rgba(212,175,55,0.25), 0 0 48px rgba(212,175,55,0.22); }
+  }
+  @keyframes pulseDot {
+    0%,100% { opacity: 1; transform: scale(1); }
+    50%     { opacity: 0.4; transform: scale(0.85); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  @keyframes revealLine {
+    from { width: 0; }
+    to   { width: 100%; }
+  }
+
+  .gold-card    { animation: goldGlow 3.5s ease-in-out infinite; }
+  .pulse-dot    { animation: pulseDot 1.8s ease-in-out infinite; }
+  .fade-up      { animation: fadeUp 0.4s ease forwards; }
+
+  .run-btn {
+    background: linear-gradient(135deg, #D4AF37 0%, #A8891F 100%);
+    color: #000;
+    border: none;
+    padding: 16px 36px;
+    border-radius: 10px;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    cursor: pointer;
+    box-shadow: 0 0 32px rgba(212,175,55,0.35), 0 4px 16px rgba(0,0,0,0.4);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .run-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 0 48px rgba(212,175,55,0.5), 0 6px 20px rgba(0,0,0,0.5);
+  }
+  .run-btn:disabled {
+    background: #1e1e1e;
+    color: #3a3a3a;
+    box-shadow: none;
+    cursor: not-allowed;
+  }
+
+  .ghost-btn {
+    background: transparent;
+    border: 1px solid #2a2a2a;
+    color: #666;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .ghost-btn:hover { border-color: #444; color: #999; }
+
+  .action-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 11px 20px;
+    border-radius: 9px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    border: 1px solid #222;
+    background: #111;
+    color: #777;
+  }
+  .action-btn:hover { border-color: #3a3a3a; color: #ccc; background: #161616; }
+  .action-btn.primary {
+    background: linear-gradient(135deg, #D4AF37, #A8891F);
+    color: #000;
+    border-color: transparent;
+    box-shadow: 0 0 20px rgba(212,175,55,0.25);
+  }
+  .action-btn.primary:hover {
+    box-shadow: 0 0 32px rgba(212,175,55,0.4);
+    transform: translateY(-1px);
+  }
+
+  /* Mobile breakpoints */
+  @media (max-width: 900px) {
+    .grid-2col { grid-template-columns: 1fr !important; }
+    .grid-3col { grid-template-columns: 1fr 1fr !important; }
+    .hide-mobile { display: none !important; }
+    .pipeline-grid { grid-template-columns: repeat(3, 1fr) !important; }
+    .demo-header { flex-direction: column !important; align-items: flex-start !important; gap: 16px !important; }
+    .demo-header .demo-btn-row { align-self: stretch !important; }
+    .demo-header .demo-btn-row button { width: 100% !important; }
+    .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
+    .actions-wrap { flex-wrap: wrap !important; }
+    .main-pad { padding: 20px 16px 48px !important; }
+  }
+  @media (max-width: 600px) {
+    .kpi-grid { grid-template-columns: 1fr 1fr !important; }
+    .pipeline-grid { grid-template-columns: 1fr 1fr !important; }
+    .grid-2col { grid-template-columns: 1fr !important; }
+  }
 `;
 
-// ── Demo data ─────────────────────────────────────────────────────────────────
+// ─── Data ─────────────────────────────────────────────────────────────────────
 const DEMO_STEPS = [
-  { id:1, icon:"📞", label:"Missed call detected",        detail:"From: +1 (623) 555-0147 — Marcus Webb",        delay:0    },
-  { id:2, icon:"⚡", label:"Instant SMS dispatched",      detail:"Sent in 2.3 seconds via MANO SMS Engine",      delay:1800 },
-  { id:3, icon:"💬", label:"Customer reply received",     detail:'"Yeah it\'s blowing warm air. It\'s 108° out"', delay:3800 },
-  { id:4, icon:"🧠", label:"AI qualification question",   detail:"MANO: \"Is the fan running or completely off?\"", delay:5200 },
-  { id:5, icon:"💬", label:"Customer responds",           detail:'"Fan is running but just warm air"',            delay:7000 },
-  { id:6, icon:"📅", label:"AI confirms appointment",     detail:"MANO: \"Booked. Tech arriving 2–3 PM today.\"", delay:8800 },
-  { id:7, icon:"✅", label:"Job marked BOOKED",           detail:"Lead status → BOOKED · Score: HOT",             delay:10400 },
-  { id:8, icon:"💰", label:"Revenue added to pipeline",   detail:"+$850 recovered · Pipeline updated",            delay:11800 },
+  { id:1, icon:"📞", label:"Missed call detected",        detail:"Caller: Marcus Webb  ·  +1 (623) 555-0147",             delay:0,     type:"missed"    },
+  { id:2, icon:"⚡", label:"Instant SMS dispatched",      detail:"Fired in 2.3 seconds  ·  MANO Messaging Engine",        delay:1800,  type:"sms"       },
+  { id:3, icon:"💬", label:"Customer reply received",     detail:'"Yeah it\'s blowing warm air. It\'s 108° outside."',    delay:3800,  type:"reply"     },
+  { id:4, icon:"🧠", label:"AI asks qualification question", detail:"MANO: \"Is the fan running, or completely off?\"",   delay:5200,  type:"qualify"   },
+  { id:5, icon:"💬", label:"Customer responds",           detail:'"Fan is running but just warm air coming out."',         delay:7000,  type:"reply"     },
+  { id:6, icon:"📅", label:"AI confirms appointment",     detail:"MANO: \"Tech arriving 2–3 PM today. You'll be notified.\"", delay:8800, type:"book"  },
+  { id:7, icon:"✅", label:"Job marked BOOKED",           detail:"Lead status → BOOKED  ·  Score: HOT  ·  Response: 2.3s", delay:10400, type:"booked"  },
+  { id:8, icon:"💰", label:"$850 added to pipeline",      detail:"Revenue recovered  ·  Pipeline & KPIs updated",          delay:11800, type:"revenue"   },
 ];
 
 const SMS_CONV = [
-  { from:"system", text:"Missed call detected from Marcus Webb", ts:"2:04 PM" },
+  { from:"system", text:"Missed call detected — Marcus Webb",             ts:"2:04 PM" },
   { from:"mano",   text:"Hi Marcus, this is Mano from Valley Cool HVAC 👋 We got your message — your AC isn't cooling. Can you confirm?", ts:"2:04 PM" },
   { from:"lead",   text:"Yeah it's blowing warm air. It's 108° outside right now, this is really bad", ts:"2:05 PM" },
   { from:"mano",   text:"That's urgent — I'm on it. Is the fan running, or is the whole system completely off?", ts:"2:05 PM" },
@@ -54,20 +167,20 @@ const SMS_CONV = [
 ];
 
 const INIT_PIPELINE = [
-  { id:1, name:"Marcus Webb",    service:"AC Repair",          value:850,  stage:"missed",    score:"HOT"  },
-  { id:2, name:"Sandra Ortiz",   service:"Heater Replacement", value:2200, stage:"contacted", score:"HOT"  },
-  { id:3, name:"Derek Lane",     service:"Thermostat Install",  value:320,  stage:"qualified", score:"WARM" },
-  { id:4, name:"Tonya Simms",    service:"Annual Tune-Up",      value:189,  stage:"booked",    score:"WARM" },
-  { id:5, name:"James Pruitt",   service:"Outdoor Unit Repair", value:1100, stage:"missed",    score:"HOT"  },
-  { id:6, name:"Lena Figueroa",  service:"Filter + Checkup",    value:145,  stage:"closed",    score:"COLD" },
+  { id:1, name:"Marcus Webb",   service:"AC Repair",           value:850,  stage:"missed",    score:"HOT"  },
+  { id:2, name:"Sandra Ortiz",  service:"Heater Replacement",  value:2200, stage:"contacted", score:"HOT"  },
+  { id:3, name:"Derek Lane",    service:"Thermostat Install",   value:320,  stage:"qualified", score:"WARM" },
+  { id:4, name:"Tonya Simms",   service:"Annual Tune-Up",       value:189,  stage:"booked",    score:"WARM" },
+  { id:5, name:"James Pruitt",  service:"Outdoor Unit Repair",  value:1100, stage:"missed",    score:"HOT"  },
+  { id:6, name:"Lena Figueroa", service:"Filter + Checkup",     value:145,  stage:"closed",    score:"COLD" },
 ];
 
 const PIPELINE_STAGES = [
-  { key:"missed",    label:"MISSED",    color:"#555555" },
-  { key:"contacted", label:"CONTACTED", color:"#9A9A9A" },
-  { key:"qualified", label:"QUALIFIED", color:G.gold    },
-  { key:"booked",    label:"BOOKED",    color:G.gold    },
-  { key:"closed",    label:"CLOSED",    color:G.green   },
+  { key:"missed",    label:"MISSED",    color:"#555" },
+  { key:"contacted", label:"CONTACTED", color:"#888" },
+  { key:"qualified", label:"QUALIFIED", color:G.gold },
+  { key:"booked",    label:"BOOKED",    color:G.gold },
+  { key:"closed",    label:"CLOSED",    color:G.green},
 ];
 
 const REVENUE_DATA = [
@@ -80,149 +193,271 @@ const REVENUE_DATA = [
 ];
 
 const AUTOMATIONS = [
-  { label:"Missed Call SMS",       desc:"Fires within 3 sec of missed call"   },
-  { label:"AI Voice Follow-Up",    desc:"Calls leads that don't reply"         },
-  { label:"Lead Qualification",    desc:"Scores every inbound automatically"  },
-  { label:"Calendar Booking",      desc:"Books via Calendly integration"       },
-  { label:"Follow-Up Sequences",   desc:"3-touch nurture over 7 days"         },
+  { label:"Missed Call SMS",      desc:"Fires within 3 sec of missed call"  },
+  { label:"AI Voice Follow-Up",   desc:"Calls leads that don't reply"        },
+  { label:"Lead Qualification",   desc:"Scores every inbound automatically" },
+  { label:"Calendar Booking",     desc:"Books via Calendly integration"      },
+  { label:"Follow-Up Sequences",  desc:"3-touch nurture over 7 days"        },
 ];
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
-function mono(text, size="10px", color=G.muted, extra={}) {
-  return <span style={{ fontFamily:"'Space Mono',monospace", fontSize:size, color, letterSpacing:"1px", ...extra }}>{text}</span>;
-}
+// ─── Shared primitives ────────────────────────────────────────────────────────
+const mono = (text, size = "10px", color = G.dim, extra = {}) => (
+  <span style={{ fontFamily:"'Space Mono',monospace", fontSize:size, color, letterSpacing:"1.5px", ...extra }}>{text}</span>
+);
 
-function SectionHeader({ label, badge }) {
+const Label = ({ children, style = {} }) => (
+  <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"9px", color:G.gold, letterSpacing:"3px", fontWeight:700, ...style }}>{children}</div>
+);
+
+const Divider = ({ style = {} }) => (
+  <div style={{ height:"1px", background:G.borderDim, ...style }} />
+);
+
+const Panel = ({ children, style = {}, glow = false }) => (
+  <div
+    className={glow ? "gold-card" : ""}
+    style={{
+      background: G.panel,
+      border: `1px solid ${G.border}`,
+      borderRadius: "16px",
+      padding: "28px",
+      ...style,
+    }}
+  >
+    {children}
+  </div>
+);
+
+const ScoreBadge = ({ score }) => {
+  const map = {
+    HOT:     { c:G.red,   bg:"rgba(239,68,68,0.10)"   },
+    WARM:    { c:G.gold,  bg:G.goldBg                  },
+    COLD:    { c:G.dim,   bg:"#161616"                 },
+    PENDING: { c:G.dim,   bg:"#111"                    },
+  };
+  const s = map[score] || map.COLD;
   return (
-    <div style={{ display:"flex", alignItems:"center", gap:"10px", marginBottom:"18px" }}>
-      {mono(label, "9px", G.gold, { letterSpacing:"3px", fontWeight:"700" })}
-      {badge && <span style={{ background:G.goldBg, border:`1px solid ${G.goldBd}`, borderRadius:"20px", padding:"2px 10px", fontSize:"9px", fontFamily:"'Space Mono',monospace", color:G.gold }}>{badge}</span>}
-    </div>
+    <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"8px", fontWeight:700, color:s.c, background:s.bg, border:`1px solid ${s.c}40`, padding:"2px 8px", borderRadius:"4px", letterSpacing:"1px" }}>
+      {score}
+    </span>
   );
-}
+};
 
-function Panel({ children, style={}, glow=false }) {
-  return (
-    <div className={glow?"gold-glow":""} style={{ background:G.panel, border:`1px solid ${G.border}`, borderRadius:"14px", padding:"22px", ...style }}>
-      {children}
-    </div>
-  );
-}
-
-function ScoreBadge({ score }) {
-  const map = { HOT:["#EF4444","rgba(239,68,68,0.12)"], WARM:[G.gold,G.goldBg], COLD:[G.muted,"#1a1a1a"], PENDING:[G.muted,"#111"] };
-  const [c, bg] = map[score] || map.COLD;
-  return <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"8px", fontWeight:"700", color:c, background:bg, border:`1px solid ${c}44`, padding:"2px 7px", borderRadius:"4px", letterSpacing:"1px" }}>{score}</span>;
-}
-
-// ── KPI Bar ───────────────────────────────────────────────────────────────────
+// ─── KPI Bar ──────────────────────────────────────────────────────────────────
 function KpiBar({ revenue, jobs }) {
   const kpis = [
-    { label:"Revenue Recovered",    value:`$${revenue.toLocaleString()}`, trend:"+18% this week", gold:true  },
-    { label:"Jobs Booked",          value:String(jobs),                   trend:`+${jobs-15} this week`, gold:false },
-    { label:"Missed Calls Captured",value:"47",                           trend:"This month",     gold:false },
-    { label:"Leads Qualified",      value:"62",                           trend:"This month",     gold:false },
-    { label:"Avg Response Time",    value:"4.8s",                         trend:"AI-powered",     gold:false },
+    { label:"Revenue Recovered",     value:`$${revenue.toLocaleString()}`, sub:"+18% this week",      gold:true  },
+    { label:"Jobs Booked",           value:String(jobs),                   sub:`+${jobs-15} this week`, gold:false },
+    { label:"Missed Calls Captured", value:"47",                           sub:"This month",            gold:false },
+    { label:"Leads Qualified",       value:"62",                           sub:"This month",            gold:false },
+    { label:"Avg Response Time",     value:"4.8s",                         sub:"AI-powered",            gold:false },
   ];
 
   return (
-    <div style={{ display:"grid", gridTemplateColumns:"repeat(auto-fit,minmax(160px,1fr))", gap:"12px", marginBottom:"24px" }}>
-      {kpis.map((k,i) => (
-        <div key={i} className={k.gold?"gold-glow":""} style={{ background:k.gold?`linear-gradient(135deg,rgba(212,175,55,0.12),rgba(212,175,55,0.04))`:"#111", border:`1px solid ${k.gold?G.goldBd:G.border}`, borderRadius:"14px", padding:"20px 18px" }}>
-          <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"11px", color:G.muted, marginBottom:"8px" }}>{k.label}</div>
-          <div style={{ fontFamily:"'Space Mono',monospace", fontSize:k.gold?"28px":"22px", fontWeight:"700", color:k.gold?G.gold:G.white, lineHeight:1.1, marginBottom:"6px" }}>{k.value}</div>
-          <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"9px", color:k.gold?G.goldDim:G.muted, letterSpacing:"0.5px" }}>{k.trend}</div>
+    <div className="kpi-grid" style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:"12px", marginBottom:"32px" }}>
+      {kpis.map((k, i) => (
+        <div
+          key={i}
+          className={k.gold ? "gold-card" : ""}
+          style={{
+            background: k.gold
+              ? "linear-gradient(145deg, rgba(212,175,55,0.11) 0%, rgba(212,175,55,0.04) 100%)"
+              : G.panel,
+            border: `1px solid ${k.gold ? G.goldBd : G.border}`,
+            borderRadius: "14px",
+            padding: "22px 20px",
+          }}
+        >
+          <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"12px", color:k.gold ? G.gold : G.gray, marginBottom:"12px", fontWeight:500 }}>
+            {k.label}
+          </div>
+          <div style={{
+            fontFamily: "'Space Mono',monospace",
+            fontSize: k.gold ? "30px" : "24px",
+            fontWeight: 700,
+            color: k.gold ? G.gold : G.white,
+            lineHeight: 1,
+            marginBottom: "10px",
+            letterSpacing: k.gold ? "-0.5px" : "0",
+          }}>
+            {k.value}
+          </div>
+          <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"9px", color:k.gold ? G.goldDim : G.dim, letterSpacing:"0.5px" }}>
+            {k.sub}
+          </div>
         </div>
       ))}
     </div>
   );
 }
 
-// ── Live Demo Engine ──────────────────────────────────────────────────────────
+// ─── Live Demo Engine ─────────────────────────────────────────────────────────
 function LiveDemoEngine({ onDemoComplete }) {
   const [running, setRunning] = useState(false);
-  const [steps, setSteps]     = useState([]);
-  const [done, setDone]       = useState(false);
-  const timersRef = useRef([]);
+  const [steps,   setSteps]   = useState([]);
+  const [done,    setDone]    = useState(false);
+  const timers = useRef([]);
 
   function runDemo() {
     if (running) return;
     setRunning(true); setSteps([]); setDone(false);
-    timersRef.current.forEach(t => clearTimeout(t));
-    timersRef.current = [];
-
+    timers.current.forEach(clearTimeout);
+    timers.current = [];
     DEMO_STEPS.forEach(step => {
       const t = setTimeout(() => {
         setSteps(prev => [...prev, step]);
         if (step.id === DEMO_STEPS.length) {
-          setTimeout(() => { setRunning(false); setDone(true); onDemoComplete(); }, 600);
+          const t2 = setTimeout(() => { setRunning(false); setDone(true); onDemoComplete(); }, 700);
+          timers.current.push(t2);
         }
       }, step.delay);
-      timersRef.current.push(t);
+      timers.current.push(t);
     });
   }
 
-  function reset() { setSteps([]); setDone(false); setRunning(false); timersRef.current.forEach(t => clearTimeout(t)); }
+  function reset() {
+    timers.current.forEach(clearTimeout);
+    setSteps([]); setDone(false); setRunning(false);
+  }
+
+  const stepTypeColor = { revenue:G.gold, booked:G.gold, sms:G.gold, missed:G.red, book:G.green, qualify:G.offwhite, reply:"#ccc" };
 
   return (
-    <Panel style={{ marginBottom:"24px" }}>
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"20px" }}>
-        <div>
-          <SectionHeader label="LIVE REVENUE RECOVERY DEMO" badge={running?"DEMO MODE ACTIVE":done?"DEMO COMPLETE":null} />
-          <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"13px", color:G.muted, marginTop:"-10px" }}>
-            Watch MANO capture a missed call and convert it to a booked job in real time.
+    <div
+      style={{
+        background: G.panel,
+        border: `1px solid ${done ? G.goldBd : G.border}`,
+        borderRadius: "20px",
+        marginBottom: "32px",
+        overflow: "hidden",
+        transition: "border-color 0.5s",
+        boxShadow: done ? `0 0 60px rgba(212,175,55,0.10)` : "none",
+      }}
+    >
+      {/* Hero header */}
+      <div style={{ padding:"36px 36px 28px", background:"linear-gradient(180deg, #141414 0%, #121212 100%)" }}>
+        <div className="demo-header" style={{ display:"flex", alignItems:"center", justifyContent:"space-between", gap:"24px" }}>
+          <div>
+            <Label style={{ marginBottom:"12px" }}>LIVE REVENUE RECOVERY DEMO</Label>
+            <h2 style={{
+              fontFamily: "'DM Sans',sans-serif",
+              fontSize: "clamp(22px, 3vw, 32px)",
+              fontWeight: 800,
+              color: G.white,
+              margin: "0 0 8px",
+              lineHeight: 1.15,
+              letterSpacing: "-0.5px",
+            }}>
+              Watch MANO convert a missed call<br className="hide-mobile" /> into a booked job — live.
+            </h2>
+            <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"14px", color:G.gray, lineHeight:1.6 }}>
+              No human involved. Avg response: <span style={{ color:G.gold, fontWeight:600 }}>4.8 seconds.</span>
+            </div>
+          </div>
+
+          <div className="demo-btn-row" style={{ display:"flex", gap:"10px", alignItems:"center", flexShrink:0 }}>
+            {done && <button className="ghost-btn" onClick={reset}>RESET</button>}
+            <button
+              className="run-btn"
+              disabled={running}
+              onClick={runDemo}
+            >
+              {running ? "RUNNING…" : done ? "▶  RUN AGAIN" : "▶  RUN DEMO"}
+            </button>
           </div>
         </div>
-        <div style={{ display:"flex", gap:"10px", flexShrink:0 }}>
-          {done && <button onClick={reset} style={{ padding:"10px 18px", borderRadius:"8px", background:"transparent", border:`1px solid ${G.border}`, color:G.muted, fontFamily:"'Space Mono',monospace", fontSize:"10px", cursor:"pointer" }}>RESET</button>}
-          <button onClick={runDemo} disabled={running}
-            style={{ padding:"12px 24px", borderRadius:"8px", background:running?G.panel2:`linear-gradient(135deg,${G.gold},${G.goldDim})`, color:running?G.muted:"#000", border:"none", fontFamily:"'Space Mono',monospace", fontSize:"11px", fontWeight:"700", cursor:running?"not-allowed":"pointer", letterSpacing:"1px", boxShadow:!running?`0 0 24px rgba(212,175,55,0.3)`:"none", transition:"all 0.2s" }}>
-            {running?"RUNNING…":done?"▶ RUN AGAIN":"▶ RUN DEMO"}
-          </button>
-        </div>
+
+        {/* Status bar */}
+        {(running || done) && (
+          <div className="fade-up" style={{ marginTop:"20px", display:"flex", alignItems:"center", gap:"10px" }}>
+            <div className={running?"pulse-dot":""} style={{ width:"7px", height:"7px", borderRadius:"50%", background:running?G.green:G.gold, flexShrink:0 }} />
+            <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"10px", color:running?G.green:G.gold, letterSpacing:"1px" }}>
+              {running ? "DEMO MODE ACTIVE" : "DEMO COMPLETE — JOB BOOKED"}
+            </span>
+          </div>
+        )}
       </div>
 
-      {/* Timeline */}
-      <div style={{ display:"flex", flexDirection:"column", gap:"0" }}>
+      <Divider />
+
+      {/* Timeline grid */}
+      <div style={{ padding:"28px 36px", display:"grid", gridTemplateColumns:"repeat(4, 1fr)", gap:"0" }}>
         {DEMO_STEPS.map((step, i) => {
-          const active = steps.find(s => s.id === step.id);
-          const isRevenue = step.id === 8;
+          const active   = !!steps.find(s => s.id === step.id);
+          const isLast   = i === DEMO_STEPS.length - 1;
+          const tColor   = stepTypeColor[step.type] || G.offwhite;
+          const isRevenue = step.type === "revenue";
+
           return (
-            <div key={step.id} className={active?"slide-in":""} style={{ display:"flex", gap:"14px", alignItems:"flex-start", opacity:active?1:0.18, transition:"opacity 0.4s" }}>
-              {/* Line */}
-              <div style={{ display:"flex", flexDirection:"column", alignItems:"center", flexShrink:0, width:"36px" }}>
-                <div style={{ width:"32px", height:"32px", borderRadius:"50%", background:active?(isRevenue?G.goldBg:G.greenBg):"#111", border:`1px solid ${active?(isRevenue?G.goldBd:G.greenBd):G.border}`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"14px", transition:"all 0.3s", boxShadow:active&&isRevenue?`0 0 16px rgba(212,175,55,0.3)`:active?`0 0 12px rgba(34,197,94,0.2)`:"none" }}>{step.icon}</div>
-                {i < DEMO_STEPS.length-1 && <div style={{ width:"1px", height:"28px", background:active?G.border:"#1a1a1a" }} />}
+            <div
+              key={step.id}
+              className={active ? "fade-up" : ""}
+              style={{
+                borderRight: i % 4 < 3 && !isLast ? `1px solid ${G.borderDim}` : "none",
+                borderBottom: i < 4 ? `1px solid ${G.borderDim}` : "none",
+                padding: "20px 20px",
+                opacity: active ? 1 : 0.18,
+                transition: "opacity 0.5s ease",
+                background: active && isRevenue ? `linear-gradient(135deg, rgba(212,175,55,0.05), transparent)` : "transparent",
+              }}
+            >
+              <div style={{ display:"flex", alignItems:"center", gap:"10px", marginBottom:"10px" }}>
+                <div style={{
+                  width: "34px", height: "34px", borderRadius: "10px", flexShrink: 0,
+                  background: active ? (isRevenue ? G.goldBg : G.greenBg) : "#161616",
+                  border: `1px solid ${active ? (isRevenue ? G.goldBd : G.greenBd) : G.borderDim}`,
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: "16px",
+                  boxShadow: active ? (isRevenue ? `0 0 16px rgba(212,175,55,0.25)` : `0 0 12px rgba(34,197,94,0.15)`) : "none",
+                  transition: "all 0.4s",
+                }}>
+                  {step.icon}
+                </div>
+                <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"8px", color:G.dim, letterSpacing:"1px" }}>STEP {step.id}</div>
               </div>
-              {/* Content */}
-              <div style={{ paddingTop:"6px", paddingBottom:"16px", flex:1 }}>
-                <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"13px", fontWeight:"600", color:active?(isRevenue?G.gold:G.white):G.muted, marginBottom:"2px" }}>{step.label}</div>
-                {active && <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"10px", color:isRevenue?G.goldDim:G.muted, letterSpacing:"0.5px" }}>{step.detail}</div>}
+              <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"13px", fontWeight:700, color:active ? tColor : G.dim, marginBottom:"6px", lineHeight:1.3 }}>
+                {step.label}
               </div>
-              {/* Timestamp */}
-              {active && <div style={{ paddingTop:"7px", flexShrink:0 }}>{mono(`STEP ${step.id}`, "8px", G.muted, { letterSpacing:"1px" })}</div>}
+              {active && (
+                <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"9px", color:isRevenue ? G.goldDim : "#555", lineHeight:1.6, letterSpacing:"0.3px" }}>
+                  {step.detail}
+                </div>
+              )}
             </div>
           );
         })}
       </div>
 
+      {/* Result banner */}
       {done && (
-        <div style={{ marginTop:"14px", background:`linear-gradient(135deg,${G.goldBg},transparent)`, border:`1px solid ${G.goldBd}`, borderRadius:"10px", padding:"14px 18px", display:"flex", alignItems:"center", gap:"12px" }}>
-          <span style={{ fontSize:"20px" }}>💰</span>
-          <div>
-            <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"13px", fontWeight:"700", color:G.gold }}>Lead qualified and booked in under 3 minutes</div>
-            <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"9px", color:G.goldDim, marginTop:"3px" }}>$850 RECOVERED · ZERO HUMAN INVOLVEMENT · 4.8 SEC RESPONSE</div>
+        <div className="fade-up">
+          <Divider />
+          <div style={{ padding:"24px 36px", background:"linear-gradient(135deg, rgba(212,175,55,0.06), transparent)", display:"flex", alignItems:"center", justifyContent:"space-between", flexWrap:"wrap", gap:"16px" }}>
+            <div style={{ display:"flex", alignItems:"center", gap:"16px" }}>
+              <span style={{ fontSize:"24px" }}>💰</span>
+              <div>
+                <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"16px", fontWeight:800, color:G.gold, marginBottom:"4px" }}>
+                  Lead booked. $850 recovered. Zero humans required.
+                </div>
+                <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"9px", color:G.goldDim, letterSpacing:"1px" }}>
+                  2.3 SEC RESPONSE · 3 MIN TO CLOSE · 100% AUTOMATED
+                </div>
+              </div>
+            </div>
+            <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"10px", color:G.gold, background:G.goldBg, border:`1px solid ${G.goldBd}`, borderRadius:"8px", padding:"6px 16px", letterSpacing:"1px", fontWeight:700 }}>
+              ✓ JOB BOOKED
+            </span>
           </div>
         </div>
       )}
-    </Panel>
+    </div>
   );
 }
 
-// ── Conversation Panel ────────────────────────────────────────────────────────
+// ─── Conversation Panel ───────────────────────────────────────────────────────
 function ConversationPanel({ demoRan }) {
   const [visible, setVisible] = useState([]);
-  const [typing, setTyping]   = useState(false);
+  const [typing,  setTyping]  = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior:"smooth" }); }, [visible, typing]);
@@ -234,43 +469,40 @@ function ConversationPanel({ demoRan }) {
     function next() {
       if (i >= SMS_CONV.length) return;
       const msg = SMS_CONV[i];
-      const isMano = msg.from === "mano";
-      if (isMano && i > 0) {
+      if (msg.from === "mano" && i > 0) {
         setTyping(true);
-        setTimeout(() => { setTyping(false); setVisible(v => [...v, msg]); i++; next(); }, 1200);
+        setTimeout(() => { setTyping(false); setVisible(v => [...v, msg]); i++; next(); }, 1300);
       } else {
         setVisible(v => [...v, msg]);
         i++;
-        setTimeout(next, msg.from === "system" ? 400 : 1800);
+        setTimeout(next, msg.from === "system" ? 400 : 1900);
       }
     }
     setTimeout(next, 600);
   }, [demoRan]);
 
   return (
-    <Panel style={{ display:"flex", flexDirection:"column", height:"440px" }}>
+    <Panel style={{ display:"flex", flexDirection:"column" }}>
       {/* Header */}
-      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"16px", paddingBottom:"14px", borderBottom:`1px solid ${G.border}` }}>
-        <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
-          <div style={{ width:"36px", height:"36px", borderRadius:"50%", background:`linear-gradient(135deg,${G.gold},${G.goldDim})`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"16px", boxShadow:`0 0 14px rgba(212,175,55,0.3)` }}>🤖</div>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"20px", paddingBottom:"18px", borderBottom:`1px solid ${G.borderDim}` }}>
+        <div style={{ display:"flex", alignItems:"center", gap:"12px" }}>
+          <div style={{ width:"40px", height:"40px", borderRadius:"12px", background:`linear-gradient(135deg,${G.gold},${G.goldDim})`, display:"flex", alignItems:"center", justifyContent:"center", fontSize:"18px", boxShadow:`0 0 20px rgba(212,175,55,0.30)`, flexShrink:0 }}>🤖</div>
           <div>
-            <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"13px", fontWeight:"700", color:G.white }}>MANO AI Agent</div>
-            <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"9px", color:G.green }}>● Online · 4.8s avg response</div>
+            <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"14px", fontWeight:700, color:G.white, marginBottom:"3px" }}>MANO AI Agent</div>
+            <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"9px", color:G.green, letterSpacing:"1px" }}>● ONLINE · 4.8s AVG RESPONSE</div>
           </div>
         </div>
         {visible.some(m => m.booked) && (
-          <span style={{ background:G.goldBg, border:`1px solid ${G.goldBd}`, borderRadius:"20px", padding:"4px 12px", fontFamily:"'Space Mono',monospace", fontSize:"9px", color:G.gold, fontWeight:"700" }}>✓ BOOKED</span>
+          <span style={{ background:G.goldBg, border:`1px solid ${G.goldBd}`, borderRadius:"8px", padding:"6px 14px", fontFamily:"'Space Mono',monospace", fontSize:"9px", color:G.gold, fontWeight:700, letterSpacing:"1px" }}>✓ BOOKED</span>
         )}
       </div>
 
       {/* Messages */}
-      <div style={{ flex:1, overflowY:"auto", display:"flex", flexDirection:"column", gap:"12px", paddingRight:"4px" }}>
-        {visible.length === 0 && (
-          <div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center" }}>
-            <div style={{ textAlign:"center" }}>
-              <div style={{ fontSize:"32px", marginBottom:"10px" }}>💬</div>
-              {mono("RUN DEMO TO SEE LIVE CONVERSATION", "9px", G.border, { letterSpacing:"2px" })}
-            </div>
+      <div style={{ flex:1, minHeight:"320px", maxHeight:"360px", overflowY:"auto", display:"flex", flexDirection:"column", gap:"14px", paddingRight:"2px" }}>
+        {visible.length === 0 && !typing && (
+          <div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:"12px", padding:"40px 0" }}>
+            <div style={{ fontSize:"28px" }}>💬</div>
+            {mono("RUN DEMO TO SEE LIVE CONVERSATION", "9px", G.borderDim, { letterSpacing:"2px", textAlign:"center" })}
           </div>
         )}
 
@@ -278,28 +510,42 @@ function ConversationPanel({ demoRan }) {
           if (msg.from === "system") {
             return (
               <div key={i} style={{ textAlign:"center" }}>
-                <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"9px", color:G.muted, background:"#161616", border:`1px solid ${G.border}`, borderRadius:"20px", padding:"4px 12px" }}>{msg.text}</span>
+                <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"9px", color:G.dim, background:"#161616", border:`1px solid ${G.borderDim}`, borderRadius:"20px", padding:"5px 14px", letterSpacing:"0.5px" }}>{msg.text}</span>
               </div>
             );
           }
           const isMano = msg.from === "mano";
           return (
-            <div key={i} className="slide-in" style={{ display:"flex", flexDirection:"column", alignItems:isMano?"flex-start":"flex-end", gap:"3px" }}>
-              {mono(isMano?"MANO":"MARCUS", "8px", G.muted)}
-              <div style={{ maxWidth:"80%", padding:"11px 14px", borderRadius:isMano?"4px 14px 14px 14px":"14px 4px 14px 14px", background:isMano?"#181818":G.goldBg, border:isMano?`1px solid ${G.border}`:`1px solid ${G.goldBd}`, fontFamily:"'DM Sans',sans-serif", fontSize:"12px", color:isMano?G.white:G.gold, lineHeight:1.65 }}>
+            <div key={i} className="fade-up" style={{ display:"flex", flexDirection:"column", alignItems:isMano?"flex-start":"flex-end", gap:"4px" }}>
+              {mono(isMano ? "MANO" : "MARCUS", "8px", G.dim)}
+              <div style={{
+                maxWidth: "82%",
+                padding: "12px 16px",
+                borderRadius: isMano ? "4px 16px 16px 16px" : "16px 4px 16px 16px",
+                background: isMano ? "#181818" : G.goldBg,
+                border: `1px solid ${isMano ? G.border : G.goldBd}`,
+                fontFamily: "'DM Sans',sans-serif",
+                fontSize: "13px",
+                color: isMano ? G.offwhite : G.gold,
+                lineHeight: 1.65,
+              }}>
                 {msg.text}
-                {msg.booked && <div style={{ marginTop:"6px", fontFamily:"'Space Mono',monospace", fontSize:"8px", color:G.gold, letterSpacing:"1px" }}>● JOB BOOKED · $850 RECOVERED</div>}
+                {msg.booked && (
+                  <div style={{ marginTop:"8px", paddingTop:"8px", borderTop:`1px solid ${G.goldBd}`, fontFamily:"'Space Mono',monospace", fontSize:"8px", color:G.gold, letterSpacing:"1px" }}>
+                    ● JOB BOOKED · $850 RECOVERED
+                  </div>
+                )}
               </div>
-              {mono(msg.ts, "8px", G.border)}
+              {mono(msg.ts, "8px", G.borderDim)}
             </div>
           );
         })}
 
         {typing && (
-          <div className="slide-in" style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:"3px" }}>
-            {mono("MANO", "8px", G.muted)}
-            <div style={{ padding:"11px 18px", borderRadius:"4px 14px 14px 14px", background:"#181818", border:`1px solid ${G.border}` }}>
-              <span className="pulse-dot" style={{ fontFamily:"'Space Mono',monospace", fontSize:"16px", color:G.muted, letterSpacing:"4px" }}>···</span>
+          <div className="fade-up" style={{ display:"flex", flexDirection:"column", alignItems:"flex-start", gap:"4px" }}>
+            {mono("MANO", "8px", G.dim)}
+            <div style={{ padding:"12px 18px", borderRadius:"4px 16px 16px 16px", background:"#181818", border:`1px solid ${G.border}` }}>
+              <span className="pulse-dot" style={{ fontFamily:"'Space Mono',monospace", fontSize:"18px", color:G.dim, letterSpacing:"5px" }}>···</span>
             </div>
           </div>
         )}
@@ -309,46 +555,122 @@ function ConversationPanel({ demoRan }) {
   );
 }
 
-// ── Pipeline ──────────────────────────────────────────────────────────────────
+// ─── Activity Feed ────────────────────────────────────────────────────────────
+function ActivityFeed({ events }) {
+  const feedRef = useRef(null);
+  useEffect(() => { if (feedRef.current) feedRef.current.scrollTop = 0; }, [events]);
+
+  const typeMap = {
+    missed:    { icon:"📞", color:G.red  },
+    sms:       { icon:"⚡", color:G.gold },
+    qualified: { icon:"🧠", color:G.gray },
+    booked:    { icon:"📅", color:G.gold },
+    revenue:   { icon:"💰", color:G.gold },
+  };
+
+  return (
+    <Panel style={{ display:"flex", flexDirection:"column" }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"20px", paddingBottom:"18px", borderBottom:`1px solid ${G.borderDim}` }}>
+        <Label>LIVE AI ACTIVITY</Label>
+        {events.length > 0 && (
+          <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"9px", color:G.green, background:G.greenBg, border:`1px solid ${G.greenBd}`, borderRadius:"20px", padding:"3px 10px" }}>
+            {events.length} EVENTS
+          </span>
+        )}
+      </div>
+
+      <div ref={feedRef} style={{ flex:1, minHeight:"320px", maxHeight:"360px", overflowY:"auto", display:"flex", flexDirection:"column", gap:"8px" }}>
+        {events.length === 0 && (
+          <div style={{ flex:1, display:"flex", alignItems:"center", justifyContent:"center", flexDirection:"column", gap:"12px", padding:"40px 0" }}>
+            <div style={{ fontSize:"24px", opacity:0.3 }}>⚡</div>
+            {mono("ACTIVITY APPEARS DURING DEMO", "9px", G.borderDim, { letterSpacing:"2px", textAlign:"center" })}
+          </div>
+        )}
+        {events.map((ev, i) => {
+          const s = typeMap[ev.type] || { icon:"•", color:G.dim };
+          const isGold = ev.type === "revenue" || ev.type === "booked" || ev.type === "sms";
+          return (
+            <div
+              key={i}
+              className="fade-up"
+              style={{
+                display: "flex", gap: "12px", alignItems: "flex-start",
+                padding: "11px 14px",
+                background: isGold ? "rgba(212,175,55,0.04)" : "#0E0E0E",
+                border: `1px solid ${isGold ? G.goldBd : G.borderDim}`,
+                borderRadius: "10px",
+              }}
+            >
+              <span style={{ fontSize:"14px", flexShrink:0 }}>{s.icon}</span>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"13px", color:isGold ? G.gold : G.offwhite, fontWeight:500, lineHeight:1.4 }}>{ev.text}</div>
+                <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"8px", color:G.dim, marginTop:"3px", letterSpacing:"0.5px" }}>{ev.ts}</div>
+              </div>
+              <div style={{ width:"6px", height:"6px", borderRadius:"50%", background:s.color, flexShrink:0, marginTop:"5px", boxShadow:`0 0 6px ${s.color}88` }} />
+            </div>
+          );
+        })}
+      </div>
+    </Panel>
+  );
+}
+
+// ─── Pipeline ─────────────────────────────────────────────────────────────────
 function PipelinePanel({ demoRan }) {
   const [leads, setLeads] = useState(INIT_PIPELINE);
 
   useEffect(() => {
     if (!demoRan) return;
-    const t1 = setTimeout(() => {
-      setLeads(prev => prev.map(l => l.id === 1 ? { ...l, stage:"contacted" } : l));
-    }, 3000);
-    const t2 = setTimeout(() => {
-      setLeads(prev => prev.map(l => l.id === 1 ? { ...l, stage:"qualified" } : l));
-    }, 7000);
-    const t3 = setTimeout(() => {
-      setLeads(prev => prev.map(l => l.id === 1 ? { ...l, stage:"booked" } : l));
-    }, 11000);
+    const t1 = setTimeout(() => setLeads(p => p.map(l => l.id===1 ? {...l,stage:"contacted"} : l)), 3000);
+    const t2 = setTimeout(() => setLeads(p => p.map(l => l.id===1 ? {...l,stage:"qualified"} : l)), 7200);
+    const t3 = setTimeout(() => setLeads(p => p.map(l => l.id===1 ? {...l,stage:"booked"}    : l)), 11200);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, [demoRan]);
 
+  const total = leads.reduce((s, l) => s + l.value, 0);
+
   return (
     <Panel>
-      <SectionHeader label="LEAD PIPELINE" badge="LIVE" />
-      <div style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:"10px" }}>
+      <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"22px", paddingBottom:"18px", borderBottom:`1px solid ${G.borderDim}` }}>
+        <Label>LEAD PIPELINE</Label>
+        <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
+          <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"9px", color:G.dim }}>PIPELINE VALUE</div>
+          <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"15px", color:G.gold, fontWeight:700 }}>
+            ${total.toLocaleString()}
+          </div>
+        </div>
+      </div>
+
+      <div className="pipeline-grid" style={{ display:"grid", gridTemplateColumns:"repeat(5,1fr)", gap:"10px" }}>
         {PIPELINE_STAGES.map(stage => {
           const stageLeads = leads.filter(l => l.stage === stage.key);
-          const isHighlight = stage.key === "booked" || stage.key === "closed";
+          const highlight  = stage.key === "booked" || stage.key === "closed";
           return (
             <div key={stage.key}>
               <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"10px" }}>
-                <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"8px", color:stage.color, letterSpacing:"2px", fontWeight:"700" }}>{stage.label}</span>
-                <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"9px", color:stage.color, background:`${stage.color}14`, border:`1px solid ${stage.color}33`, borderRadius:"10px", padding:"1px 7px" }}>{stageLeads.length}</span>
+                <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"8px", color:stage.color, letterSpacing:"2px", fontWeight:700 }}>{stage.label}</span>
+                <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"9px", color:stage.color, background:`${stage.color}12`, border:`1px solid ${stage.color}30`, borderRadius:"10px", padding:"1px 7px" }}>{stageLeads.length}</span>
               </div>
-              <div style={{ display:"flex", flexDirection:"column", gap:"8px", minHeight:"50px" }}>
+              <div style={{ display:"flex", flexDirection:"column", gap:"8px", minHeight:"44px" }}>
                 {stageLeads.map(lead => (
-                  <div key={lead.id} className="slide-in" style={{ background:"#0E0E0E", border:`1px solid ${isHighlight?G.goldBd:G.border}`, borderRadius:"10px", padding:"12px 11px", boxShadow:isHighlight?`0 0 12px rgba(212,175,55,0.08)`:"none" }}>
-                    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"5px" }}>
-                      <span style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"11px", fontWeight:"600", color:G.white }}>{lead.name.split(" ")[0]}</span>
+                  <div
+                    key={lead.id}
+                    className="fade-up"
+                    style={{
+                      background: "#0C0C0C",
+                      border: `1px solid ${highlight ? G.goldBd : G.borderDim}`,
+                      borderRadius: "10px", padding: "12px",
+                      boxShadow: highlight ? `0 0 14px rgba(212,175,55,0.07)` : "none",
+                    }}
+                  >
+                    <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:"6px" }}>
+                      <span style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"12px", fontWeight:700, color:G.white }}>{lead.name.split(" ")[0]}</span>
                       <ScoreBadge score={lead.score} />
                     </div>
-                    <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"10px", color:G.muted, marginBottom:"5px" }}>{lead.service}</div>
-                    <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"10px", color:isHighlight?G.gold:G.muted, fontWeight:isHighlight?"700":"400" }}>${lead.value.toLocaleString()}</div>
+                    <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"11px", color:G.gray, marginBottom:"6px" }}>{lead.service}</div>
+                    <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"11px", color:highlight ? G.gold : G.dim, fontWeight:highlight ? 700 : 400 }}>
+                      ${lead.value.toLocaleString()}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -356,89 +678,48 @@ function PipelinePanel({ demoRan }) {
           );
         })}
       </div>
-      <div style={{ marginTop:"16px", paddingTop:"14px", borderTop:`1px solid ${G.border}`, display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-        <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"9px", color:G.muted }}>PIPELINE VALUE</div>
-        <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"14px", color:G.gold, fontWeight:"700" }}>
-          ${leads.reduce((s, l) => s + l.value, 0).toLocaleString()}
-        </div>
-      </div>
     </Panel>
   );
 }
 
-// ── Revenue Chart ─────────────────────────────────────────────────────────────
+// ─── Revenue Chart ────────────────────────────────────────────────────────────
 function RevenueChart({ revenue }) {
-  const max = Math.max(...REVENUE_DATA.map(d => d.val));
   const data = [...REVENUE_DATA.slice(0, -1), { month:"Apr", val:revenue }];
+  const max  = Math.max(...data.map(d => d.val));
 
   return (
     <Panel>
-      <SectionHeader label="RECOVERED REVENUE OVER TIME" />
-      <div style={{ display:"flex", alignItems:"flex-end", gap:"8px", height:"120px", marginBottom:"12px" }}>
+      <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:"24px", paddingBottom:"18px", borderBottom:`1px solid ${G.borderDim}` }}>
+        <div>
+          <Label style={{ marginBottom:"10px" }}>RECOVERED REVENUE</Label>
+          <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"26px", fontWeight:700, color:G.gold, lineHeight:1 }}>
+            ${revenue.toLocaleString()}
+          </div>
+        </div>
+        <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"10px", color:G.gold, background:G.goldBg, border:`1px solid ${G.goldBd}`, borderRadius:"8px", padding:"7px 14px", letterSpacing:"0.5px" }}>
+          +${(revenue - 12600).toLocaleString()} vs last month
+        </div>
+      </div>
+
+      <div style={{ display:"flex", alignItems:"flex-end", gap:"8px", height:"100px" }}>
         {data.map((d, i) => {
-          const pct = (d.val / max) * 100;
+          const pct    = Math.max((d.val / max) * 100, 4);
           const isLast = i === data.length - 1;
           return (
-            <div key={i} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:"6px", height:"100%" }}>
+            <div key={i} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:"8px", height:"100%" }}>
               <div style={{ flex:1, display:"flex", alignItems:"flex-end", width:"100%" }}>
-                <div
-                  title={`$${d.val.toLocaleString()}`}
-                  style={{
-                    width:"100%",
-                    height:`${pct}%`,
-                    background:isLast?`linear-gradient(180deg,${G.gold},${G.goldDim})`:`linear-gradient(180deg,#2a2a2a,#1a1a1a)`,
-                    borderRadius:"4px 4px 0 0",
-                    boxShadow:isLast?`0 0 20px rgba(212,175,55,0.35)`:"none",
-                    transition:"height 0.6s ease",
-                    position:"relative",
-                  }}
-                />
+                <div style={{
+                  width: "100%",
+                  height: `${pct}%`,
+                  background: isLast
+                    ? `linear-gradient(180deg, ${G.gold} 0%, ${G.goldDim} 100%)`
+                    : `linear-gradient(180deg, #2e2e2e 0%, #1a1a1a 100%)`,
+                  borderRadius: "4px 4px 0 0",
+                  boxShadow: isLast ? `0 0 24px rgba(212,175,55,0.40)` : "none",
+                  transition: "height 0.6s ease",
+                }} />
               </div>
-              {mono(d.month, "9px", isLast?G.gold:G.muted)}
-            </div>
-          );
-        })}
-      </div>
-      <div style={{ display:"flex", justifyContent:"flex-end" }}>
-        <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"10px", color:G.gold, background:G.goldBg, border:`1px solid ${G.goldBd}`, borderRadius:"8px", padding:"4px 12px" }}>+${(revenue - 12600).toLocaleString()} vs last month</div>
-      </div>
-    </Panel>
-  );
-}
-
-// ── Activity Feed ─────────────────────────────────────────────────────────────
-function ActivityFeed({ events }) {
-  const feedRef = useRef(null);
-  useEffect(() => { if (feedRef.current) feedRef.current.scrollTop = 0; }, [events]);
-
-  const typeStyle = {
-    missed:    { icon:"📞", color:"#EF4444" },
-    sms:       { icon:"⚡", color:G.gold    },
-    qualified: { icon:"🧠", color:G.muted   },
-    booked:    { icon:"📅", color:G.gold    },
-    revenue:   { icon:"💰", color:G.gold    },
-  };
-
-  return (
-    <Panel style={{ display:"flex", flexDirection:"column", height:"100%" }}>
-      <SectionHeader label="LIVE AI ACTIVITY" badge={`${events.length} EVENTS`} />
-      <div ref={feedRef} style={{ flex:1, overflowY:"auto", display:"flex", flexDirection:"column", gap:"8px" }}>
-        {events.length === 0 && (
-          <div style={{ textAlign:"center", padding:"24px 0" }}>
-            {mono("RUN DEMO TO SEE ACTIVITY", "9px", G.border, { letterSpacing:"2px" })}
-          </div>
-        )}
-        {events.map((ev, i) => {
-          const s = typeStyle[ev.type] || { icon:"•", color:G.muted };
-          const isRevenue = ev.type === "revenue" || ev.type === "booked";
-          return (
-            <div key={i} className="slide-in" style={{ display:"flex", gap:"10px", alignItems:"flex-start", padding:"9px 12px", background:"#0E0E0E", border:`1px solid ${isRevenue?G.goldBd:G.border}`, borderRadius:"8px" }}>
-              <span style={{ fontSize:"13px", flexShrink:0, marginTop:"1px" }}>{s.icon}</span>
-              <div style={{ flex:1, minWidth:0 }}>
-                <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"12px", color:isRevenue?G.gold:G.white, fontWeight:"500", whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis" }}>{ev.text}</div>
-                <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"8px", color:G.muted, marginTop:"2px" }}>{ev.ts}</div>
-              </div>
-              <div style={{ width:"6px", height:"6px", borderRadius:"50%", background:s.color, flexShrink:0, marginTop:"5px", boxShadow:`0 0 6px ${s.color}77` }} />
+              <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"9px", color:isLast ? G.gold : G.dim, letterSpacing:"0.5px" }}>{d.month}</span>
             </div>
           );
         })}
@@ -447,26 +728,44 @@ function ActivityFeed({ events }) {
   );
 }
 
-// ── Automation Toggles ────────────────────────────────────────────────────────
+// ─── Automation Status ────────────────────────────────────────────────────────
 function AutomationPanel() {
   const [active, setActive] = useState(AUTOMATIONS.map(() => true));
 
   return (
     <Panel>
-      <SectionHeader label="AUTOMATION STATUS" />
+      <div style={{ marginBottom:"22px", paddingBottom:"18px", borderBottom:`1px solid ${G.borderDim}` }}>
+        <Label>AUTOMATION STATUS</Label>
+      </div>
       <div style={{ display:"flex", flexDirection:"column", gap:"10px" }}>
         {AUTOMATIONS.map((a, i) => (
-          <div key={i} style={{ display:"flex", alignItems:"center", justifyContent:"space-between", padding:"12px 14px", background:"#0E0E0E", border:`1px solid ${active[i]?G.greenBd:G.border}`, borderRadius:"10px", transition:"border-color 0.3s" }}>
-            <div>
-              <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"13px", fontWeight:"600", color:G.white }}>{a.label}</div>
-              <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"9px", color:G.muted, marginTop:"2px" }}>{a.desc}</div>
+          <div
+            key={i}
+            style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              padding: "14px 16px",
+              background: "#0C0C0C",
+              border: `1px solid ${active[i] ? G.greenBd : G.borderDim}`,
+              borderRadius: "12px",
+              transition: "border-color 0.3s",
+              gap: "12px",
+            }}
+          >
+            <div style={{ flex:1, minWidth:0 }}>
+              <div style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"13px", fontWeight:600, color:G.white, marginBottom:"3px" }}>{a.label}</div>
+              <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"9px", color:G.dim, letterSpacing:"0.3px" }}>{a.desc}</div>
             </div>
-            <button
-              onClick={() => setActive(prev => prev.map((v, j) => j === i ? !v : v))}
-              style={{ width:"42px", height:"22px", borderRadius:"11px", border:"none", cursor:"pointer", background:active[i]?G.green:"#2a2a2a", position:"relative", transition:"background 0.3s", flexShrink:0 }}
-            >
-              <div style={{ position:"absolute", top:"3px", left:active[i]?"22px":"3px", width:"16px", height:"16px", borderRadius:"50%", background:G.white, transition:"left 0.3s" }} />
-            </button>
+            <div style={{ display:"flex", alignItems:"center", gap:"8px", flexShrink:0 }}>
+              <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"8px", color:active[i] ? G.green : G.dim, letterSpacing:"1px" }}>
+                {active[i] ? "ACTIVE" : "OFF"}
+              </span>
+              <button
+                onClick={() => setActive(p => p.map((v,j) => j===i ? !v : v))}
+                style={{ width:"40px", height:"22px", borderRadius:"11px", border:"none", cursor:"pointer", background:active[i] ? G.green : "#2a2a2a", position:"relative", transition:"background 0.3s", flexShrink:0 }}
+              >
+                <div style={{ position:"absolute", top:"3px", left:active[i]?"21px":"3px", width:"16px", height:"16px", borderRadius:"50%", background:G.white, transition:"left 0.3s" }} />
+              </button>
+            </div>
           </div>
         ))}
       </div>
@@ -474,23 +773,20 @@ function AutomationPanel() {
   );
 }
 
-// ── Quick Actions ─────────────────────────────────────────────────────────────
+// ─── Quick Actions ────────────────────────────────────────────────────────────
 function QuickActions({ onRunDemo }) {
-  const CALENDLY = "https://calendly.com/monkee-bizznus/30min";
+  const CAL = "https://calendly.com/monkee-bizznus/30min";
   const actions = [
-    { label:"Run Demo",          icon:"▶",  gold:true,  action:onRunDemo                                    },
-    { label:"Add Lead",          icon:"＋",  gold:false, action:() => window.open("/LeadForm","_blank")       },
-    { label:"View Conversations",icon:"💬", gold:false, action:() => window.open("/ChatCenter","_blank")     },
-    { label:"Edit Scripts",      icon:"✏️", gold:false, action:() => window.open("/Settings","_blank")       },
-    { label:"Book Demo Call",    icon:"📅", gold:false, action:() => window.open(CALENDLY,"_blank")          },
+    { label:"Run Demo",           gold:true,  action:onRunDemo                                },
+    { label:"Add Lead",           gold:false, action:() => window.open("/LeadForm","_blank")  },
+    { label:"Conversations",      gold:false, action:() => window.open("/ChatCenter","_blank")},
+    { label:"Edit Scripts",       gold:false, action:() => window.open("/Settings","_blank")  },
+    { label:"Book Demo Call",     gold:false, action:() => window.open(CAL,"_blank")          },
   ];
-
   return (
-    <div style={{ display:"flex", gap:"10px", flexWrap:"wrap", marginBottom:"24px" }}>
+    <div className="actions-wrap" style={{ display:"flex", gap:"10px", marginBottom:"32px", flexWrap:"wrap" }}>
       {actions.map((a, i) => (
-        <button key={i} onClick={a.action}
-          style={{ display:"flex", alignItems:"center", gap:"7px", padding:"10px 18px", borderRadius:"9px", border:`1px solid ${a.gold?G.goldBd:G.border}`, background:a.gold?`linear-gradient(135deg,${G.gold},${G.goldDim})`:"#111", color:a.gold?"#000":G.gray, fontFamily:"'Space Mono',monospace", fontSize:"10px", fontWeight:"700", cursor:"pointer", letterSpacing:"0.5px", transition:"all 0.2s", boxShadow:a.gold?`0 0 20px rgba(212,175,55,0.25)`:"none" }}>
-          <span style={{ fontSize:"12px" }}>{a.icon}</span>
+        <button key={i} onClick={a.action} className={`action-btn${a.gold?" primary":""}`}>
           {a.label}
         </button>
       ))}
@@ -498,14 +794,13 @@ function QuickActions({ onRunDemo }) {
   );
 }
 
-// ── Main Component ────────────────────────────────────────────────────────────
+// ─── Main ─────────────────────────────────────────────────────────────────────
 export default function ManoCommandCenter() {
   const [revenue, setRevenue] = useState(14850);
   const [jobs,    setJobs]    = useState(18);
-  const [demoRan, setDemoRan] = useState(0); // increment = new demo run
+  const [demoRan, setDemoRan] = useState(0);
   const [events,  setEvents]  = useState([]);
-
-  const demoRunRef = useRef(0);
+  const runRef = useRef(0);
 
   const addEvent = (type, text) => {
     const ts = new Date().toLocaleTimeString("en-US", { hour:"numeric", minute:"2-digit" });
@@ -519,11 +814,8 @@ export default function ManoCommandCenter() {
   }
 
   function handleRunDemo() {
-    const run = demoRunRef.current + 1;
-    demoRunRef.current = run;
+    const run = ++runRef.current;
     setDemoRan(run);
-
-    // Staged activity events
     setTimeout(() => addEvent("missed",    "Missed call captured — Marcus Webb (+1 623-555-0147)"), 200);
     setTimeout(() => addEvent("sms",       "Instant SMS fired in 2.3 seconds"), 2000);
     setTimeout(() => addEvent("qualified", "Lead qualified — Urgency: HIGH · Score: HOT"), 7500);
@@ -533,48 +825,54 @@ export default function ManoCommandCenter() {
 
   return (
     <div style={{ display:"flex", minHeight:"100vh", background:G.bg, color:G.white, fontFamily:"'DM Sans',sans-serif" }}>
-      <style>{css}</style>
+      <style>{GLOBAL_CSS}</style>
       <ManoSidebar current="/CommandCenter" />
 
-      <main style={{ flex:1, padding:"28px 28px 48px", overflowY:"auto", minWidth:0 }}>
-        {/* Header */}
-        <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:"24px" }}>
+      <main className="main-pad" style={{ flex:1, padding:"32px 32px 64px", overflowY:"auto", minWidth:0 }}>
+
+        {/* ── Page Header */}
+        <div style={{ display:"flex", alignItems:"flex-start", justifyContent:"space-between", marginBottom:"32px", gap:"16px" }}>
           <div>
-            <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"9px", color:G.gold, letterSpacing:"3px", marginBottom:"6px" }}>REVENUE RECOVERY SYSTEM</div>
-            <h1 style={{ fontSize:"24px", fontWeight:"700", color:G.white, margin:"0 0 4px", letterSpacing:"-0.3px" }}>MANO Command Center</h1>
-            <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"9px", color:G.muted }}>Powered by Manologics · Monkee Bizz AI</div>
+            <Label style={{ marginBottom:"10px" }}>REVENUE RECOVERY SYSTEM</Label>
+            <h1 style={{ fontFamily:"'DM Sans',sans-serif", fontSize:"clamp(22px,2.5vw,30px)", fontWeight:800, color:G.white, margin:"0 0 6px", lineHeight:1.15, letterSpacing:"-0.5px" }}>
+              MANO Command Center
+            </h1>
+            <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"9px", color:G.dim, letterSpacing:"1.5px" }}>
+              Powered by Manologics · Monkee Bizz AI
+            </div>
           </div>
-          <div style={{ display:"flex", alignItems:"center", gap:"10px" }}>
-            <div className="pulse-dot" style={{ width:"8px", height:"8px", borderRadius:"50%", background:G.green, boxShadow:`0 0 8px ${G.green}` }} />
-            <div style={{ fontFamily:"'Space Mono',monospace", fontSize:"10px", color:G.green }}>SYSTEM LIVE</div>
+          <div style={{ display:"flex", alignItems:"center", gap:"10px", flexShrink:0, paddingTop:"4px" }}>
+            <div className="pulse-dot" style={{ width:"8px", height:"8px", borderRadius:"50%", background:G.green, boxShadow:`0 0 10px ${G.green}` }} />
+            <span style={{ fontFamily:"'Space Mono',monospace", fontSize:"10px", color:G.green, letterSpacing:"1px" }}>SYSTEM LIVE</span>
           </div>
         </div>
 
-        {/* KPIs */}
+        {/* ── KPIs */}
         <KpiBar revenue={revenue} jobs={jobs} />
 
-        {/* Quick Actions */}
+        {/* ── Quick Actions */}
         <QuickActions onRunDemo={handleRunDemo} />
 
-        {/* Demo Engine — full width */}
+        {/* ── DEMO ENGINE — focal point */}
         <LiveDemoEngine onDemoComplete={handleDemoComplete} />
 
-        {/* Conversation + Activity — side by side */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"16px", marginBottom:"24px" }}>
+        {/* ── Conversation + Activity */}
+        <div className="grid-2col" style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:"16px", marginBottom:"20px" }}>
           <ConversationPanel demoRan={demoRan} />
           <ActivityFeed events={events} />
         </div>
 
-        {/* Pipeline — full width */}
-        <div style={{ marginBottom:"24px" }}>
+        {/* ── Pipeline */}
+        <div style={{ marginBottom:"20px" }}>
           <PipelinePanel demoRan={demoRan} />
         </div>
 
-        {/* Revenue chart + Automation side by side */}
-        <div style={{ display:"grid", gridTemplateColumns:"2fr 1fr", gap:"16px" }}>
+        {/* ── Revenue + Automations */}
+        <div className="grid-2col" style={{ display:"grid", gridTemplateColumns:"3fr 2fr", gap:"16px" }}>
           <RevenueChart revenue={revenue} />
           <AutomationPanel />
         </div>
+
       </main>
     </div>
   );
