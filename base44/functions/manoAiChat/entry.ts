@@ -10,7 +10,6 @@ Deno.serve(async (req) => {
       return Response.json({ success: false, error: "Message required" }, { status: 400 });
     }
 
-    // Use asServiceRole only — never call auth.me() or user context
     const base44 = createClientFromRequest(req);
 
     const systemPrompt = `You are Mano, an AI Revenue Operator for service businesses like HVAC, plumbing, and contractors. Help explain how MANO helps capture missed leads, respond instantly, qualify customers, and book jobs. Be conversational and friendly.`;

@@ -422,7 +422,7 @@ export default function ManoChatPage() {
     setLoading(true);
     try {
       const res = await callMano({ message: msg, history: messages.slice(-10) });
-      console.log("[ManoChat] raw response:", JSON.stringify(res?.data ?? res));
+      console.log("[ManoChat] raw response:", JSON.stringify(res));
       const reply = res?.data?.reply ?? res?.reply ?? null;
       if (reply) {
         setMessages(prev => [...prev, { role: "assistant", content: reply, ts: ts() }]);
