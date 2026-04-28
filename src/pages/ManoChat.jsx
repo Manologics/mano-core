@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
-import { base44 } from "@/api/base44Client";
 import { manoAiChat as callMano } from "@/functions/manoAiChat";
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
@@ -423,16 +422,12 @@ export default function ManoChatPage() {
     setLoading(true);
     try {
       const res = await callMano({ message: msg, history: messages.slice(-10) });
-      console.log("[ManoChat] raw response:", res);
-      const reply = res?.data?.reply || res?.reply;
-      if (reply) {
-        setMessages(prev => [...prev, { role: "assistant", content: reply, ts: ts() }]);
-      } else {
-        throw new Error("No reply");
-      }
+      console.log("[ManoChat] raw response:", JSON.stringify(res?.data ?? res));
+      const reply = res?.data?.reply ?? res?.reply ?? null;
+      if (!reply) throw new Error(`No reply in response: ${JSON.stringify(res?.data ?? res)}`);
+      setMessages(prev => [...prev, { role: "assistant", content: reply, ts: ts() }]);
     } catch (e) {
-      console.error("[ManoChat]", e);
-      setMessages(prev => [...prev, { role: "assistant", content: "MANO is online. I can help with missed call recovery logic, lead qualification, booking workflows, follow-up sequences, and revenue recovery strategy.", ts: ts() }]);
+      console.error("[ManoChat] error:", e.message);
     }
     setLoading(false);
   };
