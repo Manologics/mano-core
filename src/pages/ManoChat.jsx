@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import { base44 } from "@/api/base44Client";
+import { manoAiChat as callMano } from "@/functions/manoAiChat";
 
 // ─── DESIGN TOKENS ────────────────────────────────────────────────────────────
 const G = {
@@ -421,11 +422,9 @@ export default function ManoChatPage() {
     setInput("");
     setLoading(true);
     try {
-      const res = await base44.functions.invoke("manoAiChat", {
-        message: msg,
-        history: messages.slice(-10),
-      });
-      const reply = res?.reply;
+      const res = await callMano({ message: msg, history: messages.slice(-10) });
+      console.log("[ManoChat] raw response:", res);
+      const reply = res?.data?.reply || res?.reply;
       if (reply) {
         setMessages(prev => [...prev, { role: "assistant", content: reply, ts: ts() }]);
       } else {
