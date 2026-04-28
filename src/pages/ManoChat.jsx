@@ -424,10 +424,15 @@ export default function ManoChatPage() {
       const res = await callMano({ message: msg, history: messages.slice(-10) });
       console.log("[ManoChat] raw response:", JSON.stringify(res?.data ?? res));
       const reply = res?.data?.reply ?? res?.reply ?? null;
-      if (!reply) throw new Error(`No reply in response: ${JSON.stringify(res?.data ?? res)}`);
-      setMessages(prev => [...prev, { role: "assistant", content: reply, ts: ts() }]);
+      if (reply) {
+        setMessages(prev => [...prev, { role: "assistant", content: reply, ts: ts() }]);
+      } else {
+        console.error("[ManoChat] No reply found:", res);
+        setMessages(prev => [...prev, { role: "assistant", content: "Sorry, MANO didn't return a response. Please try again.", ts: ts() }]);
+      }
     } catch (e) {
       console.error("[ManoChat] error:", e.message);
+      setMessages(prev => [...prev, { role: "assistant", content: "Connection error. Please try again.", ts: ts() }]);
     }
     setLoading(false);
   };
