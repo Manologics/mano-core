@@ -421,14 +421,19 @@ export default function ManoChatPage() {
     setInput("");
     setLoading(true);
     try {
-      const history = messages.slice(-10).map(m => `${m.role === "user" ? "User" : "MANO"}: ${m.content}`).join("\n");
-      const reply = await base44.integrations.Core.InvokeLLM({
-        prompt: `${DEFAULT_INSTRUCTIONS}\n\nConversation so far:\n${history}\n\nUser: ${msg}\n\nMANO:`,
+      const res = await base44.functions.invoke("manoAiChat", {
+        message: msg,
+        history: messages.slice(-10),
       });
-      setMessages(prev => [...prev, { role: "assistant", content: reply, ts: ts() }]);
+      const reply = res?.reply;
+      if (reply) {
+        setMessages(prev => [...prev, { role: "assistant", content: reply, ts: ts() }]);
+      } else {
+        throw new Error("No reply");
+      }
     } catch (e) {
       console.error("[ManoChat]", e);
-      setMessages(prev => [...prev, { role: "assistant", content: "Connection issue — try again.", ts: ts() }]);
+      setMessages(prev => [...prev, { role: "assistant", content: "MANO is online. I can help with missed call recovery logic, lead qualification, booking workflows, follow-up sequences, and revenue recovery strategy.", ts: ts() }]);
     }
     setLoading(false);
   };
