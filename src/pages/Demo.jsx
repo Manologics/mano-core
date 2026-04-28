@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import ManoDemoWidget from "@/components/public/ManoDemoWidget";
 
 // ─── FONT IMPORT ──────────────────────────────────────────────────────────────
 const FontStyle = () => (
@@ -693,6 +694,8 @@ export default function Demo() {
         <CTAPrimary style={{ fontSize:"15px", padding:"22px 52px", letterSpacing:"1.5px" }}/>
         <div style={{ fontFamily:"'Space Mono', monospace", fontSize:"10px", color:"#1c1c1c", marginTop:"18px", letterSpacing:"1px" }}>Free. No pitch. Just the number.</div>
       </section>
+
+      <ManoDemoWidget />
 
       {/* FOOTER */}
       <footer style={{ borderTop:"1px solid #0d0d0d", padding:"28px 24px", textAlign:"center" }}>
