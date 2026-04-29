@@ -40,14 +40,14 @@ export default function ManoDemoWidget() {
     setLoading(true);
 
     try {
-      const res = await manoDemoChat({ message: msg, history: messages.slice(-8) });
-      const reply = res?.data?.reply ?? res?.reply ?? null;
-      if (reply) {
-        setMessages(prev => [...prev, { role: "assistant", content: reply }]);
-      }
+      const res = await manoDemoChat({ message: msg, history: messages.slice(-10) });
+      // Accept reply from either res.data.reply or res.reply (platform v1/v2 compat)
+      const reply = res?.data?.reply ?? res?.reply ?? res?.data?.fallbackReply ?? res?.fallbackReply ?? null;
+      const content = reply || "I'm here — looks like I had a slow response. What kind of business do you run?";
+      setMessages(prev => [...prev, { role: "assistant", content }]);
     } catch (e) {
       console.error("[ManoDemoWidget]", e.message);
-      setMessages(prev => [...prev, { role: "assistant", content: "Sorry, something went wrong. Try again or book a demo directly!" }]);
+      setMessages(prev => [...prev, { role: "assistant", content: "I'm here — looks like I had a slow response. What kind of business do you run?" }]);
     }
     setLoading(false);
   };
