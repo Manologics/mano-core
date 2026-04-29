@@ -1,26 +1,27 @@
 // twilioInboundVoice — initial inbound call handler
-// SPEED: Returns TwiML immediately with zero DB/LLM/auth overhead.
-// Timing logs help measure Twilio round-trip.
+// LATENCY ARCHITECTURE:
+//   - Greeting uses Polly <Say> — plays in ~100ms, no ElevenLabs round-trip on first ring
+//   - TwiML is fully static — zero DB, LLM, or auth overhead
+//   - Gather listens immediately after greeting ends
+//   - voiceProcess handles all subsequent turns
 const BASE_URL = "https://mano-app-8159dde8.base44.app";
 
-const GREETING = "Hey, this is Mano with Monkee Biz AI. How can I help you today?";
-const FALLBACK = "I didn't catch that. Please call back and we will be happy to help. Goodbye!";
+// Short, punchy greeting — under 12 words, Polly plays instantly
+const GREETING = "Hey, this is Mano. What can I help you with today?";
+const FALLBACK  = "I didn't catch that. Please call back and we will help you. Goodbye.";
 
 Deno.serve(async (_req) => {
   const t0 = Date.now();
   console.log(`[twilioInboundVoice] webhook_received_at:${new Date(t0).toISOString()}`);
 
-  const encoded         = encodeURIComponent(GREETING);
-  const fallbackEncoded = encodeURIComponent(FALLBACK);
-
-  // TwiML is fully static — no DB, no LLM, no auth.
-  // voiceProcess handles the next turn after Gather.
+  // Use Amazon Polly <Say> for greeting — ~100ms vs ~600-900ms for ElevenLabs
+  // Twilio renders Polly natively, no external HTTP call required.
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Play>${BASE_URL}/functions/serveVoiceAudio?text=${encoded}</Play>
+  <Say voice="Polly.Matthew-Neural">${GREETING}</Say>
   <Gather input="speech" action="${BASE_URL}/functions/voiceProcess" method="POST" speechTimeout="3" timeout="10" language="en-US">
   </Gather>
-  <Play>${BASE_URL}/functions/serveVoiceAudio?text=${fallbackEncoded}</Play>
+  <Say voice="Polly.Matthew-Neural">${FALLBACK}</Say>
   <Hangup/>
 </Response>`;
 
