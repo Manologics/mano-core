@@ -1,81 +1,45 @@
-import { createClientFromRequest } from 'npm:@base44/sdk@0.8.21';
+import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 Deno.serve(async (req) => {
   try {
     const base44 = createClientFromRequest(req);
-    const body = await req.json();
-    const { data } = body;
+    const raw = await req.json();
 
-    if (!data) {
-      return Response.json({ error: 'No lead data provided' }, { status: 400 });
-    }
+    // Accept both { data: {...} } and flat { name, phone, ... } payloads
+    const lead = raw?.data || raw || {};
 
-    const source = data.source || "monkee";
-    const adminTo = source === "vendorfy" ? "info@vendorfyai.com" : source === "surplus" ? "info@surplussyndicatestore.com" : "info@monkeebizai.com";
-    const brandName = source === "vendorfy" ? "VENDORFY AI" : source === "surplus" ? "SURPLUS SYNDICATE" : "MONKEE BIZZ AI";
+    const name       = lead.name        || 'Unknown';
+    const phone      = lead.phone       || 'Unknown';
+    const serviceNeed= lead.service_need || 'Unknown';
+    const urgency    = lead.urgency     || 'Unknown';
+    const location   = lead.location    || lead.business_type || 'Unknown';
+    const source     = lead.source      || 'Unknown';
+    const timestamp  = new Date().toLocaleString('en-US', { timeZone: 'America/Phoenix', hour12: true });
 
-    const urgencyLabel = {
-      low: '🟢 Low — Just exploring',
-      medium: '🟡 Medium — Ready in weeks',
-      high: '🔴 High — Needs ASAP',
-    };
-
-    const emailBody = `
-      <div style="font-family: 'Inter', Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-        <div style="background: #0a0a0a; border-radius: 16px; padding: 32px; color: #fff;">
-          <div style="text-align: center; margin-bottom: 24px;">
-            <div style="font-size: 32px; margin-bottom: 8px;">🐒</div>
-            <div style="font-family: monospace; font-size: 11px; color: #00ff88; letter-spacing: 3px;">${brandName} — NEW LEAD SUBMITTED</div>
-          </div>
-
-          <table style="width: 100%; border-collapse: collapse;">
-            <tr>
-              <td style="padding: 14px; border-bottom: 1px solid #1a1a1a; font-family: monospace; font-size: 10px; color: #555; letter-spacing: 2px; width: 140px;">NAME</td>
-              <td style="padding: 14px; border-bottom: 1px solid #1a1a1a; color: #ddd; font-size: 14px;">${data.name || 'N/A'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 14px; border-bottom: 1px solid #1a1a1a; font-family: monospace; font-size: 10px; color: #555; letter-spacing: 2px;">EMAIL</td>
-              <td style="padding: 14px; border-bottom: 1px solid #1a1a1a; color: #ddd; font-size: 14px;">
-                <a href="mailto:${data.email}" style="color: #00ff88; text-decoration: none;">${data.email || 'N/A'}</a>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 14px; border-bottom: 1px solid #1a1a1a; font-family: monospace; font-size: 10px; color: #555; letter-spacing: 2px;">PHONE</td>
-              <td style="padding: 14px; border-bottom: 1px solid #1a1a1a; color: #ddd; font-size: 14px;">
-                <a href="tel:${data.phone}" style="color: #00ff88; text-decoration: none; font-size: 18px; font-weight: 700;">${data.phone || 'N/A'}</a>
-              </td>
-            </tr>
-            <tr>
-              <td style="padding: 14px; border-bottom: 1px solid #1a1a1a; font-family: monospace; font-size: 10px; color: #555; letter-spacing: 2px;">BUSINESS TYPE</td>
-              <td style="padding: 14px; border-bottom: 1px solid #1a1a1a; color: #ddd; font-size: 14px;">${data.business_type || 'Not specified'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 14px; border-bottom: 1px solid #1a1a1a; font-family: monospace; font-size: 10px; color: #555; letter-spacing: 2px;">SERVICE NEED</td>
-              <td style="padding: 14px; border-bottom: 1px solid #1a1a1a; color: #ddd; font-size: 14px;">${data.service_need || 'Not specified'}</td>
-            </tr>
-            <tr>
-              <td style="padding: 14px; font-family: monospace; font-size: 10px; color: #555; letter-spacing: 2px;">URGENCY</td>
-              <td style="padding: 14px; color: #ddd; font-size: 14px;">${urgencyLabel[data.urgency] || data.urgency || 'Medium'}</td>
-            </tr>
-          </table>
-
-          <div style="margin-top: 24px; padding: 16px; background: #111; border: 1px solid #1a1a1a; border-radius: 10px; text-align: center;">
-            <div style="font-family: monospace; font-size: 10px; color: #333; letter-spacing: 1px;">
-              SUBMITTED ${new Date().toLocaleString('en-US', { timeZone: 'America/New_York' })} EST
-            </div>
-          </div>
-        </div>
+    const body = `
+      <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;background:#f9f9f9;border-radius:12px;">
+        <h2 style="margin:0 0 20px;font-size:20px;color:#111;">🔥 New HVAC Lead</h2>
+        <table style="width:100%;border-collapse:collapse;font-size:14px;color:#333;">
+          <tr><td style="padding:10px 12px;background:#fff;border:1px solid #e5e5e5;font-weight:600;width:130px;">Name</td><td style="padding:10px 12px;background:#fff;border:1px solid #e5e5e5;">${name}</td></tr>
+          <tr><td style="padding:10px 12px;background:#f4f4f4;border:1px solid #e5e5e5;font-weight:600;">Phone</td><td style="padding:10px 12px;background:#f4f4f4;border:1px solid #e5e5e5;">${phone}</td></tr>
+          <tr><td style="padding:10px 12px;background:#fff;border:1px solid #e5e5e5;font-weight:600;">Service Need</td><td style="padding:10px 12px;background:#fff;border:1px solid #e5e5e5;">${serviceNeed}</td></tr>
+          <tr><td style="padding:10px 12px;background:#f4f4f4;border:1px solid #e5e5e5;font-weight:600;">Urgency</td><td style="padding:10px 12px;background:#f4f4f4;border:1px solid #e5e5e5;">${urgency}</td></tr>
+          <tr><td style="padding:10px 12px;background:#fff;border:1px solid #e5e5e5;font-weight:600;">Location</td><td style="padding:10px 12px;background:#fff;border:1px solid #e5e5e5;">${location}</td></tr>
+          <tr><td style="padding:10px 12px;background:#f4f4f4;border:1px solid #e5e5e5;font-weight:600;">Source</td><td style="padding:10px 12px;background:#f4f4f4;border:1px solid #e5e5e5;">${source}</td></tr>
+          <tr><td style="padding:10px 12px;background:#fff;border:1px solid #e5e5e5;font-weight:600;">Timestamp</td><td style="padding:10px 12px;background:#fff;border:1px solid #e5e5e5;">${timestamp} MST</td></tr>
+        </table>
       </div>
     `;
 
     await base44.asServiceRole.integrations.Core.SendEmail({
-      to: adminTo,
-      subject: `🐒 New Lead [${brandName}]: ${data.name} — ${data.business_type || 'General Inquiry'}`,
-      body: emailBody,
+      to: 'info@monkeebizznus.com',
+      subject: `New HVAC Lead — ${name} (${phone})`,
+      body,
     });
 
-    return Response.json({ success: true, message: 'Notification email sent' });
+    return Response.json({ success: true });
   } catch (error) {
+    console.error('[notifyNewLead] ERROR:', error.message);
     return Response.json({ error: error.message }, { status: 500 });
   }
 });
