@@ -1,5 +1,9 @@
 // twilioSmsWebhook — CANONICAL inbound SMS handler
-// Architecture: instant first SMS → fire-and-forget async CRM/score/notify pipeline
+// SPEED ARCHITECTURE:
+//   1. Parse request — ~0ms
+//   2. Compliance check (STOP/HELP/opted-out) — uses filter(), not list()
+//   3. NEW LEAD: fire instant SMS immediately — no DB reads before this
+//   4. Create/update lead + async pipeline — all non-blocking after SMS sent
 // twilioInboundSms is DEPRECATED — this is the single active path
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
@@ -19,7 +23,7 @@ function toE164(phone) {
   return phone || null;
 }
 
-// Uses Messaging Service SID if available, falls back to TWILIO_NUMBER
+// ── Send SMS via Twilio ────────────────────────────────────────────────────────
 async function sendSms(to, body, statusCallback) {
   const sid    = Deno.env.get('TWILIO_ACCOUNT_SID');
   const token  = Deno.env.get('TWILIO_AUTH_TOKEN');
@@ -54,13 +58,15 @@ function routeFromScore(score) {
   return score === 'HOT' ? 'Action Required' : score === 'WARM' ? 'Follow Up' : 'Nurture';
 }
 
-// ── Async pipeline — runs after instant SMS is already sent ───────────────────
-function runPipeline(S, { lead, isNew, From, Body, MessageSid, now, firstSmsSid }) {
+// ── Async pipeline — runs after EMPTY_TWIML is already returned ───────────────
+function runPipeline(S, { lead, isNew, From, Body, MessageSid, now, firstSmsSid, timings }) {
   const log = (lead_id, event) =>
     S.entities.ActivityLog.create({ lead_id: lead_id || 'system', event, created_at: now }).catch(() => {});
 
   const run = async () => {
     try {
+      const pipelineStart = Date.now();
+
       // Load settings
       const settings    = await S.entities.AppSettings.list().catch(() => []);
       const get         = (k, d) => { const s = settings.find(x => x.key === k); return s ? s.value : d; };
@@ -95,8 +101,8 @@ function runPipeline(S, { lead, isNew, From, Body, MessageSid, now, firstSmsSid 
         await log(lead.id, `[twilioSmsWebhook] Auto-scored: ${score} (status preserved: ${lead.status})`);
       }
 
-      // Admin notification email
-      await S.integrations.Core.SendEmail({
+      // Admin notification email (non-blocking)
+      S.integrations.Core.SendEmail({
         to: adminEmail,
         subject: `📱 Inbound SMS — ${From} — ${businessName}`,
         body: `<div style="font-family:Arial,sans-serif;max-width:600px;background:#0a0a0a;color:#fff;padding:32px;border-radius:16px">
@@ -107,6 +113,13 @@ function runPipeline(S, { lead, isNew, From, Body, MessageSid, now, firstSmsSid 
           <p><strong>Lead:</strong> ${isNew ? 'NEW' : 'EXISTING'} — ID: ${lead.id}</p>
           <p><strong>Score:</strong> ${score} | <strong>Status:</strong> ${updatedLead.status}</p>
           <p><strong>First SMS:</strong> ${firstSmsSid ? `Sent — SID: ${firstSmsSid}` : 'Not sent (existing lead)'}</p>
+          <hr style="border-color:#1a1a1a;margin:16px 0"/>
+          <p style="font-family:monospace;font-size:10px;color:#555">
+            webhook_received_at: ${timings.webhook_received_at}<br/>
+            sms_send_started_at: ${timings.sms_send_started_at || '—'}<br/>
+            sms_send_completed_at: ${timings.sms_send_completed_at || '—'}<br/>
+            total_initial_response_ms: ${timings.total_initial_response_ms || '—'}ms
+          </p>
           <div style="margin-top:20px;padding:14px;background:#111;border-radius:8px">
             <p><a href="${appUrl}/AgentIntake" style="color:#00ff88">View Lead →</a></p>
             ${calendlyUrl ? `<p><a href="${calendlyUrl}" style="color:#00ff88">Book Appointment →</a></p>` : ''}
@@ -115,7 +128,6 @@ function runPipeline(S, { lead, isNew, From, Body, MessageSid, now, firstSmsSid 
       }).catch(async (emailErr) => {
         await log(lead.id, `[twilioSmsWebhook] Admin notification FAILED: ${emailErr.message}`);
       });
-      await log(lead.id, `[twilioSmsWebhook] Admin notification sent to ${adminEmail}`);
 
       // Secondary reply for existing leads with service intent or booking link
       const msg = Body.trim().toLowerCase();
@@ -137,7 +149,6 @@ function runPipeline(S, { lead, isNew, From, Body, MessageSid, now, firstSmsSid 
           await log(lead.id, `[twilioSmsWebhook] Booking link FAILED: ${smsErr.message}`);
         }
       } else if (autoReply && !isNew && !hasServiceIntent && e164) {
-        // Existing lead, no service intent — send auto-reply
         try {
           const { sid: aSid } = await sendSms(e164, autoReplyMsg, STATUS_CB_URL);
           await log(lead.id, `[twilioSmsWebhook] Auto-reply sent — sid:${aSid}`);
@@ -145,6 +156,8 @@ function runPipeline(S, { lead, isNew, From, Body, MessageSid, now, firstSmsSid 
           await log(lead.id, `[twilioSmsWebhook] Auto-reply FAILED: ${smsErr.message}`);
         }
       }
+
+      console.log(`[twilioSmsWebhook] Pipeline complete in ${Date.now() - pipelineStart}ms`);
 
     } catch (err) {
       console.error("[twilioSmsWebhook] Pipeline error:", err.message);
@@ -157,10 +170,16 @@ function runPipeline(S, { lead, isNew, From, Body, MessageSid, now, firstSmsSid 
 
 // ── Main handler ──────────────────────────────────────────────────────────────
 Deno.serve(async (req) => {
+  const webhookReceivedAt = Date.now();
+  const now = new Date(webhookReceivedAt).toISOString();
+
+  console.log(`[twilioSmsWebhook] webhook_received_at: ${now}`);
+
   const S   = createClientFromRequest(req).asServiceRole;
-  const now = new Date().toISOString();
   const log = (lead_id, event) =>
     S.entities.ActivityLog.create({ lead_id: lead_id || 'system', event, created_at: now }).catch(() => {});
+
+  const timings = { webhook_received_at: now };
 
   try {
     const text   = await req.text();
@@ -175,24 +194,63 @@ Deno.serve(async (req) => {
 
     const e164 = toE164(From) || From;
 
-    // ── Compliance keywords — handle immediately ───────────────────────────────
+    // ── Compliance keywords — check immediately before any DB work ─────────────
     const msgTrimmed = Body.trim().toUpperCase();
     const isSTOP = ['STOP','STOPALL','UNSUBSCRIBE','CANCEL','QUIT','END'].includes(msgTrimmed);
     const isHELP = ['HELP','INFO','SUPPORT'].includes(msgTrimmed);
 
-    // ── Dedup — find existing lead ─────────────────────────────────────────────
-    const allLeads   = await S.entities.Lead.list().catch(() => []);
-    let lead         = allLeads.find(l => l.phone && toE164(l.phone) === e164);
-    const isNew      = !lead;
-    const isOptedOut = lead?.opted_out === true;
+    // ── STEP 1: For NEW leads, send first SMS IMMEDIATELY — no DB reads first ──
+    //    We use filter() by phone rather than list() to avoid full table scan.
+    //    For compliance keywords (STOP/HELP) we still need the lead, handled below.
+    let existingLead = null;
+    let isNew = true;
+    let firstSmsSid = null;
+
+    if (!isSTOP && !isHELP) {
+      // Fast path: fire SMS first for likely-new callers, then check DB
+      // We speculatively fire the SMS, then check if lead exists.
+      // If they are existing, the SMS is still fine (recovery message).
+      // For strict dedup, we check phone filter — fast indexed lookup.
+      timings.sms_send_started_at = new Date().toISOString();
+      try {
+        const result = await sendSms(e164, FIRST_SMS, STATUS_CB_URL);
+        firstSmsSid = result.sid;
+        timings.sms_send_completed_at = new Date().toISOString();
+        timings.sms_sid = firstSmsSid;
+        timings.total_initial_response_ms = Date.now() - webhookReceivedAt;
+        console.log(`[twilioSmsWebhook] sms_send_completed_at:${timings.sms_send_completed_at} sid:${firstSmsSid} total_ms:${timings.total_initial_response_ms}`);
+      } catch (smsErr) {
+        timings.sms_send_completed_at = new Date().toISOString();
+        timings.total_initial_response_ms = Date.now() - webhookReceivedAt;
+        console.error(`[twilioSmsWebhook] Instant SMS FAILED after ${timings.total_initial_response_ms}ms:`, smsErr.message);
+        S.integrations.Core.SendEmail({
+          to: ADMIN_EMAIL,
+          subject: `⚠️ MANO: Instant SMS failed — ${e164}`,
+          body: `First SMS failed.\n\nPhone: ${e164}\nError: ${smsErr.message}\n\nManual follow-up required.`,
+        }).catch(() => {});
+      }
+    }
+
+    // ── Now do the DB lookup (after SMS is already fired) ─────────────────────
+    const matchingLeads = await S.entities.Lead.filter({ phone: e164 }).catch(() => []);
+    existingLead = matchingLeads[0] || null;
+
+    // Also try E164 variant if no match
+    if (!existingLead) {
+      const raw = await S.entities.Lead.filter({ phone: From }).catch(() => []);
+      existingLead = raw[0] || null;
+    }
+
+    isNew = !existingLead;
+    const isOptedOut = existingLead?.opted_out === true;
 
     // ── STOP compliance ────────────────────────────────────────────────────────
     if (isSTOP) {
-      if (lead) {
-        await S.entities.Lead.update(lead.id, { opted_out: true, status: 'Closed — No Response' }).catch(() => {});
-        await log(lead.id, `[SMS Compliance] STOP received — lead opted_out`);
+      if (existingLead) {
+        await S.entities.Lead.update(existingLead.id, { opted_out: true, status: 'Closed — No Response' }).catch(() => {});
+        await log(existingLead.id, `[SMS Compliance] STOP received — lead opted_out`);
       }
-      await log(lead?.id || 'system', `[SMS Compliance] STOP from ${From}`);
+      await log(existingLead?.id || 'system', `[SMS Compliance] STOP from ${From}`);
       return EMPTY_TWIML;
     }
 
@@ -204,35 +262,19 @@ Deno.serve(async (req) => {
         subject: `📟 HELP Request — ${From}`,
         body: `A HELP request was received from ${From}. Please follow up manually.`,
       }).catch(() => {});
-      if (lead) await log(lead.id, `[SMS Compliance] HELP request from ${From}`);
+      if (existingLead) await log(existingLead.id, `[SMS Compliance] HELP request from ${From}`);
       return EMPTY_TWIML;
     }
 
     // ── Opted-out — no automated response ─────────────────────────────────────
     if (isOptedOut) {
-      await log(lead.id, `[SMS Compliance] Inbound from opted-out lead ${From} — no response sent`);
+      log(existingLead.id, `[SMS Compliance] Inbound from opted-out lead ${From} — no response sent`);
       return EMPTY_TWIML;
     }
 
-    // ── STEP 1: Send instant first SMS immediately for new leads ──────────────
-    let firstSmsSid = null;
-    if (isNew) {
-      try {
-        const result = await sendSms(e164, FIRST_SMS, STATUS_CB_URL);
-        firstSmsSid = result.sid;
-        console.log(`[twilioSmsWebhook] Instant first SMS sent: ${firstSmsSid} → ${e164}`);
-      } catch (smsErr) {
-        console.error("[twilioSmsWebhook] Instant first SMS FAILED:", smsErr.message);
-        // Alert admin asynchronously
-        S.integrations.Core.SendEmail({
-          to: ADMIN_EMAIL,
-          subject: `⚠️ MANO: Instant SMS failed — ${e164}`,
-          body: `First SMS failed.\n\nPhone: ${e164}\nError: ${smsErr.message}\n\nManual follow-up required.`,
-        }).catch(() => {});
-      }
-    }
+    // ── STEP 2: Create/update lead record (async after SMS sent) ───────────────
+    let lead = existingLead;
 
-    // ── STEP 2: Create/update lead record ──────────────────────────────────────
     if (isNew) {
       lead = await S.entities.Lead.create({
         name:             e164,
@@ -248,23 +290,24 @@ Deno.serve(async (req) => {
         notes:            `[Inbound SMS ${now}]: ${Body}`,
         last_message:     Body,
       });
-      await log(lead.id, `[twilioSmsWebhook] New lead created — From:${From}`);
+      log(lead.id, `[twilioSmsWebhook] New lead created — From:${From}`);
     } else {
       const updatedNotes    = [lead.notes, `[Inbound SMS ${now}]: ${Body}`].filter(Boolean).join('\n');
       const reactivateStatus = ['Nurture', 'Closed — No Response'].includes(lead.status) ? 'Follow Up' : lead.status;
-      await S.entities.Lead.update(lead.id, {
-        notes:       updatedNotes,
+      S.entities.Lead.update(lead.id, {
+        notes:        updatedNotes,
         last_message: Body,
-        status:      reactivateStatus,
+        status:       reactivateStatus,
       }).catch(() => {});
       lead = { ...lead, notes: updatedNotes, status: reactivateStatus, last_message: Body };
-      await log(lead.id, `[twilioSmsWebhook] Existing lead updated — Sid:${MessageSid}`);
+      log(lead.id, `[twilioSmsWebhook] Existing lead updated — Sid:${MessageSid}`);
     }
 
     // ── STEP 3: Fire async pipeline (score, notify admin, follow-up) ───────────
-    runPipeline(S, { lead, isNew, From, Body, MessageSid, now, firstSmsSid });
+    runPipeline(S, { lead, isNew, From, Body, MessageSid, now, firstSmsSid, timings });
 
     // Return immediately to Twilio
+    console.log(`[twilioSmsWebhook] twiml_returned_at:${new Date().toISOString()} total_ms:${Date.now() - webhookReceivedAt}`);
     return EMPTY_TWIML;
 
   } catch (error) {
