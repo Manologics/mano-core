@@ -129,34 +129,6 @@ function runPipeline(S, { lead, isNew, From, Body, MessageSid, now, firstSmsSid,
         await log(lead.id, `[twilioSmsWebhook] Admin notification FAILED: ${emailErr.message}`);
       });
 
-      // Secondary reply for existing leads with service intent or booking link
-      const msg = Body.trim().toLowerCase();
-      const SERVICE_KEYWORDS = ['website','seo','marketing','social','ads','branding','design','automation','ai','app','help','need','want','looking','build','create','fix','manage','grow','email','content','video','photo','logo','repair','replace','emergency','hvac','heat','cool','ac','furnace'];
-      const hasServiceIntent = SERVICE_KEYWORDS.some(k => msg.includes(k)) || msg.length > 10;
-
-      if (!isNew && hasServiceIntent && calendlyUrl && !lead.booking_offered) {
-        try {
-          const bookingMsg = `Got it! You can book a quick call here: ${calendlyUrl} 📅`;
-          const { sid: bSid } = await sendSms(e164, bookingMsg, STATUS_CB_URL);
-          await S.entities.Lead.update(lead.id, {
-            score: 'WARM', status: 'Action Required', booking_offered: true,
-            service_need: lead.service_need || Body,
-            notes: [lead.notes, `[Booking link sent ${now}]`].filter(Boolean).join('\n'),
-            last_message: bookingMsg,
-          }).catch(() => {});
-          await log(lead.id, `[twilioSmsWebhook] Booking link sent — sid:${bSid}`);
-        } catch (smsErr) {
-          await log(lead.id, `[twilioSmsWebhook] Booking link FAILED: ${smsErr.message}`);
-        }
-      } else if (autoReply && !isNew && !hasServiceIntent && e164) {
-        try {
-          const { sid: aSid } = await sendSms(e164, autoReplyMsg, STATUS_CB_URL);
-          await log(lead.id, `[twilioSmsWebhook] Auto-reply sent — sid:${aSid}`);
-        } catch (smsErr) {
-          await log(lead.id, `[twilioSmsWebhook] Auto-reply FAILED: ${smsErr.message}`);
-        }
-      }
-
       console.log(`[twilioSmsWebhook] Pipeline complete in ${Date.now() - pipelineStart}ms`);
 
     } catch (err) {
@@ -199,9 +171,8 @@ Deno.serve(async (req) => {
     const isSTOP = ['STOP','STOPALL','UNSUBSCRIBE','CANCEL','QUIT','END'].includes(msgTrimmed);
     const isHELP = ['HELP','INFO','SUPPORT'].includes(msgTrimmed);
 
-    // ── STEP 1: For NEW leads, send first SMS IMMEDIATELY — no DB reads first ──
-    //    We use filter() by phone rather than list() to avoid full table scan.
-    //    For compliance keywords (STOP/HELP) we still need the lead, handled below.
+    // ── STEP 1: DB lookup first, then branch on new vs returning ─────────────
+    //    New lead → send FIRST_SMS immediately. Returning → LLM contextual reply.
     let existingLead = null;
     let isNew = true;
     let firstSmsSid = null;
