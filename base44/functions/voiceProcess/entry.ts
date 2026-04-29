@@ -8,7 +8,7 @@
 //   6. Timing logs at every key step
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
-const FIRST_SMS     = "Hey, sorry we missed you. Is this repair, replacement, or emergency service?";
+const FIRST_SMS     = "Hey, sorry we missed your call — how can we help?";
 const STATUS_CB_URL = `${Deno.env.get("BASE_URL") || ""}/functions/twilioStatusCallback`;
 const BASE_URL      = "https://mano-app-8159dde8.base44.app";
 const HUMAN         = "+16232822252";
