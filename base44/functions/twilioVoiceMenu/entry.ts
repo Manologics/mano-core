@@ -39,24 +39,26 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Press 3 — demo request, log lead, offer to connect
+    // Press 3 — demo request, log lead fire-and-forget, offer to connect
     if (digits === "3") {
-      // Log demo request as a lead
-      try {
-        const base44 = createClientFromRequest(req);
-        await base44.asServiceRole.entities.Lead.create({
-          name: `Voice Demo Request`,
-          phone: callerPhone,
-          source: "inbound_voice",
-          service_need: "Demo request via inbound voice menu",
-          status: "Action Required",
-          score: "WARM",
-          notes: `Demo requested via inbound call from ${callerPhone}`,
-        });
-        console.log("[twilioVoiceMenu] Demo lead created for:", callerPhone);
-      } catch (e) {
-        console.error("[twilioVoiceMenu] Failed to log demo lead:", e.message);
-      }
+      // Fire-and-forget — never await DB writes before returning TwiML
+      (async () => {
+        try {
+          const base44 = createClientFromRequest(req);
+          await base44.asServiceRole.entities.Lead.create({
+            name: `Voice Demo Request`,
+            phone: callerPhone,
+            source: "inbound_voice",
+            service_need: "Demo request via inbound voice menu",
+            status: "Action Required",
+            score: "WARM",
+            notes: `Demo requested via inbound call from ${callerPhone}`,
+          });
+          console.log("[twilioVoiceMenu] Demo lead created for:", callerPhone);
+        } catch (e) {
+          console.error("[twilioVoiceMenu] Failed to log demo lead:", e.message);
+        }
+      })();
 
       const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>

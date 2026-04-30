@@ -36,6 +36,7 @@ const FIRST_SMS     = "Hey, sorry we missed your call — how can we help?";
 // Pick one based on what the caller said. Keeps caller engaged immediately.
 const ACKS = {
   default:   "Got it.",
+  gotIt:     "Got it.",
   urgent:    "On it.",
   question:  "Good question.",
   wait:      "One sec.",
