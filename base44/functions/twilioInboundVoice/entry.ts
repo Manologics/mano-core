@@ -7,7 +7,7 @@
 const BASE_URL = "https://mano-app-8159dde8.base44.app";
 
 // Short, punchy greeting — under 12 words, Polly plays instantly
-const GREETING = "Hey, this is Mano. What can I help you with today?";
+const GREETING = "Hi, thanks for calling Monkee Bizz AI. Mano speaking — how can I help you today?";
 const FALLBACK  = "I didn't catch that. Please call back and we will help you. Goodbye.";
 
 Deno.serve(async (_req) => {
