@@ -1,23 +1,11 @@
-// twilioInboundVoice — instant inbound call handler
-// ARCHITECTURE: Pure Polly <Say>. Zero DB, zero LLM, zero ElevenLabs on first ring.
-// TwiML is static — returns in <50ms guaranteed.
-
-const BASE_URL = "https://mano-app-8159dde8.base44.app";
-
+// twilioInboundVoice — redirects to TwiML Bin immediately
 Deno.serve(async (req) => {
   const t0 = Date.now();
   console.log(`[twilioInboundVoice] call_received_at:${new Date(t0).toISOString()}`);
 
   const twiml = `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
-  <Say voice="Polly.Matthew-Neural">Hey — got you. Is this for repair, replacement, or emergency service?</Say>
-  <Gather input="speech" action="${BASE_URL}/functions/voiceProcess?intent=init" method="POST" speechTimeout="3" timeout="10" language="en-US">
-  </Gather>
-  <Say voice="Polly.Matthew-Neural">I didn't catch that. What service do you need help with?</Say>
-  <Gather input="speech" action="${BASE_URL}/functions/voiceProcess?intent=init" method="POST" speechTimeout="3" timeout="10" language="en-US">
-  </Gather>
-  <Say voice="Polly.Matthew-Neural">We'll follow up shortly. Goodbye!</Say>
-  <Hangup/>
+  <Redirect method="POST">https://handler.twilio.com/twiml/EH49de5987401262b3f0580e75f1e4f20b</Redirect>
 </Response>`;
 
   console.log(`[twilioInboundVoice] twiml_returned_at:${new Date().toISOString()} total_ms:${Date.now() - t0}`);
