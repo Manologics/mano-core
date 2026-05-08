@@ -197,6 +197,10 @@
     "last_security_review_at": {
       "type": "string",
       "description": "UTC ISO timestamp of last security review"
+    },
+    "twilio_message_sid": {
+      "type": "string",
+      "description": "Twilio Message SID for tracking SMS delivery"
     }
   },
   "required": [
