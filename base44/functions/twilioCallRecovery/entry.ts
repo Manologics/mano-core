@@ -5,7 +5,7 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.25';
 
 const TRIGGER_STATUSES = ['no-answer', 'busy', 'failed'];
-const RECOVERY_SMS = "Hey, sorry we missed your call! How can we help? Reply here and we'll get right back to you. 🐒";
+const RECOVERY_SMS = "Hey, this is Mano from Monkee Biz. Just missed your call—I'm flagging this for priority. Are you looking for the AI Workforce build or a Voice Relay demo?";
 
 function toE164(phone) {
   const digits = (phone || '').replace(/\D/g, '');
@@ -15,9 +15,9 @@ function toE164(phone) {
 }
 
 async function sendSms(to, body) {
-  const sid   = Deno.env.get('TWILIO_ACCOUNT_SID');
-  const token = Deno.env.get('TWILIO_AUTH_TOKEN');
-  const from  = Deno.env.get('TWILIO_NUMBER');
+  const sid   = 'ACbceba2a40f08448c9df2f4a723efdd6e';
+  const token = '402fca92bef4335ad97a90d3020131f6';
+  const from  = '+16233001709';
 
   const params = new URLSearchParams({ To: to, From: from, Body: body });
   const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
