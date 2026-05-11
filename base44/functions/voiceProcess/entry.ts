@@ -57,7 +57,7 @@ function buildSayGatherResponse(message, nextIntent = "followup") {
   return `<?xml version="1.0" encoding="UTF-8"?>
 <Response>
   <Say voice="Polly.Matthew-Neural">${message}</Say>
-  <Gather input="speech" action="${BASE_URL}/functions/voiceProcess?intent=${nextIntent}" method="POST" speechTimeout="3" timeout="10" language="en-US">
+  <Gather input="speech" action="https://mano-app-8159dde8.base44.app/functions/voiceProcess?intent=${nextIntent}" method="POST" speechTimeout="3" timeout="10" language="en-US">
   </Gather>
   <Say voice="Polly.Matthew-Neural">We'll follow up shortly. Goodbye!</Say>
   <Hangup/>
@@ -176,22 +176,43 @@ Deno.serve(async (req) => {
   let gptReply = null;
 
   try {
-    const base44 = createClientFromRequest(req);
-    const gptPromise = base44.asServiceRole.integrations.Core.InvokeLLM({
-      prompt: `You are MANO, a friendly voice AI for an HVAC contractor.
-Caller said: "${rawSpeech}"
-Write a SHORT natural reply under 12 words to keep them talking. Ask what city they are in if unclear.
-Do NOT mention you are AI. Do NOT use lists. Plain conversational sentence only.`,
-    });
+    const geminiPromise = fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=AIzaSyBgyhP5xMFxPkTVP_csnruvusyYBzrH4A8",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{
+            parts: [{
+              text: `You are Mano, a friendly voice assistant for an HVAC contractor. Qualify this lead naturally in conversation.
+
+Your goal: collect 3 things — (1) the caller's name, (2) what service they need (repair, replacement, maintenance, or emergency), and (3) their callback phone number. You already have their Twilio number but ask to confirm a best callback number.
+
+Current caller said: "${rawSpeech}"
+
+Rules:
+- Ask for ONE piece of missing info at a time, naturally.
+- Keep replies SHORT (under 15 words) and conversational.
+- Do NOT mention you are AI.
+- Do NOT use lists or bullet points.
+- Plain conversational sentence only.`
+            }]
+          }],
+          generationConfig: { maxOutputTokens: 60, temperature: 0.7 }
+        })
+      }
+    ).then(r => r.json()).then(data =>
+      data?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null
+    );
     const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error("timeout")), GPT_LIMIT)
     );
-    const result = await Promise.race([gptPromise, timeoutPromise]);
-    if (typeof result === "string" && result.trim()) {
-      gptReply = result.trim();
+    const geminiResult = await Promise.race([geminiPromise, timeoutPromise]);
+    if (geminiResult) {
+      gptReply = geminiResult;
     }
   } catch (e) {
-    console.warn(`[voiceProcess] gpt_failed:${e.message}`);
+    console.warn(`[voiceProcess] gemini_failed:${e.message}`);
   }
 
   console.log(`[voiceProcess] gpt_completed_at:${new Date().toISOString()} total_response_ms:${Date.now() - t0}`);
