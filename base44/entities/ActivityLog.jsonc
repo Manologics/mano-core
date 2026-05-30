@@ -1,0 +1,22 @@
+{
+  "name": "ActivityLog",
+  "type": "object",
+  "properties": {
+    "lead_id": {
+      "type": "string",
+      "description": "Related lead ID or 'system' for system events"
+    },
+    "event": {
+      "type": "string",
+      "description": "Event description or log message"
+    },
+    "created_at": {
+      "type": "string",
+      "description": "UTC ISO timestamp of the event"
+    }
+  },
+  "required": [
+    "lead_id",
+    "event"
+  ]
+}

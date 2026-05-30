@@ -13,7 +13,7 @@ Deno.serve(async (req) => {
       return Response.json({ success: true, message: 'Weekly digest disabled' });
     }
 
-    const opsEmail = get('ops_admin_email', 'info@monkeebizai.com');
+    const opsEmail = get('ops_admin_email', 'info@monkeebizznus.com');
     const appUrl   = get('app_url',         'https://app.monkeebizzai.com');
     const tz       = get('app_timezone',    'America/Phoenix');
     const avgDeal  = parseFloat(get('ops_average_deal_value', '1500'));
