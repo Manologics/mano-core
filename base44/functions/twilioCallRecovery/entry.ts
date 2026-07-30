@@ -15,9 +15,9 @@ function toE164(phone) {
 }
 
 async function sendSms(to, body) {
-  const sid   = 'ACbceba2a40f08448c9df2f4a723efdd6e';
-  const token = '402fca92bef4335ad97a90d3020131f6';
-  const from  = '+16233001709';
+  const sid   = Deno.env.get('TWILIO_ACCOUNT_SID');
+  const token = Deno.env.get('TWILIO_AUTH_TOKEN');
+  const from  = Deno.env.get('TWILIO_NUMBER');
 
   const params = new URLSearchParams({ To: to, From: from, Body: body });
   const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Messages.json`, {
